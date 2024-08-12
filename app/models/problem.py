@@ -1,24 +1,27 @@
-from app.database import Base
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey as FK
+from sqlalchemy import ForeignKey as FK, Integer, String, Boolean, DateTime
 from datetime import datetime
+from typing import Optional, List
+from app.database import Base
 from app.models import *
 
 
 class Problem(Base):
-    __tablename__ = "problems"
+    __tablename__ = 'problems'
 
-    id: Mapped[str] = mapped_column(primary_key=True, index=True)
-    title: Mapped[str] = mapped_column()
-    description: Mapped[str] = mapped_column()
-    memory_limit: Mapped[int] = mapped_column()
-    time_limit: Mapped[int] = mapped_column()
-    points: Mapped[int] = mapped_column()
-    is_public: Mapped[bool] = mapped_column()
-    config_version_number: Mapped[int] = mapped_column()
-    created_at: Mapped[datetime] = mapped_column()
-    updated_at: Mapped[datetime] = mapped_column()
-    author_id: Mapped[str] = mapped_column("creator_id", FK("users.id"))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String)
+    points: Mapped[int] = mapped_column(Integer, nullable=False)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False)
+    config_version_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
+    author_id: Mapped[int] = mapped_column(Integer, FK('users.id'), nullable=False)
 
     # connected field
-    author: Mapped["User"] = relationship("User", back_populates="problems")
+    author: Mapped['User'] = relationship('User', back_populates='created_problems')
+    constraints: Mapped[List['ProblemConstraint']] = relationship('ProblemConstraint', back_populates='problem')
+    test_cases: Mapped[List['ProblemTestCase']] = relationship('ProblemTestCase', back_populates='problem')
+    contests: Mapped[List['Contest']] = relationship("Contest", secondary="contest_problems", back_populates="problems")
+    submissions: Mapped[List['Submission']] = relationship('Submission', back_populates='problem')
