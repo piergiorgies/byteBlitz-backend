@@ -1,8 +1,8 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey as FK, Integer, String
 from typing import List
-from app.database import Base
-from app.models import *
+from database import Base
+from . import *
 
 class Language(Base):
     __tablename__ = 'languages'

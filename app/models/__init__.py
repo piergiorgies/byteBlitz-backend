@@ -1,13 +1,2 @@
-from .user import User
-from .user_type import UserType
-from .problem import Problem
-from .problem_test_case import ProblemTestCase
-from .contest_user import ContestUser
-from .contest_problem import ContestProblem
-from .contest import Contest
-from .submission_test_case import SubmissionTestCase
-from .submission_result import SubmissionResult
-from .submission import Submission
-from .language import Language
-from .problem_constraint import ProblemConstraint
-from .contest_submission import ContestSubmission
+from .mapping import *
+from .DTOs import UserSignupDTO, UserLoginDTO, Token

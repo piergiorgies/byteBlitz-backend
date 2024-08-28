@@ -1,8 +1,8 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import Integer, String
 from typing import Optional, List
-from app.database import Base
-from app.models import *
+from database import Base
+from . import *
 
 class SubmissionResult(Base):
     __tablename__ = 'submission_results'

@@ -1,8 +1,8 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey as FK, String, Integer, Boolean
 from typing import List, Optional
-from app.database import Base
-from app.models import *
+from database import Base
+from . import *
 
 class ProblemTestCase(Base):
     __tablename__ = 'problem_test_cases'

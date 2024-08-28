@@ -2,8 +2,8 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey as FK, Integer, String, Boolean, DateTime
 from datetime import datetime
 from typing import Optional, List
-from app.database import Base
-from app.models import *
+from database import Base
+from . import *
 
 
 class Problem(Base):
@@ -19,9 +19,9 @@ class Problem(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
     author_id: Mapped[int] = mapped_column(Integer, FK('users.id'), nullable=False)
 
-    # connected field
+    # connected fields
     author: Mapped['User'] = relationship('User', back_populates='created_problems')
     constraints: Mapped[List['ProblemConstraint']] = relationship('ProblemConstraint', back_populates='problem')
     test_cases: Mapped[List['ProblemTestCase']] = relationship('ProblemTestCase', back_populates='problem')
-    contests: Mapped[List['Contest']] = relationship("Contest", secondary="contest_problems", back_populates="problems")
+    contests: Mapped[List['Contest']] = relationship('Contest', secondary='contest_problems', back_populates='problems')
     submissions: Mapped[List['Submission']] = relationship('Submission', back_populates='problem')

@@ -2,20 +2,21 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
-from app.database import Base
-from app.models import *
+from database import Base
+from models import *
 from app.config import settings
 
 @pytest.fixture(scope='module')
 def engine():
     # Use an in-memory SQLite database for testing
-    return create_engine(settings.get_test_connection_string)
+    return create_engine(settings.get_connection_string)
 
 @pytest.fixture(scope='module')
 def tables(engine):
-    Base.metadata.create_all(engine)
-    yield
-    Base.metadata.drop_all(engine)
+    pass
+    # Base.metadata.create_all(engine)
+    # yield
+    # Base.metadata.drop_all(engine)
 
 @pytest.fixture(scope='function')
 def session(engine, tables):

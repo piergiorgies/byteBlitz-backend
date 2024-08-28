@@ -1,8 +1,8 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey as FK, Integer, String
 from typing import Optional
-from app.database import Base
-from app.models import *
+from database import Base
+from . import *
 
 class ProblemConstraint(Base):
     __tablename__ = 'problem_constraints'

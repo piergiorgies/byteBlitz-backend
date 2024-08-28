@@ -1,7 +1,7 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey as FK, Integer
-from app.database import Base
-from app.models import *
+from database import Base
+from . import *
 
 class ContestProblem(Base):
     __tablename__ = 'contest_problems'
