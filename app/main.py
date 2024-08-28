@@ -2,7 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="ByteBlitz", description="API for ByteBlitz", version="1.0.0")
+from routers import auth
+
+app = FastAPI(title="ByteBlitz", description="API for ByteBlitz", version="0.1")
 
 app.add_middleware(
     CORSMiddleware,
@@ -12,9 +14,11 @@ app.add_middleware(
     allow_credentials=True
 )
 
+app.include_router(auth.router)
+
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Hello ByteBlitz users!"}
 
 if __name__ == '__main__':
     uvicorn.run(app,host="localhost",port=9000)

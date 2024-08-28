@@ -1,5 +1,4 @@
-from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
         
 class Settings(BaseSettings):
 
@@ -8,16 +7,18 @@ class Settings(BaseSettings):
     DATABASE_PASSWORD: str
     DATABASE_HOST: str
     DATABASE_PORT: str
-    TESTING_DB_NAME: str
-    
 
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_MINUTES: int
+    TIMEZONE: str
+
+    model_config = SettingsConfigDict(env_file=".env")
+    
     @property
     def get_connection_string(self):
         return f"postgresql+psycopg2://{self.DATABASE_USER}:{self.DATABASE_PASSWORD}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
 
-    @property
-    def get_test_connection_string(self):
-        return f"postgresql+psycopg2://{self.DATABASE_USER}:{self.DATABASE_PASSWORD}@{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.TESTING_DB_NAME}"
-    model_config = ConfigDict(env_file='.env')
 
 settings = Settings()
