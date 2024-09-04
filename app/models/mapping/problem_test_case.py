@@ -1,7 +1,7 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey as FK, String, Integer, Boolean
 from typing import List, Optional
-from database import Base
+from app.database import Base
 from . import *
 
 class ProblemTestCase(Base):

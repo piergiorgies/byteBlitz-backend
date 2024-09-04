@@ -34,4 +34,4 @@ and modify the following fields:
 
 Start the application (without debug) with
 
-`python app/main.py`
+`python main.py`

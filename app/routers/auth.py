@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from models import UserSignupDTO, UserLoginDTO, Token
-from controllers.auth import signup as signup_controller, login as login_controller, refresh_token as refresh_token_controller
-from database import get_session
+from app.models import UserSignupDTO, UserLoginDTO, Token
+from app.controllers.auth import signup as signup_controller, login as login_controller, refresh_token as refresh_token_controller
+from app.database import get_session
 
 router = APIRouter(
     tags=["Authentication"],

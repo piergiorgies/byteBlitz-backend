@@ -1,6 +1,6 @@
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy import ForeignKey as FK, Integer, DateTime
-from database import Base
+from app.database import Base
 from datetime import datetime
 
 class TeamUser(Base):

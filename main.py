@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import auth
+from app.routers import auth
 
 app = FastAPI(title="ByteBlitz", description="API for ByteBlitz", version="0.1")
 

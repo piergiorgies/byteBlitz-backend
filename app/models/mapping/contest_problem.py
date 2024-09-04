@@ -1,6 +1,6 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey as FK, Integer
-from database import Base
+from app.database import Base
 from . import *
 
 class ContestProblem(Base):

@@ -1,8 +1,9 @@
-from config import settings
-from models import User
+from app.config import settings
+from app.models import User
+from app.models.DTOs import Token
+
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
-from models.DTOs import Token
 
 def _create_access_token(data: dict = None, expires_delta: timedelta = None):
     if data:

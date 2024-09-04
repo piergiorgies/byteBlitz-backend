@@ -1,0 +1,7 @@
+## do a migration with alembic
+
+`alembic revision --autogenerate -m "Changes made"`
+
+## to push the migration to the DB:
+
+`alembic upgrade head`

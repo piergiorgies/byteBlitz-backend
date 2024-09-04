@@ -4,9 +4,8 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
-from models import UserSignupDTO, UserLoginDTO
-from models import User
-from models import UserType
+from app.models import UserSignupDTO, UserLoginDTO
+from app.models import User, UserType
 from .jwt import get_tokens, get_user_by_token
 
 def _hash_password(password: str, salt: str):
