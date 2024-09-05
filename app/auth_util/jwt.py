@@ -1,0 +1,97 @@
+from app.config import settings
+from app.models import User
+from app.models.DTOs import Token
+from app.database import get_session
+
+from datetime import datetime, timedelta, timezone
+from jose import JWTError, jwt
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import HTTPException, status, Depends
+from typing import Annotated
+from sqlalchemy.orm import Session
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+def _create_access_token(data: dict = None, expires_delta: timedelta = None):
+    # data is the payload of the token
+    to_encode = data.copy()
+
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+def get_tokens(user_id, username, user_type):
+    # Generate access token
+    access_token_expire = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_token_expire = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+
+    data = {
+        "user_id": user_id,
+        "sub": username,
+        "user_type": user_type
+    }
+
+    access_token = _create_access_token(data=data, expires_delta=access_token_expire)
+    refresh_token = _create_access_token(data=data, expires_delta=refresh_token_expire)
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token
+    }
+
+def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        
+        user_id = payload.get("user_id")
+        username = payload.get("sub")
+        role = payload.get("user_type")
+
+        if not user_id or not username or not role:
+            raise credentials_exception
+    
+
+        return user_id, username
+    
+    except JWTError as e:
+        raise credentials_exception
+
+def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
+    try: 
+        id, username = decode_token(token)
+
+        # get user from database filter by id, username and role
+        user : User = session.query(User).filter(User.id == id, User.username == username).first()
+
+        if user is None:
+            raise credentials_exception
+
+        return user
+
+    except HTTPException as e:
+        raise e
+    
+
+# def get_refresh_token():
+#     refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+#     refresh_token = _create_access_token(expires_delta=refresh_token_expires)
+#     return Token(access_token="", refresh_token=refresh_token)
+
+# def get_user_by_token(token: str):
+#     try:
+#         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+#         return payload
+#     except JWTError:
+#         return None
+
+

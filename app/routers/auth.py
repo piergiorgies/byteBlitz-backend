@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from app.models import UserSignupDTO, UserLoginDTO, Token
-from app.controllers.auth import signup as signup_controller, login as login_controller, refresh_token as refresh_token_controller
+from app.controllers.auth import signup as signup_controller, login as login_controller
 from app.database import get_session
+from app.auth_util.role_checker import RoleChecker
 
 router = APIRouter(
     tags=["Authentication"],
@@ -65,13 +66,26 @@ async def login(body: UserLoginDTO, session = Depends(get_session)):
             content={"detail": "An unexpected error occurred", "error": str(e)}
         )
     
-@router.post("/refresh", summary="Refresh token", response_description="Token refreshed", response_model=Token)
-async def refresh_token(token):
+# @router.post("/refresh", summary="Refresh token", response_description="Token refreshed", response_model=Token)
+# async def refresh_token(token):
 
-    refresh_token_controller(token)
+#     refresh_token_controller(token)
+#     """
+#     Refresh token
+
+#     Returns:
+#         JSONResponse: response
+#     """
+
+@router.get("/test", summary="Test", response_description="Test", dependencies=[Depends(RoleChecker(["user"]))])
+async def test():
     """
-    Refresh token
+    Test
 
     Returns:
         JSONResponse: response
     """
+    return JSONResponse(
+        status_code=200,
+        content={"detail": "Test successful"}
+    )

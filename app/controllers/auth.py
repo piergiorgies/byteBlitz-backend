@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from app.models import UserSignupDTO, UserLoginDTO
 from app.models import User, UserType
-from .jwt import get_tokens, get_user_by_token
+from app.auth_util.jwt import get_tokens
 
 def _hash_password(password: str, salt: str):
     if not salt:
@@ -59,7 +59,7 @@ def login(userDTO: UserLoginDTO, session: Session):
         if password_hash != userMap.password_hash:
             raise HTTPException(status_code=401, detail="Invalid password")
 
-        return get_tokens(userMap.user_type.code)
+        return get_tokens(userMap.id, userMap.username, userMap.user_type.code)
     
     except SQLAlchemyError as e:
         session.rollback()
@@ -71,11 +71,11 @@ def login(userDTO: UserLoginDTO, session: Session):
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 
-def refresh_token(token: str):
-    try:
-        user_type = get_user_by_token(token)
+# def refresh_token(token: str):
+#     try:
+#         user_type = get_user_by_token(token)
 
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid token")
+#     except Exception as e:
+#         raise HTTPException(status_code=401, detail="Invalid token")
 
-    return get_tokens(user_type)
+#     return get_tokens(user_type)
