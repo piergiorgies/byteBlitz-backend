@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
 from app.models import UserSignupDTO, UserLoginDTO, Token
 from app.controllers.auth import signup as signup_controller, login as login_controller
@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 @router.post("/signup", summary="Create a new user", response_description="User created")
-async def signup(body: UserSignupDTO, session = Depends(get_session)) -> JSONResponse:
+async def signup(body: UserSignupDTO = Body(), session = Depends(get_session)) -> JSONResponse:
     """
     Create a new user
 
@@ -39,7 +39,7 @@ async def signup(body: UserSignupDTO, session = Depends(get_session)) -> JSONRes
         )
     
 @router.post("/login", summary="Login", response_description="User logged in", response_model=Token)
-async def login(body: UserLoginDTO, session = Depends(get_session)):
+async def login(body: UserLoginDTO = Body(), session = Depends(get_session)):
     """
     Login a user
 
@@ -77,7 +77,7 @@ async def login(body: UserLoginDTO, session = Depends(get_session)):
 #         JSONResponse: response
 #     """
 
-@router.get("/test", summary="Test", response_description="Test", dependencies=[Depends(RoleChecker(["user"]))])
+@router.get("/test", summary="Test", response_description="Test", dependencies=[Depends(RoleChecker(["admin"]))])
 async def test():
     """
     Test

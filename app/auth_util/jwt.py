@@ -1,6 +1,6 @@
 from app.config import settings
 from app.models import User
-from app.models.DTOs import Token
+from app.models.base_dto import Token
 from app.database import get_session
 
 from datetime import datetime, timedelta, timezone
