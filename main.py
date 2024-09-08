@@ -23,4 +23,4 @@ async def root():
     return {"message": "Hello ByteBlitz users!"}
 
 if __name__ == '__main__':
-    uvicorn.run(app,host="localhost",port=9000)
+    uvicorn.run("main:app", host="localhost", port=9000, reload=True)

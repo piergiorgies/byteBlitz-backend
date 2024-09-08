@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "byteblitz",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
