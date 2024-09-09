@@ -26,8 +26,9 @@ class ContestUserDTO(BaseRequest):
         contest_id (int): The id of the contest
         user_id (int): The id of the user
     """
+    id : int | None = None
     username: str = None
-    score: int | None = None
+    score: int | None = 0
 
 class ContestTeamDTO(BaseRequest):
     """
@@ -37,5 +38,18 @@ class ContestTeamDTO(BaseRequest):
         contest_id (int): The id of the contest
         team_id (int): The id of the team
     """
+    id : int | None = None
     name: str = None
-    score: int | None = None
+    score: int | None = 0
+
+class ContestProblemDTO(BaseRequest):
+    """
+    Contest Problem DTO
+
+    Attributes:
+        contest_id (int): The id of the contest
+        problem_id (int): The id of the problem
+    """
+    id : int = None
+    title: str | None = None
+    publication_delay: int | None = 0
