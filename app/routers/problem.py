@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 router = APIRouter(
     tags=["Problems"],
-    prefix="/problem"
+    prefix="/problems"
 )
 
 @router.get("/test", summary="Test", response_description="Test")
