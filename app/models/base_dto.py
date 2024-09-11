@@ -1,11 +1,12 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
-
 from dataclasses import dataclass
 
 # Request objects definition
 class BaseRequest(BaseModel):
-    model_config = ConfigDict()
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="forbid",
+        )
 
 @dataclass
 class Token(BaseRequest):
@@ -47,3 +48,25 @@ class UserSignupDTO(BaseRequest):
     username: str
     email: str
     password: str
+
+@dataclass
+class ListDTOBase(BaseRequest):
+    """
+    List DTO
+
+    """
+    limit: int | None = None
+    offset: int | None = None
+
+@dataclass
+class ListResponse(BaseRequest):
+    """
+    List Response DTO
+
+    Attributes
+        data (list): The list of data
+        count (int): The count of data
+
+    """
+    data: list
+    count: int
