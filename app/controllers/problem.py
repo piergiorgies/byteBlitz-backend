@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
 
-from app.database import QueryBuilder
+from app.database import QueryBuilder, get_object_by_id
 from app.models import ListDTOBase, ListResponse, User, Problem
 from app.models.problem import ProblemDTO
 
@@ -61,3 +61,74 @@ def read(id: int, user: User, session: Session) -> ProblemDTO:
     #     raise e
     # except Exception as e:
     #     raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+#TODO: create to be tested.
+def create(problemDTO: ProblemDTO, session: Session) -> ProblemDTO:
+    """
+    Create a problem
+    
+    Args:
+        problem: ProblemDTO
+        session: Session
+    
+    Returns: 
+        ProblemDTO: problem
+    """
+
+    try:
+        problem = session.query(Problem).filter(Problem.title == problemDTO.title).first()
+        if problem:
+            raise HTTPException(status_code=409, detail="Problem title already exists")
+        if problemDTO.points < 0: #TODO: define minimum/maximum points
+            raise HTTPException(status_code=400, detail="Points cannot be negative.")
+
+        problem = Problem(
+            title=problemDTO.title,
+            description=problemDTO.description,
+            points=problemDTO.points,
+            is_public=problemDTO.is_public
+        )
+
+        session.add(problem)
+        session.commit()
+
+        return problem
+    
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+              
+#TODO: def delete to be tested
+def delete(id: int, session: Session) -> bool:
+    """
+    Delete problem by id
+
+    Args: 
+        id: int
+    
+    Returns:
+        bool: deleted
+    """
+
+    try:
+        problem: Problem = get_object_by_id(Problem, session, id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
+        
+        session.delete(problem)
+        session.commit()
+        return True
+    
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
