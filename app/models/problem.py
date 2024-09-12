@@ -21,3 +21,11 @@ class ProblemDTO(BaseRequest):
 
 #TODO: config_version_number viene aggiornato ogni volta che il problema, una sua constraint
 # o un suo testcase ecc... (ci siamo capiti) viene modificato/creato
+
+class ProblemTestCaseDTO(BaseRequest):
+    pass
+    #TODO: everything
+
+class ProblemConstraintDTO(BaseRequest):
+    pass
+    #TODO: everything
