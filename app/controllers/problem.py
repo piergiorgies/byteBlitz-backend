@@ -76,9 +76,6 @@ def create(problemDTO: ProblemDTO, session: Session) -> ProblemDTO:
     """
 
     try:
-        problem = session.query(Problem).filter(Problem.title == problemDTO.title).first()
-        if problem:
-            raise HTTPException(status_code=409, detail="Problem title already exists")
         if problemDTO.points < 0: #TODO: define minimum/maximum points
             raise HTTPException(status_code=400, detail="Points cannot be negative.")
 
