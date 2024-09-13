@@ -22,8 +22,8 @@ def list(body: ListDTOBase, user: User, session: Session) -> ListResponse:
 
     try:
         builder = QueryBuilder(Problem, session, body.limit, body.offset)
-        problems: List[Problem] = builder.get()
-        count = builder.count()
+        problems: List[Problem] = builder.getQuery().all()
+        count = builder.getCount()
         #TODO: visibility (public or not)
         return {"data": [ProblemDTO.model_validate(obj=obj) for obj in problems], "count": count}
     
