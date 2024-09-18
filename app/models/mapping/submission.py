@@ -15,7 +15,7 @@ class Submission(Base):
     problem_id: Mapped[int] = mapped_column(Integer, FK('problems.id'), nullable=False)
     user_id: Mapped[int] = mapped_column(Integer, FK('users.id'), nullable=False)
     language_id: Mapped[int] = mapped_column(Integer, FK('languages.id'), nullable=False)
-    submission_result_id: Mapped[int] = mapped_column(Integer, FK('submission_results.id'))
+    submission_result_id: Mapped[int] = mapped_column(Integer, FK('submission_results.id'), nullable=True)
 
     # connected fields
     problem: Mapped['Problem'] = relationship('Problem', back_populates='submissions')

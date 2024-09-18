@@ -5,6 +5,23 @@ from app.database import Base
 from . import *
 
 class SubmissionTestCase(Base):
+    """
+    The submission test case model
+
+    Attributes:
+        id (int): The test case id
+        number (int): The test case number
+        notes (str): The test case notes
+        memory (int): The test case memory
+        time (int): The test case time
+        input_name (str): The test case input name
+        result_id (int): The test case result id
+        submission_id (int): The test case submission id
+
+        result (SubmissionResult): The submission result
+        submission (Submission): The submission
+    """
+
     __tablename__ = 'submission_test_cases'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
