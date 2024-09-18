@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 from app.auth_util.role_checker import RoleChecker
 from app.auth_util.jwt import get_current_user
-from app.controllers.problem import list, read, create, delete
+from app.controllers.problem import list, read, create, delete, update
 
 from app.models import ListResponse, problem
 from app.database import get_session
@@ -96,5 +96,36 @@ async def delete_problem(id: int, session=Depends(get_session)):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+@router.put("/{id}", summary= "Update a problem by id", dependencies=[Depends(RoleChecker(["admin"]))])
+async def update_problem(id: int, problem: ProblemDTO = Body(), session=Depends(get_session)): 
+    """
+    Update problem by id
     
+    Args:
+        id: int
+        problem: ProblemDTO
+    """
+
+    try:
+        problem = update(id, problem, session)
+        return JSONResponse(status_code=200, content={"message": "Problem update successfully"})
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 #endregion
+#region Probem Test Cases
+
+@router.get("/{id}/testcases", summary= "List problem testcases by problem id", dependencies=[Depends(RoleChecker(["admin"]))])
+async def list_problem_test_cases(id: int, body: ListDTOBase = Body(), session=Depends(get_session)):
+    """
+    List all test cases by problem id
+    
+    Args:
+        id: int
+    
+    Returns:
+        JSONResponse
+    """
