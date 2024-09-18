@@ -27,10 +27,13 @@ def list(body: ListDTOBase, user: User, session: Session) -> ListResponse:
 
         builder = QueryBuilder(Problem, session, body.limit, body.offset)
         if is_user:
-            problems: List[Problem] = builder.getQuery().filter(Problem.is_public == True).all()
+            tmp_query = builder.getQuery().filter(Problem.is_public == True)
+            problems: List[Problem] = tmp_query.all()
+            count = tmp_query.count()
+            #TODO: fix (user when body has limit)
         else:
             problems: List[Problem] = builder.getQuery().all()
-        count = builder.getCount()
+            count = builder.getCount()
 
         return {"data": [ProblemDTO.model_validate(obj=obj) for obj in problems], "count": count}
     
@@ -148,18 +151,21 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
         contest (ProblemDTO):
 
     Returns:
-        problem (ProblemDTOP):
+        problem (ProblemDTO):
     """
 
     try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
+        problem: Problem = get_object_by_id(Problem, session, id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
+
+        problem = session.query(Problem).filter(Problem.title == problem_update.title).first() #TODO: is a list
+        if problem and problem.id != problem_update.id:
+            raise HTTPException(status_code=409, detail="Problem title already exists")
+        if problem_update.points < 0:
+            raise HTTPException(status_code=400, detail="Points cannot be negative")
         
-        if contest.start_datetime > contest.end_datetime:
-            raise HTTPException(status_code=400, detail="Start time cannot be greater than end time")
-        
-        contest.name = contest_update.name
+        problem.name = problem_update.name
         contest.description = contest_update.description
         contest.start_datetime = contest_update.start_datetime
         contest.end_datetime = contest_update.end_datetime
@@ -175,5 +181,27 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+#endregion
+
+#region ProblemTestCase
+#TODO: everything
+
+#list all for a specific problem
+#read single for a specific problem
+#create
+#update
+#delete
+
+#endregion
+
+#region ProblemConstraint
+#TODO: everything
+
+#list for a specific problem
+#read for a specific problem and a specific language
+#create
+#update
+#delete
 
 #endregion
