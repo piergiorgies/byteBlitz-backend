@@ -165,6 +165,7 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
         if problem_update.points < 0:
             raise HTTPException(status_code=400, detail="Points cannot be negative")
         
+        #TODO: from here
         problem.name = problem_update.name
         contest.description = contest_update.description
         contest.start_datetime = contest_update.start_datetime
@@ -187,21 +188,21 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
 #region ProblemTestCase
 #TODO: everything
 
-#list all for a specific problem
-#read single for a specific problem
-#create
-#update
-#delete
+#list all for a specific problem (admin)
+#read single for a specific problem (admin)
+#create (admin)
+#update (admin)
+#delete (admin)
 
 #endregion
 
 #region ProblemConstraint
 #TODO: everything
 
-#list for a specific problem
-#read for a specific problem and a specific language
-#create
-#update
-#delete
+#list for a specific problem (admin, user)
+#read for a specific problem and a specific language (admin, user)
+#create (admin)
+#update (admin)
+#delete (admin)
 
 #endregion
