@@ -11,7 +11,6 @@ class ProblemDTO(BaseRequest):
         description (str): The description of the problem
         points (int): The amount of points of the problem
         is_public (bool): The visibility of the problem
-        config_version_number (int): The configuration number of the problem
     """
     id : int | None = None
     title: str = None

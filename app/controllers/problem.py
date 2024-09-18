@@ -7,6 +7,8 @@ from app.database import QueryBuilder, get_object_by_id
 from app.models import ListDTOBase, ListResponse, User, Problem
 from app.models.problem import ProblemDTO
 
+#region Problem
+
 def list(body: ListDTOBase, user: User, session: Session) -> ListResponse:
     """
     List problems according to visibility
@@ -21,10 +23,15 @@ def list(body: ListDTOBase, user: User, session: Session) -> ListResponse:
     """
 
     try:
+        is_user = user.user_type.code == "user"
+
         builder = QueryBuilder(Problem, session, body.limit, body.offset)
-        problems: List[Problem] = builder.getQuery().all()
+        if is_user:
+            problems: List[Problem] = builder.getQuery().filter(Problem.is_public == True).all()
+        else:
+            problems: List[Problem] = builder.getQuery().all()
         count = builder.getCount()
-        #TODO: visibility (public or not)
+
         return {"data": [ProblemDTO.model_validate(obj=obj) for obj in problems], "count": count}
     
     except SQLAlchemyError as e:
@@ -47,23 +54,22 @@ def read(id: int, user: User, session: Session) -> ProblemDTO:
         ProblemDTO: problem
     """
 
-    #TODO: everything
-    # try:
-    #     contest: Contest = session.query(Contest).filter(Contest.id == id).first()
-    #     if not contest:
-    #         raise HTTPException(status_code=404, detail="Contest not found")
+    try:
+        problem: Problem = get_object_by_id(Problem, session, id)
+        #TODO: visibility rules
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
         
-    #     return ContestDTO.model_validate(obj=contest)
+        return ProblemDTO.model_validate(obj=problem)
     
-    # except SQLAlchemyError as e:
-    #     raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    # except HTTPException as e:
-    #     raise e
-    # except Exception as e:
-    #     raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-#TODO: create to be tested.
-def create(problemDTO: ProblemDTO, session: Session) -> ProblemDTO:
+def create(problemDTO: ProblemDTO, user: User, session: Session) -> ProblemDTO:
     """
     Create a problem
     
@@ -76,14 +82,18 @@ def create(problemDTO: ProblemDTO, session: Session) -> ProblemDTO:
     """
 
     try:
-        if problemDTO.points < 0: #TODO: define minimum/maximum points
-            raise HTTPException(status_code=400, detail="Points cannot be negative.")
+        problem = session.query(Problem).filter(Problem.title == problemDTO.title).first()
+        if problem:
+            raise HTTPException(status_code=409, detail="Problem title already exists")
+        if problemDTO.points < 0:
+            raise HTTPException(status_code=400, detail="Points cannot be negative")
 
         problem = Problem(
             title=problemDTO.title,
             description=problemDTO.description,
             points=problemDTO.points,
-            is_public=problemDTO.is_public
+            is_public=problemDTO.is_public,
+            author_id=user.id
         )
 
         session.add(problem)
@@ -100,7 +110,6 @@ def create(problemDTO: ProblemDTO, session: Session) -> ProblemDTO:
         session.rollback
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
               
-#TODO: def delete to be tested
 def delete(id: int, session: Session) -> bool:
     """
     Delete problem by id
@@ -109,7 +118,7 @@ def delete(id: int, session: Session) -> bool:
         id: int
     
     Returns:
-        bool: deleted
+        deleted: bool
     """
 
     try:
@@ -129,3 +138,42 @@ def delete(id: int, session: Session) -> bool:
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
+    """
+    Update problem by id
+
+    Args:
+        id (int):
+        contest (ProblemDTO):
+
+    Returns:
+        problem (ProblemDTOP):
+    """
+
+    try:
+        contest: Contest = get_object_by_id(Contest, session, id)
+        if not contest:
+            raise HTTPException(status_code=404, detail="Contest not found")
+        
+        if contest.start_datetime > contest.end_datetime:
+            raise HTTPException(status_code=400, detail="Start time cannot be greater than end time")
+        
+        contest.name = contest_update.name
+        contest.description = contest_update.description
+        contest.start_datetime = contest_update.start_datetime
+        contest.end_datetime = contest_update.end_datetime
+
+        session.commit()
+        return ProblemDTO.model_validate(obj=contest)
+    
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+#endregion

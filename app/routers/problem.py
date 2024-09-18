@@ -55,7 +55,7 @@ async def read_problem(id: int, user=Depends(get_current_user), session=Depends(
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 @router.post("/", summary="Create a problem", dependencies=[Depends(RoleChecker(["admin"]))])
-async def create_problem(problem: ProblemDTO = Body(), session=Depends(get_session)):
+async def create_problem(problem: ProblemDTO = Body(), user=Depends(get_current_user), session=Depends(get_session)):
     """
     Create a problem
     
@@ -67,7 +67,7 @@ async def create_problem(problem: ProblemDTO = Body(), session=Depends(get_sessi
     """
 
     try:
-        problem = create(problem, session)
+        problem = create(problem, user, session)
         return JSONResponse(status_code=201, content={"message": "Problem created successfully"})
     
     except HTTPException as e:
