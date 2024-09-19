@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from app.auth_util.role_checker import RoleChecker
 from app.auth_util.jwt import get_current_user
 from app.controllers.problem import list, read, create, delete, update
+from app.controllers.problem import list_test_cases, read_test_case, create_test_case, delete_test_case, update_test_case
 
 from app.models import ListResponse, problem
 from app.database import get_session
@@ -17,7 +18,6 @@ router = APIRouter(
 
 #region Problem
 
-#TODO: manage problem visibility --> admin: all problems, user: only public problems
 @router.get("/", response_model=ListResponse, summary="List problems", dependencies=[Depends(RoleChecker(["admin", "user"]))])
 async def list_problems(body: ListDTOBase = Body(),  user=Depends(get_current_user), session=Depends(get_session)):
     """
@@ -118,66 +118,59 @@ async def update_problem(id: int, problem: ProblemDTO = Body(), session=Depends(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
 #endregion
+
 #region Probem Test Cases
 
-@router.get("/{id}/testcases", response_model=ProblemTestCaseDTO, summary= "List problem testcases by problem id", dependencies=[Depends(RoleChecker(["admin"]))])
-async def list_problem_test_cases(id: int, body: ListDTOBase = Body(), session=Depends(get_session)):
-    """
-    List all test cases by problem id
+#TODO: capire come rinominare i due metodi get
+# @router.get("/{id}/testcases", response_model=ProblemTestCaseDTO, summary= "List problem testcases", dependencies=[Depends(RoleChecker(["admin"]))])
+# async def list_problem_test_cases(id: int, session=Depends(get_session)):
+#     """
+#     List all test cases for a specific problem
     
-    Args:
-        id: int
-    
-    Returns:
-        JSONResponse
-    """
+#     Args:
+#         id (int): the id of the related problem 
+#     """
 
-    try:
-        problem_test_cases = list_test_cases(id, body, session)
-        return problem_test_cases
+#     try:
+#         problem_test_cases = list_test_cases(id, session)
+#         return problem_test_cases
     
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.get("/{id}/testcases/{id}", response_model=ProblemTestCaseDTO, summary= "Get a specific testcase by id", dependencies=[RoleChecker(["admin"])])
-async def get_specific_test_case(problemID: int, testcaseID: int, session=Depends(get_session)):
-    """
-    Get specific test case by id
+# @router.get("/{id}/testcase", response_model=ProblemTestCaseDTO, summary= "Get a specific testcase by id", dependencies=[Depends(RoleChecker(["admin"]))])
+# async def get_specific_test_case(id: int, session=Depends(get_session)):
+#     """
+#     Get a specific test case
     
-    Args:
-        problemID: int
-        testcaseID: int
-    
-    Returns:
-        JSONRresponse: response
-    """
+#     Args:
+#         test_case_id (int): the id of the testcase
+#     """
 
-    try:
-        test_case = get_test_case(problemID, testcaseID, session)
+#     try:
+#         test_case = read_test_case(id, session)
 
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 @router.post("/{id}/testcases", summary= "Create problem test case", dependencies=[Depends(RoleChecker(["admin"]))])
-async def create_problem_test_case(problemID: int, problem_test_case : ProblemTestCaseDTO, session=Depends(get_session)):
+async def create_problem_test_case(id: int, problem_test_case : ProblemTestCaseDTO, session=Depends(get_session)):
     """
     Create a problem test case
     
     Args:
-        problemID: int
-        problem_test_case: ProblemTestCaseDTO
-    
-    Returns:
-        JSONResponse: response
+        id (int): the id of the related problem
+        problem_test_case (ProblemTestCaseDTO):
     """
 
     try:
-        problem_test_case = create_test_case(problem_test_case, session)
+        problem_test_case = create_test_case(problem_test_case, id, session)
         return JSONResponse(status_code=201, content={"message": "Problem test case created successfully"})
     
     except HTTPException as e:
@@ -185,51 +178,47 @@ async def create_problem_test_case(problemID: int, problem_test_case : ProblemTe
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-#TODO: Valutare se aggiungere un endpoint per la rimozione completa di tutti i testcases
-@router.delete("/{id}/testcases/{id}", summary= "Delete problem test case", dependencies=[Depends(RoleChecker(["admin"]))])
-async def delete_problem_test_case(problemID: int, testcaseID: int, session=Depends(get_session)):
+@router.delete("/{id}/testcases", summary= "Delete problem test case", dependencies=[Depends(RoleChecker(["admin"]))])
+async def delete_problem_test_case(id: int, session=Depends(get_session)):
     """
-    Delete a problem test case by id
+    Delete a problem test case
     
     Args:
-        problemID: int
-        testcaseID: int
-    
-    Returns:
-        JSONResponse: response
+        id (int): the testcase id
     """
 
     try:
-        deleted = delete_test_case(problemID, testcaseID, session)
+        deleted = delete_test_case(id, session)
         if not deleted:
-            raise HTTPException(status_code=404, detail="Problem or testcase not found")
+            raise HTTPException(status_code=404, detail="Problem test case not found")
         
-        return JSONResponse(status_code=200, content={"message": "Test case removed successfully"})
+        return JSONResponse(status_code=200, content={"message": "Problem test case removed successfully"})
     
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.put("/{id}/testcases/{id}", summary= "Update a testcase by id", dependencies=[Depends(RoleChecker(["admin"]))])
-async def update_problem_test_case(problemID: int, testcaseID: int, test_case: ProblemTestCaseDTO = Body(), session=Depends(get_session)):
+@router.put("/{id}/testcases", summary= "Update a testcase", dependencies=[Depends(RoleChecker(["admin"]))])
+async def update_problem_test_case(id: int, test_case: ProblemTestCaseDTO = Body(), session=Depends(get_session)):
     """
-    Update a problem test case by id
+    Update a problem test case
     
     Args:
-        problemID: int
-        testcaseID: id
-        test_case: ProblemTestCaseDTO
-        
-    Returns:
-        JSONResponse: response
+        id (int): the id of the testcase
+        test_case (ProblemTestCaseDTO): the updated testcase
     """
     try:
-        test_case = update_test_case(problemID, testcaseID, session)
+        test_case = update_test_case(id, test_case, session)
         return JSONResponse(status_code=200, content={"message": "Problem test case updated"})
     
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+#endregion
+
+#region Problem Constraints
+#TODO: everything
 #endregion

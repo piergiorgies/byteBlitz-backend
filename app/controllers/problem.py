@@ -5,7 +5,7 @@ from typing import List
 
 from app.database import QueryBuilder, get_object_by_id
 from app.models import ListDTOBase, ListResponse, User, Problem
-from app.models.problem import ProblemDTO
+from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
 
 #region Problem
 
@@ -77,7 +77,7 @@ def create(problemDTO: ProblemDTO, user: User, session: Session) -> ProblemDTO:
     Create a problem
     
     Args:
-        problem: ProblemDTO
+        problemDTO: ProblemDTO
         session: Session
     
     Returns: 
@@ -148,7 +148,7 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
 
     Args:
         id (int):
-        contest (ProblemDTO):
+        problem_update (ProblemDTO):
 
     Returns:
         problem (ProblemDTO):
@@ -185,18 +185,78 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
 
 #endregion
 
-#region ProblemTestCase
-#TODO: everything
+#region Problem Test Cases
 
-#list all for a specific problem (admin)
-#read single for a specific problem (admin)
-#create (admin)
-#update (admin)
-#delete (admin)
+def list_test_cases(id: int, session: Session) -> ListResponse:
+    """
+   List all test cases for a specific problem
+    
+    Args:
+        id (int): the id of the related problem
+        session (Session):
+    
+    Returns:
+        [ListResponse]: list of test cases
+    """
+    pass
+    
+def read_test_case(id: int, session: Session) -> ProblemTestCaseDTO:
+    """
+    Get test case by id
+
+    Args:
+        id (int):
+        session (Session):
+
+    Returns:
+        ProblemTestCaseDTO: test case
+    """
+    pass
+
+def create_test_case(problemTestCaseDTO: ProblemTestCaseDTO, problem_id: int, session: Session) -> ProblemTestCaseDTO:
+    """
+    Create test case
+    
+    Args:
+        problemTestCaseDTO (ProblemTestCaseDTO):
+        problem_id (int):
+        session (Session): 
+    
+    Returns: 
+        ProblemTestCaseDTO: test case
+    """
+    pass
+              
+def delete_test_case(id: int, session: Session) -> bool:
+    """
+    Delete test case by id
+
+    Args:
+        id (int):
+        session (Session): 
+    
+    Returns:
+        deleted: bool
+    """
+    pass
+    
+def update_test_case(id: int, test_case_update: ProblemTestCaseDTO, session: Session) -> ProblemTestCaseDTO:
+    """
+    Update test case by id
+
+    Args:
+        id (int):
+        test_case_update (ProblemTestCaseDTO):
+        session (Session): 
+
+    Returns:
+        ProblemTestCaseDTO: test case
+    """
+    pass
 
 #endregion
 
-#region ProblemConstraint
+#region Problem Constraints
 #TODO: everything
 
 #list for a specific problem (admin, user)
