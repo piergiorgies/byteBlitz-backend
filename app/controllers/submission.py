@@ -3,8 +3,11 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 
 from app.database import get_object_by_id
+from app.config import rabbitmq_connection
 from app.models import SubmissionDTO, Submission, User, Problem, Language, Contest, ContestSubmission, SubmissionTestCase
 
+# I won't follow the right import order
+import pika
 
 def create(submission_dto: SubmissionDTO, session: Session):
     """
@@ -69,6 +72,8 @@ def create(submission_dto: SubmissionDTO, session: Session):
             session.add(contest_submission)
 
         session.commit()
+
+        rabbitmq_connection.try_send_to_queue('submissions', 'stocazzo')
 
         return True
     
