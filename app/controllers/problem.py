@@ -199,8 +199,9 @@ def list_test_cases(id: int, session: Session) -> ListResponse:
     Returns:
         [ListResponse]: list of test cases
     """
+
     try:
-        test_cases: List[ProblemTestCase] = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == id)
+        test_cases: List[ProblemTestCase] = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == id).all()
         return {"data" : [ProblemTestCaseDTO.model_validate(obj=obj) for obj in test_cases]}
     
     except SQLAlchemyError as e:
@@ -221,6 +222,7 @@ def read_test_case(id: int, session: Session) -> ProblemTestCaseDTO:
     Returns:
         ProblemTestCaseDTO: test case
     """
+
     try:
         test_case = get_object_by_id(ProblemTestCase, session, id)
         if not test_case:
@@ -246,22 +248,25 @@ def create_test_case(problemTestCaseDTO: ProblemTestCaseDTO, problem_id: int, se
     Returns: 
         ProblemTestCaseDTO: test case
     """
-    #TODO: eseguire controlli sull'unicità del test case (ove necessario)
+    
     try:
         last_test_case = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem_id).order_by(ProblemTestCase.number.desc()).first()
-        if last_test_case:
-            number_of_testcase = last_test_case.number + 1
-        else:
-            number_of_testcase = 1
-    
+        test_case_number = last_test_case.number + 1 if last_test_case else 1        
+        test_case_points = problemTestCaseDTO.points if not problemTestCaseDTO.is_pretest else 0
+
         problemTestCase = ProblemTestCase(
-            number=number_of_testcase,
+            number=test_case_number,
             notes=problemTestCaseDTO.notes,
             input_name=problemTestCaseDTO.input_name,
             output_name=problemTestCaseDTO.output_name,
-            points=problemTestCaseDTO.points,
+            points=test_case_points,
             is_pretest=problemTestCaseDTO.is_pretest
         )
+        
+        problem = get_object_by_id(Problem, session, problem_id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
+        problem.increment_version_number()
 
         session.add(problemTestCase)
         session.commit()
