@@ -27,7 +27,7 @@ async def submit_solution(submission: SubmissionDTO = Body(), session = Depends(
     try:
         submission = create(submission, session)
 
-        return JSONResponse(content={"message": "submission sended successfully"}, status_code=201)
+        return JSONResponse(content={"message": "submission sent successfully"}, status_code=201)
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Internal server error")
