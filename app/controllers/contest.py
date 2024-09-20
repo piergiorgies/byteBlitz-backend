@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
 
-from app.database import QueryBuilder
+from app.database import QueryBuilder, get_object_by_id
 from app.models import ContestDTO, Contest, ListDTOBase, ListResponse
 from app.models import User, ContestUserDTO
 from app.models import Team, ContestTeamDTO
@@ -58,8 +58,8 @@ def list(body: ListDTOBase, session: Session) -> ListResponse:
     """
     try:
         builder = QueryBuilder(Contest, session, body.limit, body.offset)
-        contests: List[Contest] = builder.get()
-        count = builder.count()
+        contests: List[Contest] = builder.getQuery().all()
+        count = builder.getCount()
         return {"data": [ContestDTO.model_validate(obj=obj) for obj in contests], "count": count}
     
     except SQLAlchemyError as e:
@@ -72,7 +72,7 @@ def list(body: ListDTOBase, session: Session) -> ListResponse:
 def read(id: int, session: Session) -> ContestDTO:
     """
     Get contest by id
-
+    
     Args:
         id: int
 
@@ -81,7 +81,7 @@ def read(id: int, session: Session) -> ContestDTO:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
@@ -106,7 +106,7 @@ def delete(id: int, session: Session) -> bool:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
@@ -136,7 +136,7 @@ def update(id: int, contest_update: ContestDTO, session: Session) -> ContestDTO:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
@@ -177,11 +177,12 @@ def add_user(id: int, user_id: int, session: Session) -> bool:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        user = session.query(User).filter(User.id == user_id).first()
+        user: User = get_object_by_id(User, session, user_id)
+
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -214,11 +215,12 @@ def remove_user(id: int, user_id: int, session: Session) -> bool:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        user = session.query(User).filter(User.id == user_id).first()
+        user: User = get_object_by_id(User, session, user_id)
+
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -250,7 +252,7 @@ def list_users(id: int, session: Session) -> ListResponse:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
@@ -280,11 +282,12 @@ def add_team(id: int, team_id: int, session: Session) -> bool:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        team = session.query(Team).filter(Team.id == team_id).first()
+        team: Team = get_object_by_id(Team, session, team_id)
+
         if not team:
             raise HTTPException(status_code=404, detail="Team not found")
 
@@ -317,11 +320,12 @@ def remove_team(id: int, team_id: int, session: Session) -> bool:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        team = session.query(Team).filter(Team.id == team_id).first()
+        team: Team = get_object_by_id(Team, session, team_id)
+
         if not team:
             raise HTTPException(status_code=404, detail="Team not found")
 
@@ -353,7 +357,7 @@ def list_teams(id: int, session: Session) -> ListResponse:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
@@ -383,11 +387,12 @@ def add_problem(id: int, body: ContestProblemDTO, session: Session) -> bool:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        problem: Problem = session.query(Problem).filter(Problem.id == body.id).first()
+        problem: Problem = get_object_by_id(Problem, session, body.id)
+
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
 
@@ -427,11 +432,12 @@ def remove_problem(id: int, problem_id: int, session: Session) -> bool:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        problem = session.query(Problem).filter(Problem.id == problem_id).first()
+        problem: Problem = get_object_by_id(Problem, session, problem_id)
+
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
 
@@ -463,7 +469,7 @@ def list_problems(id: int, session: Session) -> ListResponse:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
@@ -489,11 +495,12 @@ def update_problem(id: int, body: ContestProblemDTO, session: Session) -> bool:
     """
 
     try:
-        contest: Contest = session.query(Contest).filter(Contest.id == id).first()
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        problem: Problem = session.query(Problem).filter(Problem.id == body.id).first()
+        problem: Problem = get_object_by_id(Problem, session, body.id)
+
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
         
@@ -506,6 +513,7 @@ def update_problem(id: int, body: ContestProblemDTO, session: Session) -> bool:
             raise HTTPException(status_code=400, detail="Problem publication delay is greater than contest duration")
 
         contest_problem = session.query(ContestProblem).filter(ContestProblem.contest_id == id, ContestProblem.problem_id == body.id).first()
+        
         contest_problem.publication_delay = body.publication_delay
 
         session.commit()
