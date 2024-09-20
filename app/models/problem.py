@@ -1,3 +1,4 @@
+from numbers import Number
 from app.models.base_dto import BaseRequest
 from datetime import datetime
 
@@ -13,18 +14,46 @@ class ProblemDTO(BaseRequest):
         is_public (bool): The visibility of the problem
     """
     id : int | None = None
-    title: str = None
-    description: str | None = None
-    points: int
-    is_public: bool | None
-
-#TODO: config_version_number viene aggiornato ogni volta che il problema, una sua constraint
-# o un suo testcase ecc... (ci siamo capiti) viene modificato/creato
+    title : str = None
+    description : str | None = None
+    points : int
+    is_public : bool | None
 
 class ProblemTestCaseDTO(BaseRequest):
-    pass
-    #TODO: everything
+    """
+    Problem Test Case DTO
+
+    Attributes:
+        id (int): The id of the test case
+        number (int): The number of the test case
+        notes (str): Some additional notes for the test case
+        input_name (str): The name of the input file for the test case
+        output_name (str): The name of the output file with the expected results
+        points (int): The amount of points given for solving this test case
+        is_pretest (bool): If the test case is a pre-test or not
+        problem_id (int): The problem related to the test case
+    """
+    id : int = None
+    number : int
+    notes : str | None = None
+    input_name : str
+    output_name : str
+    points : int | None = 0
+    is_pretest : bool | None = False
+    title : str | None = None
 
 class ProblemConstraintDTO(BaseRequest):
-    pass
-    #TODO: everything
+    """
+    Problem Constraint DTO
+
+    Attributes:
+        problem_id (int): The id of the problem
+        language_id (int): The id of the programming language chosen
+        memory_limit (int): The memory limit (expressed in MB)
+        time_limit (int): The time limit (expressed in ms)
+
+    """
+    id : int = None
+    language : str | None = None
+    memory_limit : int
+    time_limit : int
