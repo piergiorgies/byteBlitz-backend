@@ -1,10 +1,11 @@
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
 
 from app.database import QueryBuilder, get_object_by_id
-from app.models import ListDTOBase, ListResponse, User, Problem
+from app.models import ListDTOBase, ListResponse, User, Problem, ProblemTestCase
 from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
 
 #region Problem
@@ -186,7 +187,7 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
 #endregion
 
 #region Problem Test Cases
-
+#TODO: sto scrivendo a macchinetta. verificare quali controlli sono necessari.
 def list_test_cases(id: int, session: Session) -> ListResponse:
     """
    List all test cases for a specific problem
@@ -198,7 +199,16 @@ def list_test_cases(id: int, session: Session) -> ListResponse:
     Returns:
         [ListResponse]: list of test cases
     """
-    pass
+    try:
+        test_cases: List[ProblemTestCase] = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == id)
+        return {"data" : [ProblemTestCaseDTO.model_validate(obj=obj) for obj in test_cases]}
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 def read_test_case(id: int, session: Session) -> ProblemTestCaseDTO:
     """
@@ -211,7 +221,18 @@ def read_test_case(id: int, session: Session) -> ProblemTestCaseDTO:
     Returns:
         ProblemTestCaseDTO: test case
     """
-    pass
+    try:
+        test_case = get_object_by_id(ProblemTestCase, session, id)
+        if not test_case:
+            raise HTTPException(status_code=404, detail= "Problem test case not found")
+        return ProblemTestCaseDTO.model_validate(obj=test_case)
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 def create_test_case(problemTestCaseDTO: ProblemTestCaseDTO, problem_id: int, session: Session) -> ProblemTestCaseDTO:
     """
@@ -225,8 +246,37 @@ def create_test_case(problemTestCaseDTO: ProblemTestCaseDTO, problem_id: int, se
     Returns: 
         ProblemTestCaseDTO: test case
     """
-    pass
-              
+    #TODO: eseguire controlli sull'unicità del test case (ove necessario)
+    try:
+        last_test_case = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem_id).order_by(ProblemTestCase.number.desc()).first()
+        if last_test_case:
+            number_of_testcase = last_test_case.number + 1
+        else:
+            number_of_testcase = 1
+    
+        problemTestCase = ProblemTestCase(
+            number=number_of_testcase,
+            notes=problemTestCaseDTO.notes,
+            input_name=problemTestCaseDTO.input_name,
+            output_name=problemTestCaseDTO.output_name,
+            points=problemTestCaseDTO.points,
+            is_pretest=problemTestCaseDTO.is_pretest
+        )
+
+        session.add(problemTestCase)
+        session.commit()
+
+        return problemTestCase
+
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
 def delete_test_case(id: int, session: Session) -> bool:
     """
     Delete test case by id
