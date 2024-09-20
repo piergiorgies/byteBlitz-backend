@@ -18,6 +18,7 @@ class SubmissionDTO(BaseRequest):
     problem_id: int
     user_id: int
     language_id: int
+    submitted_code: str
 
 class SubmissionTestCaseDTO(BaseRequest):
     """

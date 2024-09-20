@@ -8,8 +8,6 @@ from app.models import SubmissionDTO, Submission, User, Problem, Language, Conte
 from app.models import ContestSubmission, SubmissionTestCase, SubmissionTestCaseDTO, SubmissionResult
 from app.config import rabbitmq_connection
 
-# I won't follow the right import order
-
 def create(submission_dto: SubmissionDTO, session: Session):
     """
     Create a submission
@@ -54,6 +52,7 @@ def create(submission_dto: SubmissionDTO, session: Session):
         
         # create the submission
         submission = Submission(
+            submitted_code=submission_dto.submitted_code,
             notes=submission_dto.notes,
             problem_id=submission_dto.problem_id,
             user_id=submission_dto.user_id,
@@ -74,6 +73,7 @@ def create(submission_dto: SubmissionDTO, session: Session):
 
         session.commit()
 
+        # send the submission to the queue
         rabbitmq_connection.try_send_to_queue('submissions', 'stocazzo')
 
         return True
