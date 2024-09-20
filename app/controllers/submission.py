@@ -3,7 +3,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 
 from app.database import get_object_by_id
-from app.models import SubmissionDTO, Submission, User, Problem, Language, Contest, ContestSubmission, SubmissionTestCase
+from app.models import SubmissionDTO, Submission, User, Problem, Language, Contest
+from app.models import ContestSubmission, SubmissionTestCase, SubmissionTestCaseDTO, SubmissionResult
 
 
 def create(submission_dto: SubmissionDTO, session: Session):
@@ -17,7 +18,6 @@ def create(submission_dto: SubmissionDTO, session: Session):
     Returns:
         created (bool): Whether the submission was created
     """
-    
 
     try:
 
@@ -46,6 +46,7 @@ def create(submission_dto: SubmissionDTO, session: Session):
             if contest.problems and problem not in contest.problems:
                 raise HTTPException(status_code=400, detail="Problem not in contest")
             
+        
         # TODO: Implement a sort of submission rate limiting
         
         # create the submission
@@ -70,6 +71,10 @@ def create(submission_dto: SubmissionDTO, session: Session):
 
         session.commit()
 
+        # send the submission to the judge with rabbitmq
+
+
+
         return True
     
     except SQLAlchemyError as e:
@@ -81,3 +86,59 @@ def create(submission_dto: SubmissionDTO, session: Session):
         session.rollback()
         raise e
 
+
+def accept(submission_id: int, submission_test_case: SubmissionTestCaseDTO, session: Session):
+    try:
+        # check if the submission exists
+        submission: Submission = get_object_by_id(Submission, session, submission_id)
+        if not submission:
+            raise HTTPException(status_code=400, detail="Submission not found")
+        
+        result: SubmissionResult = get_object_by_id(SubmissionResult, session, submission_test_case.result_id)
+
+        submission_test_case = SubmissionTestCase(
+            submission=submission,
+            result=result,
+            number=submission_test_case.number,
+            notes=submission_test_case.notes,
+            memory=submission_test_case.memory,
+            time=submission_test_case.time
+        )
+
+        session.add(submission_test_case)
+        session.commit()
+        
+
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise e
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise e
+
+def save_total(submission_id: int, result: SubmissionResult, session: Session):
+    try:
+        # check if the submission exists
+        submission: Submission = get_object_by_id(Submission, session, submission_id)
+        if not submission:
+            raise HTTPException(status_code=400, detail="Submission not found")
+        
+        submission_result: SubmissionResult = get_object_by_id(SubmissionResult, session, result.result_id)
+        if not submission_result:
+            raise HTTPException(status_code=400, detail="Result not found")
+        
+        submission.result = submission_result
+
+        session.commit()
+        
+
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise e
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise e
