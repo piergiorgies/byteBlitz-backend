@@ -54,6 +54,6 @@ class ProblemConstraintDTO(BaseRequest):
 
     """
     id : int = None
-    language : str | None = None
+    language_id : int = None
     memory_limit : int
     time_limit : int
