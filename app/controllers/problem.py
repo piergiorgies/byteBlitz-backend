@@ -6,7 +6,6 @@ from typing import List
 
 from app.database import QueryBuilder, get_object_by_id
 from app.models import ListDTOBase, ListResponse, User, Problem, ProblemTestCase
-from app.models.mapping import problem_test_case
 from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
 
 #region Problem
@@ -484,11 +483,5 @@ def update_constraint(id: int, constraint_update: ProblemConstraintDTO, session:
         ProblemConstraintDTO: constraint
     """
     pass
-
-#list for a specific problem (admin, user)
-#read for a specific problem and a specific language (admin, user)
-#create (admin)
-#update (admin)
-#delete (admin)
 
 #endregion
