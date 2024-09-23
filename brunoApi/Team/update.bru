@@ -1,0 +1,18 @@
+meta {
+  name: update
+  type: http
+  seq: 8
+}
+
+put {
+  url: http://localhost:9000/team/12
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name" : "nuovonome",
+    "logo_path" : "nuovologo"
+  }
+}

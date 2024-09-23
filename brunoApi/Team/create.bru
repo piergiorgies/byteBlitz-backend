@@ -1,0 +1,18 @@
+meta {
+  name: create
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:9000/team/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name" : "nuovoTeam2",
+    "logo_path" : "random_fantoccio"
+  }
+}

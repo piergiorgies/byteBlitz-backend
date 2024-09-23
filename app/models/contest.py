@@ -13,10 +13,10 @@ class ContestDTO(BaseRequest):
 
     """
     id: int | None = None
-    name: str = None
-    description: str = None
-    start_datetime: datetime = None
-    end_datetime: datetime = None
+    name: str
+    description: str
+    start_datetime: datetime
+    end_datetime: datetime
 
 class ContestUserDTO(BaseRequest):
     """

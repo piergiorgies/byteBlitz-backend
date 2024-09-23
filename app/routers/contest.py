@@ -142,7 +142,7 @@ async def add_user_to_contest(id: int, user_id: int = Body(), session=Depends(ge
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))  
     
 @router.delete("/{id}/users", summary="Remove a user from a contest", dependencies=[Depends(RoleChecker(["admin"]))])
 async def remove_user_from_contest(id: int, user_id: int = Body(), session=Depends(get_session)):
