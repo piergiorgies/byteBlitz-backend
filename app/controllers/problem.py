@@ -6,6 +6,7 @@ from typing import List
 
 from app.database import QueryBuilder, get_object_by_id
 from app.models import ListDTOBase, ListResponse, User, Problem, ProblemTestCase
+from app.models.mapping import problem_test_case
 from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
 
 #region Problem
@@ -293,7 +294,28 @@ def delete_test_case(id: int, session: Session) -> bool:
     Returns:
         deleted: bool
     """
-    pass
+    try:
+        test_case : ProblemTestCase = get_object_by_id(ProblemTestCase, session, id)
+        if not test_case:
+            raise HTTPException(status_code=404, detail="Test case not found")
+        problem : Problem = get_object_by_id(Problem, session, test_case.problem_id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
+        problem.increment_version_number()
+    
+        session.delete(test_case)
+        session.commit()
+        return True 
+    
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
     
 def update_test_case(id: int, test_case_update: ProblemTestCaseDTO, session: Session) -> ProblemTestCaseDTO:
     """
@@ -307,7 +329,33 @@ def update_test_case(id: int, test_case_update: ProblemTestCaseDTO, session: Ses
     Returns:
         ProblemTestCaseDTO: test case
     """
-    pass
+    try: 
+        test_case: ProblemTestCase = get_object_by_id(ProblemTestCase, session, id)
+        if not test_case:
+            raise HTTPException(status_code=404, detail="Test case not found.")
+        #TODO: pensare ad eventuali controlli.
+        problem : Problem = get_object_by_id(Problem, session, test_case.problem_id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
+        problem.increment_version_number()
+        test_case.notes = test_case_update.notes
+        test_case.input_name = test_case_update.input_name
+        test_case.output_name = test_case_update.output_name
+        test_case.points = test_case_update.points
+        test_case.is_pretest = test_case_update.is_pretest
+
+        session.commit()
+        return ProblemTestCaseDTO.model_validate(obj=test_case)
+    
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
 
 #endregion
 
@@ -436,5 +484,11 @@ def update_constraint(id: int, constraint_update: ProblemConstraintDTO, session:
         ProblemConstraintDTO: constraint
     """
     pass
+
+#list for a specific problem (admin, user)
+#read for a specific problem and a specific language (admin, user)
+#create (admin)
+#update (admin)
+#delete (admin)
 
 #endregion
