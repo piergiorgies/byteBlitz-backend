@@ -154,7 +154,8 @@ async def get_specific_test_case(id: int, test_case_id : int = Body(), session=D
     """
 
     try:
-        test_case = read_test_case(id, test_case_id, session)
+        problem_test_case = read_test_case(id, test_case_id, session)
+        return problem_test_case
 
     except HTTPException as e:
         raise e
@@ -255,6 +256,7 @@ async def get_specific_constraint(id: int, language_id : int = Body(), session=D
 
     try:
         problem_constaint = read_constraint(id, language_id, session)
+        return problem_constaint
 
     except HTTPException as e:
         raise e
