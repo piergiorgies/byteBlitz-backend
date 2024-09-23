@@ -312,12 +312,129 @@ def update_test_case(id: int, test_case_update: ProblemTestCaseDTO, session: Ses
 #endregion
 
 #region Problem Constraints
-#TODO: everything
 
-#list for a specific problem (admin, user)
-#read for a specific problem and a specific language (admin, user)
-#create (admin)
-#update (admin)
-#delete (admin)
+def list_constraints(id: int, session: Session) -> ListResponse:
+    """
+   List all constraints for a specific problem
+    
+    Args:
+        id (int): the id of the related problem
+        session (Session):
+    
+    Returns:
+        [ListResponse]: list of constraints
+    """
+    #TODO: everything
+    pass
+    # try:
+    #     test_cases: List[ProblemTestCase] = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == id).all()
+    #     return {"data" : [ProblemTestCaseDTO.model_validate(obj=obj) for obj in test_cases]}
+    
+    # except SQLAlchemyError as e:
+    #     raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    # except HTTPException as e:
+    #     raise e
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+def read_constraint(id: int, session: Session) -> ProblemConstraintDTO:
+    """
+    Get constraint by id
+
+    Args:
+        id (int):
+        session (Session):
+
+    Returns:
+        ProblemConstraintDTO: constraint
+    """
+    #TODO: everything
+    pass
+    # try:
+    #     test_case = get_object_by_id(ProblemTestCase, session, id)
+    #     if not test_case:
+    #         raise HTTPException(status_code=404, detail= "Problem test case not found")
+    #     return ProblemTestCaseDTO.model_validate(obj=test_case)
+    
+    # except SQLAlchemyError as e:
+    #     raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    # except HTTPException as e:
+    #     raise e
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+def create_constraint(problemConstraintDTO: ProblemConstraintDTO, problem_id: int, session: Session) -> ProblemConstraintDTO:
+    """
+    Create constraint
+    
+    Args:
+        problemConstraintDTO (ProblemConstraintDTO):
+        problem_id (int):
+        session (Session): 
+    
+    Returns: 
+        ProblemConstraintDTO: constraint
+    """
+    #TODO: everything
+    pass
+    # try:
+    #     last_test_case = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem_id).order_by(ProblemTestCase.number.desc()).first()
+    #     test_case_number = last_test_case.number + 1 if last_test_case else 1        
+    #     test_case_points = problemTestCaseDTO.points if not problemTestCaseDTO.is_pretest else 0
+
+    #     problemTestCase = ProblemTestCase(
+    #         number=test_case_number,
+    #         notes=problemTestCaseDTO.notes,
+    #         input_name=problemTestCaseDTO.input_name,
+    #         output_name=problemTestCaseDTO.output_name,
+    #         points=test_case_points,
+    #         is_pretest=problemTestCaseDTO.is_pretest
+    #     )
+        
+    #     problem = get_object_by_id(Problem, session, problem_id)
+    #     if not problem:
+    #         raise HTTPException(status_code=404, detail="Problem not found")
+    #     problem.increment_version_number()
+
+    #     session.add(problemTestCase)
+    #     session.commit()
+
+    #     return problemTestCase
+
+    # except SQLAlchemyError as e:
+    #     session.rollback()
+    #     raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    # except HTTPException as e:
+    #     raise e
+    # except Exception as e:
+    #     session.rollback()
+    #     raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+def delete_constraint(id: int, session: Session) -> bool:
+    """
+    Delete constraint by id
+
+    Args:
+        id (int):
+        session (Session): 
+    
+    Returns:
+        deleted: bool
+    """
+    pass
+    
+def update_constraint(id: int, constraint_update: ProblemConstraintDTO, session: Session) -> ProblemConstraintDTO:
+    """
+    Update constraint by id
+
+    Args:
+        id (int):
+        constraint_update (ProblemConstraintDTO):
+        session (Session): 
+
+    Returns:
+        ProblemConstraintDTO: constraint
+    """
+    pass
 
 #endregion
