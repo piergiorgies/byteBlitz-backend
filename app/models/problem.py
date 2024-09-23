@@ -38,7 +38,7 @@ class ProblemTestCaseDTO(BaseRequest):
     notes : str | None = None
     input_name : str
     output_name : str
-    points : int | None = 0
+    points : int
     is_pretest : bool | None = False
     title : str | None = None
 

@@ -7,11 +7,10 @@ from app.controllers.problem import list, read, create, delete, update
 from app.controllers.problem import list_test_cases, read_test_case, create_test_case, delete_test_case, update_test_case
 from app.controllers.problem import list_constraints, read_constraint, create_constraint, delete_constraint, update_constraint
 
-from app.models import ListResponse, problem
+from app.models import ListResponse
 from app.database import get_session
 from app.models.base_dto import ListDTOBase
 from app.models import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
-from app.models.mapping import problem_constraint
 
 router = APIRouter(
     tags=["Problems"],
@@ -77,6 +76,7 @@ async def create_problem(problem: ProblemDTO = Body(), user=Depends(get_current_
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
+#TODO: CANCELLAZIONE CON LISTA
 @router.delete("/{id}", summary="Delete a problem by id", dependencies=[Depends(RoleChecker(["admin"]))])
 async def delete_problem(id: int, session=Depends(get_session)):
     """
@@ -125,7 +125,6 @@ async def update_problem(id: int, problem: ProblemDTO = Body(), session=Depends(
 
 #region Probem Test Cases
 
-#TODO: capire come rinominare i due metodi get
 @router.get("/{id}/testcases", response_model=ProblemTestCaseDTO, summary= "List problem testcases", dependencies=[Depends(RoleChecker(["admin"]))])
 async def list_problem_test_cases(id: int, session=Depends(get_session)):
     """
@@ -145,16 +144,17 @@ async def list_problem_test_cases(id: int, session=Depends(get_session)):
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 @router.get("/{id}/testcase", response_model=ProblemTestCaseDTO, summary= "Get a specific testcase by id", dependencies=[Depends(RoleChecker(["admin"]))])
-async def get_specific_test_case(id: int, session=Depends(get_session)):
+async def get_specific_test_case(id: int, test_case_id : int = Body(), session=Depends(get_session)):
     """
     Get a specific test case
     
     Args:
-        id (int): the id of the testcase
+        id (int): the id of the related problem
+        test_case_id (int) : the id of the test case
     """
 
     try:
-        test_case = read_test_case(id, session)
+        test_case = read_test_case(id, test_case_id, session)
 
     except HTTPException as e:
         raise e
@@ -162,7 +162,7 @@ async def get_specific_test_case(id: int, session=Depends(get_session)):
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 @router.post("/{id}/testcases", summary= "Create problem test case", dependencies=[Depends(RoleChecker(["admin"]))])
-async def create_problem_test_case(id: int, problem_test_case : ProblemTestCaseDTO, session=Depends(get_session)):
+async def create_problem_test_case(id: int, problem_test_case : ProblemTestCaseDTO = Body(), session=Depends(get_session)):
     """
     Create a problem test case
     
@@ -172,7 +172,7 @@ async def create_problem_test_case(id: int, problem_test_case : ProblemTestCaseD
     """
 
     try:
-        created = create_test_case(problem_test_case, id, session)
+        created = create_test_case(id, problem_test_case, session)
         return JSONResponse(status_code=201, content={"message": "Problem test case created successfully"})
     
     except HTTPException as e:
@@ -180,19 +180,20 @@ async def create_problem_test_case(id: int, problem_test_case : ProblemTestCaseD
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
+#TODO: CANCELLAZIONE CON LISTA
 @router.delete("/{id}/testcases", summary= "Delete problem test case by id", dependencies=[Depends(RoleChecker(["admin"]))])
-async def delete_problem_test_case(id: int, session=Depends(get_session)):
+async def delete_problem_test_case(id: int, test_case_id : int = Body(), session=Depends(get_session)):
     """
     Delete a problem test case
     
     Args:
         id (int): the id of the related problem
+        test_case_id (int) : the id of the test case
     """
-
     try:
-        deleted = delete_test_case(id, session)
+        deleted = delete_test_case(id, test_case_id, session)
         if not deleted:
-            raise HTTPException(status_code=404, detail="Problem test case not found")
+            raise HTTPException(status_code=404, detail="Problem test case or problem not found")
         
         return JSONResponse(status_code=200, content={"message": "Problem test case removed successfully"})
     
@@ -207,7 +208,7 @@ async def update_problem_test_case(id: int, test_case: ProblemTestCaseDTO = Body
     Update a problem test case
     
     Args:
-        id (int): the id of the testcase
+        id (int): the id of the related problem
         test_case (ProblemTestCaseDTO): the updated testcase
     """
 
@@ -224,7 +225,6 @@ async def update_problem_test_case(id: int, test_case: ProblemTestCaseDTO = Body
 
 #region Problem Constraints
 
-#TODO: capire come rinominare i due metodi get
 @router.get("/{id}/constraints", response_model=ProblemConstraintDTO, summary= "List problem constraints", dependencies=[Depends(RoleChecker(["admin", "user"]))])
 async def list_problem_constraints(id: int, session=Depends(get_session)):
     """
@@ -242,19 +242,19 @@ async def list_problem_constraints(id: int, session=Depends(get_session)):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-#TODO: check everything from here
+
 @router.get("/{id}/constraint", response_model=ProblemConstraintDTO, summary= "Get a specific constraint by language", dependencies=[Depends(RoleChecker(["admin", "user"]))])
-async def get_specific_constraint(problem_id: int, language_id : int = Body(), session=Depends(get_session)):
+async def get_specific_constraint(id: int, language_id : int = Body(), session=Depends(get_session)):
     """
     Get a specific constraint by language
     
     Args:
-        problem_id (int): the id of the problem
+        id (int): the id of the related problem
         language_id (int): the id of the language
     """
-    
+
     try:
-        problem_constaint = read_constraint(problem_id, language_id, session)
+        problem_constaint = read_constraint(id, language_id, session)
 
     except HTTPException as e:
         raise e
@@ -262,17 +262,17 @@ async def get_specific_constraint(problem_id: int, language_id : int = Body(), s
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 @router.post("/{id}/constraints", summary= "Create problem constraint", dependencies=[Depends(RoleChecker(["admin"]))])
-async def create_problem_constraint(id: int, problem_constraint : ProblemConstraintDTO, session=Depends(get_session)):
+async def create_problem_constraint(id: int, problem_constraint : ProblemConstraintDTO = Body(), session=Depends(get_session)):
     """
     Create a problem constraint
     
     Args:
         id (int): the id of the related problem
-        problem_constraint (ProblemConstraintDTO):
+        problem_constraint (ProblemConstraintDTO): the constraint to create
     """
-    
+
     try:
-        created = create_constraint(problem_constraint, id, session)
+        created = create_constraint(id, problem_constraint, session)
         return JSONResponse(status_code=201, content={"message": "Problem constraint created successfully"})
     
     except HTTPException as e:
@@ -280,19 +280,21 @@ async def create_problem_constraint(id: int, problem_constraint : ProblemConstra
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
+#TODO: CANCELLAZIONE CON LISTA
 @router.delete("/{id}/constraints", summary= "Delete problem constraint by id", dependencies=[Depends(RoleChecker(["admin"]))])
 async def delete_problem_constraint(id: int, language_id : int = Body(), session=Depends(get_session)):
     """
     Delete a problem constraint
     
     Args:
-        id (int): the constraint id
+        id (int): the id of the related problem
+        language_id (int): the id of the language
     """
 
     try:
         deleted = delete_constraint(id, language_id, session)
         if not deleted:
-            raise HTTPException(status_code=404, detail="Problem constraint not found")
+            raise HTTPException(status_code=404, detail="Problem constraint or programming language not found")
         
         return JSONResponse(status_code=200, content={"message": "Problem constraint removed successfully"})
     
@@ -302,17 +304,17 @@ async def delete_problem_constraint(id: int, language_id : int = Body(), session
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 @router.put("/{id}/constraints", summary= "Update problem constraint by id", dependencies=[Depends(RoleChecker(["admin"]))])
-async def update_problem_constraint(id: int, language_id : int = Body(), constraint: ProblemConstraintDTO = Body(), session=Depends(get_session)):
+async def update_problem_constraint(id: int, constraint: ProblemConstraintDTO = Body(), session=Depends(get_session)):
     """
     Update a problem constraint
     
     Args:
-        id (int): the id of the constraint
+        id (int): the id of the related problem
         constraint (ProblemConstraintDTO): the updated constraint
     """
 
     try:
-        updated = update_constraint(id, language_id, constraint, session)
+        updated = update_constraint(id, constraint, session)
         return JSONResponse(status_code=200, content={"message": "Problem constraint updated"})
     
     except HTTPException as e:
