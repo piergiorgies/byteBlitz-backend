@@ -6,6 +6,7 @@ from typing import List
 
 from app.database import QueryBuilder, get_object_by_id
 from app.models import ListDTOBase, ListResponse, User, Problem, ProblemTestCase
+from app.models.mapping import problem_test_case
 from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
 
 #region Problem
@@ -294,14 +295,13 @@ def delete_test_case(id: int, session: Session) -> bool:
         deleted: bool
     """
     try:
-        test_case = get_object_by_id(ProblemTestCase, session, id)
+        test_case : ProblemTestCase = get_object_by_id(ProblemTestCase, session, id)
         if not test_case:
             raise HTTPException(status_code=404, detail="Test case not found")
-        #TODO: aggiungere l'id del problema
-        #problem = get_object_by_id(Problem, session, problem_id)
-        #if not problem:
-        #    raise HTTPException(status_code=404, detail="Problem not found")
-        #problem.increment_version_number()
+        problem : Problem = get_object_by_id(Problem, session, test_case.problem_id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
+        problem.increment_version_number()
     
         session.delete(test_case)
         session.commit()
@@ -334,16 +334,15 @@ def update_test_case(id: int, test_case_update: ProblemTestCaseDTO, session: Ses
         if not test_case:
             raise HTTPException(status_code=404, detail="Test case not found.")
         #TODO: pensare ad eventuali controlli.
-        #problem : Problem = get_object_by_id(Problem, session, id)
-        #if not problem:
-        #    raise HTTPException(status_code=404, detail="Problem not found")
-        #problem.increment_version_number()
+        problem : Problem = get_object_by_id(Problem, session, test_case.problem_id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
+        problem.increment_version_number()
         test_case.notes = test_case_update.notes
         test_case.input_name = test_case_update.input_name
         test_case.output_name = test_case_update.output_name
         test_case.points = test_case_update.points
         test_case.is_pretest = test_case_update.is_pretest
-        test_case.title = test_case_update.title
 
         session.commit()
         return ProblemTestCaseDTO.model_validate(obj=test_case)
