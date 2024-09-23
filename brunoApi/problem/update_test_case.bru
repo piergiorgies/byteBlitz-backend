@@ -1,0 +1,22 @@
+meta {
+  name: update_test_case
+  type: http
+  seq: 9
+}
+
+put {
+  url: http://localhost:9000/problems/1/testcases
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id" : "1",
+    "notes" : "ciao_modificato",
+    "input_name" : "input_modificato",
+    "output_name" : "output_modificato",
+    "points" : "50",
+    "is_pretest" : "False"
+  }
+}

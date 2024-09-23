@@ -1,0 +1,15 @@
+meta {
+  name: delete_test_case
+  type: http
+  seq: 8
+}
+
+delete {
+  url: http://localhost:9000/problems/1/testcases
+  body: json
+  auth: none
+}
+
+body:json {
+  1
+}
