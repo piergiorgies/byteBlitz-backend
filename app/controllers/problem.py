@@ -184,7 +184,7 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
 #endregion
 
 #region Problem Test Cases
-
+#TODO: to be fixed
 def list_test_cases(problem_id: int, session: Session) -> ListResponse:
     """
    List all test cases for a specific problem
@@ -198,6 +198,9 @@ def list_test_cases(problem_id: int, session: Session) -> ListResponse:
     """
 
     try:
+        problem : Problem = get_object_by_id(Problem, session, problem_id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
         test_cases: List[ProblemTestCase] = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem_id).all()
         return {"data" : [ProblemTestCaseDTO.model_validate(obj=obj) for obj in test_cases]}
     
@@ -266,7 +269,8 @@ def create_test_case(problem_id: int, problemTestCaseDTO: ProblemTestCaseDTO, se
             input_name=problemTestCaseDTO.input_name,
             output_name=problemTestCaseDTO.output_name,
             points=test_case_points,
-            is_pretest=problemTestCaseDTO.is_pretest
+            is_pretest=problemTestCaseDTO.is_pretest,
+            problem_id=problem_id
         )
         
         session.add(problemTestCase)

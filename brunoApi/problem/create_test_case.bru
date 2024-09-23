@@ -1,0 +1,22 @@
+meta {
+  name: create_test_case
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:9000/problems/1/testcases
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "notes" : "ciao",
+    "input_name" : "input",
+    "output_name" : "output",
+    "points" : "20",
+    "is_pretest" : "True",
+    "title" : "cacona"
+  }
+}

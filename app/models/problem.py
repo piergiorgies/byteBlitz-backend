@@ -34,7 +34,6 @@ class ProblemTestCaseDTO(BaseRequest):
         problem_id (int): The problem related to the test case
     """
     id : int = None
-    number : int
     notes : str | None = None
     input_name : str
     output_name : str
