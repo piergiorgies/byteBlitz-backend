@@ -25,7 +25,6 @@ class ProblemTestCaseDTO(BaseRequest):
 
     Attributes:
         id (int): The id of the test case
-        number (int): The number of the test case
         notes (str): Some additional notes for the test case
         input_name (str): The name of the input file for the test case
         output_name (str): The name of the output file with the expected results

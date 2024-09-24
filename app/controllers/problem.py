@@ -153,13 +153,13 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
     Returns:
         problem (ProblemDTO):
     """
-
+    #TODO: fix --> errore nel commit
     try:
         problem : Problem = get_object_by_id(Problem, session, id)
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
         problem_title_check : Problem = session.query(Problem).filter(Problem.title == problem_update.title).first()
-        if problem_update.id != problem_title_check.id:
+        if problem_title_check and problem_update.id != problem_title_check.id:
             raise HTTPException(status_code=409, detail="Problem title already exists")
         if problem_update.points < 0:
             raise HTTPException(status_code=400, detail="Points cannot be negative")
