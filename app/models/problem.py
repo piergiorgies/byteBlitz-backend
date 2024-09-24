@@ -30,7 +30,6 @@ class ProblemTestCaseDTO(BaseRequest):
         output_name (str): The name of the output file with the expected results
         points (int): The amount of points given for solving this test case
         is_pretest (bool): If the test case is a pre-test or not
-        problem_id (int): The problem related to the test case
     """
     id : int = None
     notes : str | None = None
@@ -38,7 +37,6 @@ class ProblemTestCaseDTO(BaseRequest):
     output_name : str
     points : int
     is_pretest : bool | None = False
-    title : str | None = None
 
 class ProblemConstraintDTO(BaseRequest):
     """
@@ -51,7 +49,7 @@ class ProblemConstraintDTO(BaseRequest):
         time_limit (int): The time limit (expressed in ms)
 
     """
-    id : int = None
+    problem_id : int = None
     language_id : int = None
     memory_limit : int
     time_limit : int

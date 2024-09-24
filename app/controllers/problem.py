@@ -1,4 +1,3 @@
-from operator import is_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
@@ -230,8 +229,11 @@ def read_test_case(problem_id: int, test_case_id : int, session: Session) -> Pro
     Returns:
         ProblemTestCaseDTO: test case
     """
-
+    #TODO: fix (logical error)
     try:
+        problem : Problem = get_object_by_id(Problem, session, problem_id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
         test_case = get_object_by_id(ProblemTestCase, session, test_case_id)
         if not test_case:
             raise HTTPException(status_code=404, detail= "Problem test case not found")
@@ -306,7 +308,7 @@ def delete_test_case(problem_id: int, test_case_id: int, session: Session) -> bo
     Returns:
         deleted: bool
     """
-
+    #TODO: fix (logical error)
     try:
         problem : Problem = get_object_by_id(Problem, session, problem_id)
         if not problem:
@@ -342,6 +344,7 @@ def update_test_case(problem_id: int, test_case_update: ProblemTestCaseDTO, sess
     Returns:
         ProblemTestCaseDTO: test case
     """
+    #TODO: fix (logical error)
     try: 
         problem : Problem = get_object_by_id(Problem, session, problem_id)
         if not problem:
@@ -377,7 +380,7 @@ def update_test_case(problem_id: int, test_case_update: ProblemTestCaseDTO, sess
 #endregion
 
 #region Problem Constraints
-
+#TODO: to be fixed
 def list_constraints(problem_id: int, session: Session) -> ListResponse:
     """
    List all constraints for a specific problem
@@ -456,7 +459,7 @@ def create_constraint(problem_id: int, problemConstraintDTO: ProblemConstraintDT
         problem.increment_version_number()
 
         problemConstraint = ProblemConstraint(
-            id=problemConstraintDTO.id,
+            problem_id=problem_id,
             language_id=problemConstraintDTO.language_id,
             memory_limit=problemConstraintDTO.memory_limit,
             time_limit=problemConstraintDTO.time_limit
