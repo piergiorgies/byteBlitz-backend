@@ -1,3 +1,4 @@
+from operator import is_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
@@ -24,16 +25,17 @@ def list(body: ListDTOBase, user: User, session: Session) -> ListResponse:
 
     try:
         is_user = user.user_type.code == "user"
+        limit = body.limit if body.limit else 15
+        offset = body.offset if body.offset else None
 
-        builder = QueryBuilder(Problem, session, body.limit, body.offset)
-        if is_user:
-            tmp_query = builder.getQuery().filter(Problem.is_public == True)
-            problems: List[Problem] = tmp_query.all()
-            count = tmp_query.count()
-            #TODO: fix (user when body has limit)
-        else:
-            problems: List[Problem] = builder.getQuery().all()
-            count = builder.getCount()
+        query = session.query(Problem)
+        if is_user: 
+            query = query.filter(Problem.is_public == True)
+
+        query = query.limit(limit).offset(offset)
+
+        problems : List[Problem] = query.all();
+        count = query.count();
 
         return {"data": [ProblemDTO.model_validate(obj=obj) for obj in problems], "count": count}
     
@@ -59,10 +61,13 @@ def read(id: int, user: User, session: Session) -> ProblemDTO:
 
     try:
         problem: Problem = get_object_by_id(Problem, session, id)
-        #TODO: visibility rules
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
         
+        is_user = user.user_type.code == "user"
+        if is_user and not problem.is_public:
+            raise HTTPException(status_code=404, detail="Problem not found")
+
         return ProblemDTO.model_validate(obj=problem)
     
     except SQLAlchemyError as e:
