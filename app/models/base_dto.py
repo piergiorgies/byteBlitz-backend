@@ -70,3 +70,14 @@ class ListResponse(BaseRequest):
     """
     data: list
     count: int
+
+@dataclass
+class IdListDTO(BaseRequest):
+    """
+    Id List DTO
+
+    Attributes
+        ids (list[int]): The list of ids
+
+    """
+    ids: list[int]

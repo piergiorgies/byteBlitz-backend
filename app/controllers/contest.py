@@ -164,7 +164,7 @@ def update(id: int, contest_update: ContestDTO, session: Session) -> ContestDTO:
 
 #region Contest User
 
-def add_user(id: int, user_id: int, session: Session) -> bool:
+def add_users(id: int, user_ids: List[int], session: Session) -> bool:
     """
     Add user to contest
 
@@ -181,15 +181,17 @@ def add_user(id: int, user_id: int, session: Session) -> bool:
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        user: User = get_object_by_id(User, session, user_id)
+        for user_id in user_ids:
+            user: User = get_object_by_id(User, session, user_id)
 
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
 
-        if user in contest.users:
-            raise HTTPException(status_code=400, detail="User already in contest")
+            if user in contest.users:
+                raise HTTPException(status_code=400, detail="User already in contest")
 
-        contest.users.append(user)
+            contest.users.append(user)
+        
         session.commit()
         return True
     
@@ -202,7 +204,7 @@ def add_user(id: int, user_id: int, session: Session) -> bool:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def remove_user(id: int, user_id: int, session: Session) -> bool:
+def remove_users(id: int, user_ids: List[int], session: Session) -> bool:
     """
     Remove user from contest
 
@@ -219,15 +221,17 @@ def remove_user(id: int, user_id: int, session: Session) -> bool:
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        user: User = get_object_by_id(User, session, user_id)
+        for user_id in user_ids:
+            user: User = get_object_by_id(User, session, user_id)
 
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
 
-        if user not in contest.users:
-            raise HTTPException(status_code=404, detail="User not found in contest")
+            if user not in contest.users:
+                raise HTTPException(status_code=404, detail="User not found in contest")
+
+            contest.users.remove(user)
         
-        contest.users.remove(user)
         session.commit()
         return True
     
@@ -269,7 +273,7 @@ def list_users(id: int, session: Session) -> ListResponse:
 
 #region Contest Team
 
-def add_team(id: int, team_id: int, session: Session) -> bool:
+def add_teams(id: int, team_ids: List[int], session: Session) -> bool:
     """
     Add team to contest
 
@@ -286,15 +290,16 @@ def add_team(id: int, team_id: int, session: Session) -> bool:
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        team: Team = get_object_by_id(Team, session, team_id)
+        for team_id in team_ids:
+            team: Team = get_object_by_id(Team, session, team_id)
 
-        if not team:
-            raise HTTPException(status_code=404, detail="Team not found")
+            if not team:
+                raise HTTPException(status_code=404, detail="Team not found")
 
-        if team in contest.teams:
-            raise HTTPException(status_code=400, detail="Team already in contest")
+            if team in contest.teams:
+                raise HTTPException(status_code=400, detail="Team already in contest")
 
-        contest.teams.append(team)
+            contest.teams.append(team)
         session.commit()
         return True
     
@@ -307,7 +312,7 @@ def add_team(id: int, team_id: int, session: Session) -> bool:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def remove_team(id: int, team_id: int, session: Session) -> bool:
+def remove_teams(id: int, team_ids: List[int], session: Session) -> bool:
     """
     Remove team from contest
 
@@ -324,15 +329,16 @@ def remove_team(id: int, team_id: int, session: Session) -> bool:
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        team: Team = get_object_by_id(Team, session, team_id)
+        for team_id in team_ids:
+            team: Team = get_object_by_id(Team, session, team_id)
 
-        if not team:
-            raise HTTPException(status_code=404, detail="Team not found")
+            if not team:
+                raise HTTPException(status_code=404, detail="Team not found")
 
-        if team not in contest.teams:
-            raise HTTPException(status_code=404, detail="Team not found in contest")
-        
-        contest.teams.remove(team)
+            if team not in contest.teams:
+                raise HTTPException(status_code=404, detail="Team not found in contest")
+
+            contest.teams.remove(team)
         session.commit()
         return True
     
@@ -374,7 +380,7 @@ def list_teams(id: int, session: Session) -> ListResponse:
 
 #region Contest Problem
 
-def add_problem(id: int, body: ContestProblemDTO, session: Session) -> bool:
+def add_problems(id: int, body: List[ContestProblemDTO], session: Session) -> bool:
     """
     Add problem to contest
 
@@ -419,7 +425,7 @@ def add_problem(id: int, body: ContestProblemDTO, session: Session) -> bool:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def remove_problem(id: int, problem_id: int, session: Session) -> bool:
+def remove_problems(id: int, problem_ids: List[int], session: Session) -> bool:
     """
     Remove problem from contest
 
@@ -436,15 +442,17 @@ def remove_problem(id: int, problem_id: int, session: Session) -> bool:
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        problem: Problem = get_object_by_id(Problem, session, problem_id)
+        for problem_id in problem_ids:
+            problem: Problem = get_object_by_id(Problem, session, problem_id)
 
-        if not problem:
-            raise HTTPException(status_code=404, detail="Problem not found")
+            if not problem:
+                raise HTTPException(status_code=404, detail="Problem not found")
 
-        if problem not in contest.problems:
-            raise HTTPException(status_code=404, detail="Problem not found in contest")
+            if problem not in contest.problems:
+                raise HTTPException(status_code=404, detail="Problem not found in contest")
+
+            contest.problems.remove(problem)
         
-        contest.problems.remove(problem)
         session.commit()
         return True
     
