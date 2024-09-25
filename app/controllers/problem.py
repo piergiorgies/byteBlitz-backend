@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
 
-from app.database import QueryBuilder, get_object_by_id
+from app.database import get_object_by_id
 from app.models import ListDTOBase, ListResponse, User, Problem, ProblemTestCase, ProblemConstraint, Language
 from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
 
@@ -190,7 +190,7 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
 #endregion
 
 #region Problem Test Cases
-#TODO: to be fixed
+
 def list_test_cases(problem_id: int, session: Session) -> ListResponse:
     """
    List all test cases for a specific problem
@@ -207,8 +207,10 @@ def list_test_cases(problem_id: int, session: Session) -> ListResponse:
         problem : Problem = get_object_by_id(Problem, session, problem_id)
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
-        test_cases: List[ProblemTestCase] = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem_id).all()
-        return {"data" : [ProblemTestCaseDTO.model_validate(obj=obj) for obj in test_cases]}
+        query = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem_id)
+        test_cases: List[ProblemTestCase] = query.all()
+        count : int = query.count()
+        return {"data" : [ProblemTestCaseDTO.model_validate(obj=obj) for obj in test_cases], "count" : count}
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
@@ -229,14 +231,16 @@ def read_test_case(problem_id: int, test_case_id : int, session: Session) -> Pro
     Returns:
         ProblemTestCaseDTO: test case
     """
-    #TODO: fix (logical error)
+
     try:
         problem : Problem = get_object_by_id(Problem, session, problem_id)
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
         test_case = get_object_by_id(ProblemTestCase, session, test_case_id)
         if not test_case:
-            raise HTTPException(status_code=404, detail= "Problem test case not found")
+            raise HTTPException(status_code=404, detail= "Test case not found")
+        if test_case.problem_id != problem.id:
+            raise HTTPException(status_code=404, detail= "Problem or Test case not found")
         return ProblemTestCaseDTO.model_validate(obj=test_case)
     
     except SQLAlchemyError as e:
@@ -296,30 +300,32 @@ def create_test_case(problem_id: int, problemTestCaseDTO: ProblemTestCaseDTO, se
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def delete_test_case(problem_id: int, test_case_id: int, session: Session) -> bool:
+def delete_test_cases(problem_id: int, test_case_ids: List[int], session: Session) -> bool:
     """
     Delete test case by id
 
     Args:
         problem_id (int): the id of the related problem
-        test_case_id (int): the id of the test case
+        test_case_ids (int): the ids of the test cases
         session (Session): 
     
     Returns:
         deleted: bool
     """
-    #TODO: fix (logical error)
+
     try:
         problem : Problem = get_object_by_id(Problem, session, problem_id)
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
-        test_case : ProblemTestCase = get_object_by_id(ProblemTestCase, session, test_case_id)
-        if not test_case:
-            raise HTTPException(status_code=404, detail="Test case not found")
+        for test_case_id in test_case_ids:
+            test_case : ProblemTestCase = get_object_by_id(ProblemTestCase, session, test_case_id)
+            if not test_case:
+                raise HTTPException(status_code=404, detail="Test case not found")
+            if test_case.problem_id != problem.id:
+                raise HTTPException(status_code=404, detail= "Problem or Test case not found")
+            problem.increment_version_number()
+            session.delete(test_case)
         
-        problem.increment_version_number()
-    
-        session.delete(test_case)
         session.commit()
         return True 
     
@@ -344,7 +350,7 @@ def update_test_case(problem_id: int, test_case_update: ProblemTestCaseDTO, sess
     Returns:
         ProblemTestCaseDTO: test case
     """
-    #TODO: fix (logical error)
+
     try: 
         problem : Problem = get_object_by_id(Problem, session, problem_id)
         if not problem:
@@ -352,6 +358,8 @@ def update_test_case(problem_id: int, test_case_update: ProblemTestCaseDTO, sess
         test_case: ProblemTestCase = get_object_by_id(ProblemTestCase, session, test_case_update.id)
         if not test_case:
             raise HTTPException(status_code=404, detail="Test case not found")
+        if test_case.problem_id != problem.id:
+            raise HTTPException(status_code=404, detail= "Problem or Test case not found")
         if test_case_update.points < 0:
             raise HTTPException(status_code=400, detail="Points cannot be negative")
         
@@ -380,7 +388,7 @@ def update_test_case(problem_id: int, test_case_update: ProblemTestCaseDTO, sess
 #endregion
 
 #region Problem Constraints
-#TODO: to be fixed
+
 def list_constraints(problem_id: int, session: Session) -> ListResponse:
     """
    List all constraints for a specific problem
@@ -394,8 +402,13 @@ def list_constraints(problem_id: int, session: Session) -> ListResponse:
     """
 
     try:
-        constraints: List[ProblemConstraint] = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id).all()
-        return {"data" : [ProblemConstraintDTO.model_validate(obj=obj) for obj in constraints]}
+        problem : Problem = get_object_by_id(Problem, session, problem_id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
+        query = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id)
+        constraints : List[ProblemConstraint] = query.all()
+        count : int = query.count()
+        return {"data" : [ProblemConstraintDTO.model_validate(obj=obj) for obj in constraints], "count" : count}
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
@@ -418,6 +431,9 @@ def read_constraint(problem_id: int, language_id: int, session: Session) -> Prob
     """
     
     try:
+        problem : Problem = get_object_by_id(Problem, session, problem_id)
+        if not problem:
+            raise HTTPException(status_code=404, detail="Problem not found")
         constraint : ProblemConstraint = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id,
                                                              ProblemConstraint.language_id == language_id).first()
         if not constraint:
@@ -479,31 +495,31 @@ def create_constraint(problem_id: int, problemConstraintDTO: ProblemConstraintDT
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def delete_constraint(problem_id: int, language_id: int, session: Session) -> bool:
+def delete_constraints(problem_id: int, language_ids: List[int], session: Session) -> bool:
     """
     Delete constraint by id
 
     Args:
         problem_id (int): the id of the related problem
-        language_id (int): the id of the language
+        language_ids (int): the ids of the languages
         session (Session): 
     
     Returns:
         deleted: bool
     """
-    
+
     try:
         problem : Problem = get_object_by_id(Problem, session, problem_id)
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
-        constraint : ProblemConstraint = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id,
+        for language_id in language_ids:
+            constraint : ProblemConstraint = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id,
                                                             ProblemConstraint.language_id == language_id).first()
-        if not constraint:
-            raise HTTPException(status_code=404, detail= "Problem constraint not found")
+            if not constraint:
+                raise HTTPException(status_code=404, detail= "Problem constraint not found")
+            problem.increment_version_number()
+            session.delete(constraint)
         
-        problem.increment_version_number()
-    
-        session.delete(constraint)
         session.commit()
         return True 
     
