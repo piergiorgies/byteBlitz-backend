@@ -5,7 +5,13 @@ meta {
 }
 
 delete {
-  url: http://localhost:9000/team/1/users
-  body: none
+  url: http://localhost:9000/team/14/users
+  body: json
   auth: none
+}
+
+body:json {
+  {
+      "ids": [3]
+  }
 }

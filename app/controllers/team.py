@@ -119,7 +119,7 @@ def delete(team_id: int, session: Session) -> bool:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def add_user(team_id: int, user_id: int, session: Session) -> bool:
+def add_users(team_id: int, user_ids: List[int], session: Session) -> bool:
     """
     Add user to team
 
@@ -135,15 +135,16 @@ def add_user(team_id: int, user_id: int, session: Session) -> bool:
         team: Team = get_object_by_id(Team, session, team_id)
         if not team:
             raise HTTPException(status_code=404, detail="Team not found")
-        
-        user: User = get_object_by_id(User, session, user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        for user_id in user_ids:
+            user: User = get_object_by_id(User, session, user_id)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
 
-        if user in team.users:
-            raise HTTPException(status_code=400, detail="User already in team")
+            if user in team.users:
+                raise HTTPException(status_code=400, detail="User already in team")
 
-        team.users.append(user)
+            team.users.append(user)
+
         session.commit()
         return True
     
@@ -156,13 +157,13 @@ def add_user(team_id: int, user_id: int, session: Session) -> bool:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def remove_user(team_id: int, user_id: int, session: Session) -> bool:
+def remove_users(team_id: int, user_ids: List[int], session: Session) -> bool:
     """
-    Remove user from team
+    Remove users from team
 
     Args:
         team_id: int
-        user_id: int
+        user_ids: List[int]
     
     Returns:
         bool: removed
@@ -173,14 +174,16 @@ def remove_user(team_id: int, user_id: int, session: Session) -> bool:
         if not team:
             raise HTTPException(status_code=404, detail="Team not found")
         
-        user: User = get_object_by_id(User, session, user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        for user_id in user_ids:
+            user: User = get_object_by_id(User, session, user_id)
+            if not user:
+                raise HTTPException(status_code=404, detail=f"User with id {user_id} not found")
 
-        if user not in team.users:
-            raise HTTPException(status_code=400, detail="User not in team")
+            if user not in team.users:
+                raise HTTPException(status_code=400, detail=f"User with id {user_id} not in team")
 
-        team.users.remove(user)
+            team.users.remove(user)
+        
         session.commit()
         return True
     

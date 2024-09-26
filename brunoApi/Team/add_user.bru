@@ -5,11 +5,13 @@ meta {
 }
 
 post {
-  url: http://localhost:9000/team/15/users
+  url: http://localhost:9000/team/14/users
   body: json
   auth: none
 }
 
 body:json {
-  3
+  {
+      "ids": [3, 1]
+  }
 }

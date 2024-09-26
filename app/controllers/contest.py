@@ -170,7 +170,7 @@ def add_user(id: int, user_id: int, session: Session) -> bool:
 
     Args:
         id: int
-        user_id: int
+        user_id: int 
 
     Returns:
         bool: added

@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 
-from app.controllers.team import create, list, delete, read, add_user, remove_user, list_users, update
+from app.controllers.team import create, list, delete, read, add_users, remove_users, list_users, update
 
-from app.models import TeamDTO, ListResponse, ListDTOBase
+from app.models import TeamDTO, ListResponse, ListDTOBase, IdListDTO
 from app.database import get_session
 from app.auth_util.role_checker import RoleChecker
 
@@ -101,20 +101,22 @@ async def read_team(id: int, session = Depends(get_session)):
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 @router.post("/{id}/users", summary="Add a user to a team", dependencies=[Depends(RoleChecker(["admin"]))])
-async def add_user_to_team(id: int, user_id: int = Body(), session=Depends(get_session)):
+async def add_user_to_team(id: int, user_ids: IdListDTO = Body(), session=Depends(get_session)):
     """
-    Add a user to a team
+    Add users to a team
 
     Args:
         id: int
-        user_id: int
+        user_ids: IdListDTO
     """
 
     try:
-        added = add_user(id, user_id, session)
+        # add users to team
+        added = add_users(id, user_ids.ids, session)
         if not added:
-            raise HTTPException(status_code=404, detail="User or contest not found")
-        return JSONResponse(status_code=201, content={"message": "User added to contest successfully"})
+            raise HTTPException(status_code=404, detail="Users or team not found")
+
+        return JSONResponse(status_code=201, content={"message": "Users added to team successfully"})
     
     except HTTPException as e:
         raise e
@@ -122,20 +124,23 @@ async def add_user_to_team(id: int, user_id: int = Body(), session=Depends(get_s
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 @router.delete("/{id}/users", summary="Remove a user from a team", dependencies=[Depends(RoleChecker(["admin"]))])
-async def remove_user_from_team(id: int, user_id: int = Body(), session=Depends(get_session)):
+@router.delete("/{id}/users", summary="Remove users from a team", dependencies=[Depends(RoleChecker(["admin"]))])
+async def remove_users_from_team(id: int, user_ids: IdListDTO = Body(), session=Depends(get_session)):
     """
-    Remove a user from a team
+    Remove users from a team
 
     Args:
         id: int
-        user_id: int
+        user_ids: IdListDTO
     """
 
     try:
-        removed = remove_user(id, user_id, session)
+        # remove users from team
+        removed = remove_users(id, user_ids.ids, session)
         if not removed:
-            raise HTTPException(status_code=404, detail="User or contest not found")
-        return JSONResponse(status_code=200, content={"message": "User removed from contest successfully"})
+            raise HTTPException(status_code=404, detail="Users or team not found")
+
+        return JSONResponse(status_code=200, content={"message": "Users removed from team successfully"})
     
     except HTTPException as e:
         raise e
