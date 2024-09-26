@@ -1,0 +1,19 @@
+meta {
+  name: create_constraint
+  type: http
+  seq: 13
+}
+
+post {
+  url: http://localhost:9000/problems/1/constraints
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "language_id" : "1",
+    "memory_limit" : "100",
+    "time_limit" : "1000"
+  }
+}
