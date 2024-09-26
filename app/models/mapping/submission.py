@@ -12,10 +12,11 @@ class Submission(Base):
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
     score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    submitted_code: Mapped[str] = mapped_column(String, nullable=False)
     problem_id: Mapped[int] = mapped_column(Integer, FK('problems.id'), nullable=False)
     user_id: Mapped[int] = mapped_column(Integer, FK('users.id'), nullable=False)
     language_id: Mapped[int] = mapped_column(Integer, FK('languages.id'), nullable=False)
-    submission_result_id: Mapped[int] = mapped_column(Integer, FK('submission_results.id'))
+    submission_result_id: Mapped[int] = mapped_column(Integer, FK('submission_results.id'), nullable=True)
 
     # connected fields
     problem: Mapped['Problem'] = relationship('Problem', back_populates='submissions')

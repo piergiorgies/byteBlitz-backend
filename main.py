@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, contest, problem
+from app.routers import auth, contest, problem, submission
 
 app = FastAPI(title="ByteBlitz", description="API for ByteBlitz", version="0.1")
 
@@ -17,6 +17,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(problem.router)
 app.include_router(contest.router)
+app.include_router(submission.router)
 
 @app.get("/")
 async def root():
