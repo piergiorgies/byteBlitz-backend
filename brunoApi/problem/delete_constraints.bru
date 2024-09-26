@@ -1,0 +1,17 @@
+meta {
+  name: delete_constraints
+  type: http
+  seq: 14
+}
+
+delete {
+  url: http://localhost:9000/problems/1/constraints
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "ids" : [1]
+  }
+}
