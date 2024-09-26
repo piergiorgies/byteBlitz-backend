@@ -10,7 +10,7 @@ class Problem(Base):
     __tablename__ = 'problems'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
-    title: Mapped[str] = mapped_column(String, nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     description: Mapped[Optional[str]] = mapped_column(String)
     points: Mapped[int] = mapped_column(Integer, nullable=False)
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -25,3 +25,6 @@ class Problem(Base):
     test_cases: Mapped[List['ProblemTestCase']] = relationship('ProblemTestCase', back_populates='problem')
     contests: Mapped[List['Contest']] = relationship('Contest', secondary='contest_problems', back_populates='problems')
     submissions: Mapped[List['Submission']] = relationship('Submission', back_populates='problem')
+
+    def increment_version_number(self):
+        self.config_version_number += 1

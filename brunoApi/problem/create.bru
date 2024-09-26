@@ -1,0 +1,20 @@
+meta {
+  name: create
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:9000/problems
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title" : "problem1",
+    "description" : "a problem for tests",
+    "points" : "100",
+    "is_public" : "true"
+  }
+}

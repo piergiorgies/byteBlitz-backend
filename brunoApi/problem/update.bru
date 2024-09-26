@@ -1,0 +1,20 @@
+meta {
+  name: update
+  type: http
+  seq: 5
+}
+
+put {
+  url: http://localhost:9000/problems/1
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title" : "problem_updated",
+    "description" : "an updated problem for tests",
+    "points" : "69",
+    "is_public" : "false"
+  }
+}
