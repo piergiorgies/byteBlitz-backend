@@ -3,10 +3,10 @@ from fastapi.responses import JSONResponse
 
 from app.auth_util.role_checker import RoleChecker
 from app.auth_util.jwt import get_current_user
-from app.controllers.user import list
+from app.controllers.user import list, read, delete, update
 
 from app.database import get_session
-from app.models import ListResponse, ListDTOBase
+from app.models import ListResponse, ListDTOBase, UserDTO
 
 router = APIRouter(
     tags=["Users"],
@@ -31,71 +31,64 @@ async def list_users(body: ListDTOBase = Body(),  user=Depends(get_current_user)
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-#TODO: from here
-# @router.get("/{id}", response_model=ProblemDTO, summary="Get problem by id", dependencies=[Depends(RoleChecker(["admin"]))])
-# async def read_problem(id: int, user=Depends(get_current_user), session=Depends(get_session)):
-#     """
-#     Get problem by id
+@router.get("/{id}", response_model=UserDTO, summary="Get user by id", dependencies=[Depends(RoleChecker(["admin"]))])
+async def read_user(id: int, current_user=Depends(get_current_user), session=Depends(get_session)):
+    """
+    Get user by id
 
-#     Args:
-#         id: int
-#     """
+    Args:
+        id: int
+    """
 
-#     try:
-#         problem: ProblemDTO = read(id, user, session)
-#         return problem
+    try:
+        user: UserDTO = read(id, current_user, session)
+        return user
     
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-# @router.delete("/{id}", summary="Delete a problem by id", dependencies=[Depends(RoleChecker(["admin"]))])
-# async def delete_problem(id: int, session=Depends(get_session)):
-#     """
-#     Delete contest by id
+@router.delete("/{id}", summary="Delete a user by id", dependencies=[Depends(RoleChecker(["admin"]))])
+async def delete_user(id: int, user=Depends(get_current_user), session=Depends(get_session)):
+    """
+    Delete user by id
     
-#     Args:
-#         id: int
-#     """
+    Args:
+        id: int
+    """
 
-#     try:
-#         deleted = delete(id, session)
+    try:
+        deleted = delete(id, user, session)
 
-#         if not deleted:
-#             raise HTTPException(status_code=404, detail="Problem not found")
+        if not deleted:
+            raise HTTPException(status_code=404, detail="User not found")
         
-#         return JSONResponse(status_code=200, content={"message": "Problem deleted successfully"})
+        return JSONResponse(status_code=200, content={"message": "User deleted successfully"})
     
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-# @router.put("/{id}", summary= "Update a problem by id", dependencies=[Depends(RoleChecker(["admin"]))])
-# async def update_problem(id: int, problem: ProblemDTO = Body(), session=Depends(get_session)): 
-#     """
-#     Update problem by id
+@router.put("/{id}", summary= "Update a user by id", dependencies=[Depends(RoleChecker(["admin"]))])
+async def update_user(id: int, updated_user: UserDTO = Body(), current_user=Depends(get_current_user), session=Depends(get_session)): 
+    """
+    Update user by id
     
-#     Args:
-#         id: int
-#         problem: ProblemDTO
+    Args:
+        id: int
+        updated_user: UserDTO
 
-#     Returns:
-#         JSONResponse
-#     """
+    Returns:
+        JSONResponse
+    """
 
-#     try:
-#         problem = update(id, problem, session)
-#         return JSONResponse(status_code=200, content={"message": "Problem update successfully"})
+    try:
+        user = update(id, updated_user, current_user, session)
+        return JSONResponse(status_code=200, content={"message": "User updated successfully"})
     
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-#TODO:
-#  [GET] list all users
-#  [GET] read single user
-#  [DELETE] delete a single user
-#  [PUT] update a single user
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
