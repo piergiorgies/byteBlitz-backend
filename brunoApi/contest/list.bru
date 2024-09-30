@@ -5,13 +5,18 @@ meta {
 }
 
 get {
-  url: http://localhost:9000/contests
-  body: json
+  url: http://localhost:9000/contests/?limit=20&offset=0
+  body: none
   auth: none
+}
+
+params:query {
+  limit: 20
+  offset: 0
 }
 
 body:json {
   {
-    "limit": 20
+    
   }
 }

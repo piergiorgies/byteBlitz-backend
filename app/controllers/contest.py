@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from typing import List
 
 from app.database import QueryBuilder, get_object_by_id
-from app.models import ContestDTO, Contest, ListDTOBase, ListResponse
+from app.models import ContestDTO, Contest, ListResponse
 from app.models import User, ContestUserDTO
 from app.models import Team, ContestTeamDTO
 from app.models import Problem, ContestProblemDTO, ContestProblem
@@ -46,7 +46,7 @@ def create(contest: ContestDTO, session: Session) -> ContestDTO:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def list(body: ListDTOBase, session: Session) -> ListResponse:
+def list(limit : int, offset : int, session: Session) -> ListResponse:
     """
     List contests
     
@@ -57,7 +57,7 @@ def list(body: ListDTOBase, session: Session) -> ListResponse:
         [ContestDTO]: contests
     """
     try:
-        builder = QueryBuilder(Contest, session, body.limit, body.offset)
+        builder = QueryBuilder(Contest, session, limit, offset)
         contests: List[Contest] = builder.getQuery().all()
         count = builder.getCount()
         return {"data": [ContestDTO.model_validate(obj=obj) for obj in contests], "count": count}

@@ -4,17 +4,18 @@ from fastapi import HTTPException
 from typing import List
 
 from app.database import get_object_by_id
-from app.models import ListDTOBase, ListResponse, User, Problem, ProblemTestCase, ProblemConstraint, Language
+from app.models import ListResponse, User, Problem, ProblemTestCase, ProblemConstraint, Language
 from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
 
 #region Problem
 
-def list(body: ListDTOBase, user: User, session: Session) -> ListResponse:
+def list(limit : int, offset : int, user: User, session: Session) -> ListResponse:
     """
     List problems according to visibility
     
     Args:
-        body (ListDTOBase):
+        limit (int):
+        offset (int):
         user (User):
         session (Session):
     
@@ -24,9 +25,6 @@ def list(body: ListDTOBase, user: User, session: Session) -> ListResponse:
 
     try:
         is_user = user.user_type.code == "user"
-        limit = body.limit if body.limit else 15
-        offset = body.offset if body.offset else None
-
         query = session.query(Problem)
         if is_user: 
             query = query.filter(Problem.is_public == True)

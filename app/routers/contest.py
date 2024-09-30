@@ -7,7 +7,7 @@ from app.controllers.contest import add_users, remove_users, list_users
 from app.controllers.contest import add_teams, remove_teams, list_teams
 from app.controllers.contest import list_problems, add_problems, remove_problems, update_problem
 
-from app.models import ContestDTO, ListDTOBase, ListResponse, ContestProblemDTO, IdListDTO
+from app.models import ContestDTO, ListResponse, ContestProblemDTO, IdListDTO
 from app.database import get_session
 from app.auth_util.role_checker import RoleChecker
 
@@ -41,7 +41,7 @@ async def create_contest(contest: ContestDTO = Body(), session=Depends(get_sessi
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 @router.get("/", response_model=ListResponse, summary="List contests", dependencies=[Depends(RoleChecker(["admin", "user"]))])
-async def list_contests(body: ListDTOBase = Body(), session=Depends(get_session)):
+async def list_contests(limit : int = 15, offset : int = 0, session=Depends(get_session)):
     """
     List contests
     
@@ -50,7 +50,7 @@ async def list_contests(body: ListDTOBase = Body(), session=Depends(get_session)
     """
 
     try:
-        contests = list(body, session)
+        contests = list(limit, offset, session)
         return contests
     
     except HTTPException as e:

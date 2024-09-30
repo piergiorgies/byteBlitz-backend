@@ -6,7 +6,7 @@ from app.auth_util.jwt import get_current_user
 from app.controllers.user import list, read, delete, update
 
 from app.database import get_session
-from app.models import ListResponse, ListDTOBase, UserDTO
+from app.models import ListResponse, UserDTO
 
 router = APIRouter(
     tags=["Users"],
@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=ListResponse, summary="List users", dependencies=[Depends(RoleChecker(["admin"]))])
-async def list_users(body: ListDTOBase = Body(),  user=Depends(get_current_user), session=Depends(get_session)):
+async def list_users(limit : int = 15, offset : int = 0,  user=Depends(get_current_user), session=Depends(get_session)):
     """
     List users
     
@@ -23,7 +23,7 @@ async def list_users(body: ListDTOBase = Body(),  user=Depends(get_current_user)
     """
 
     try:
-        users = list(body, user, session)
+        users = list(limit, offset, user, session)
         return users
     
     except HTTPException as e:

@@ -27,7 +27,7 @@ class QueryBuilder():
     offset: int = None
     record_count: int = None
 
-    def __init__(self, model, session: Session, limit=15, offset=None):
+    def __init__(self, model, session: Session, limit, offset):
         self.model = model
         self.query = session.query(model)
         self.limit = limit

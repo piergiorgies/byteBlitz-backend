@@ -4,16 +4,17 @@ from fastapi import HTTPException
 from typing import List
 
 from app.database import QueryBuilder, get_object_by_id
-from app.models import ListDTOBase, ListResponse, User, UserDTO
+from app.models import ListResponse, User, UserDTO
 
 #TODO: aggiungere controlli di user type (cosa può fare per esempio uno user sul suo stesso account)
 
-def list(body: ListDTOBase, user: User, session: Session) -> ListResponse:
+def list(limit : int, offset : int, user: User, session: Session) -> ListResponse:
     """
     List all users
     
     Args:
-        body (ListDTOBase):
+        limit (int):
+        offset (int):
         user (User):
         session (Session):
     
@@ -22,7 +23,7 @@ def list(body: ListDTOBase, user: User, session: Session) -> ListResponse:
     """
     #TODO: show password hash or not ?? join user_type_id with code ??
     try:
-        builder = QueryBuilder(User, session, body.limit, body.offset)
+        builder = QueryBuilder(User, session, limit, offset)
         users: List[User] = builder.getQuery().all()
         count = builder.getCount()
         return {"data": [UserDTO.model_validate(obj=obj) for obj in users], "count": count}

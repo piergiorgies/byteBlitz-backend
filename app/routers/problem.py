@@ -8,7 +8,7 @@ from app.controllers.problem import list_test_cases, read_test_case, create_test
 from app.controllers.problem import list_constraints, read_constraint, create_constraint, delete_constraints, update_constraint
 
 from app.database import get_session
-from app.models import ListResponse, IdListDTO, ListDTOBase, ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
+from app.models import ListResponse, IdListDTO, ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
 
 router = APIRouter(
     tags=["Problems"],
@@ -18,7 +18,7 @@ router = APIRouter(
 #region Problem
 
 @router.get("/", response_model=ListResponse, summary="List problems", dependencies=[Depends(RoleChecker(["admin", "user"]))])
-async def list_problems(body: ListDTOBase = Body(),  user=Depends(get_current_user), session=Depends(get_session)):
+async def list_problems(limit : int = 15, offset : int = 0,  user=Depends(get_current_user), session=Depends(get_session)):
     """
     List problems
     
@@ -27,7 +27,7 @@ async def list_problems(body: ListDTOBase = Body(),  user=Depends(get_current_us
     """
 
     try:
-        problems = list(body, user, session)
+        problems = list(limit, offset, user, session)
         return problems
     
     except HTTPException as e:
@@ -141,7 +141,7 @@ async def list_problem_test_cases(id: int, session=Depends(get_session)):
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 @router.get("/{id}/testcase", response_model=ProblemTestCaseDTO, summary= "Get a specific testcase by id", dependencies=[Depends(RoleChecker(["admin"]))])
-async def get_specific_test_case(id: int, test_case_id : int = Body(), session=Depends(get_session)):
+async def get_specific_test_case(id: int, testcaseid : int, session=Depends(get_session)):
     """
     Get a specific test case
     
@@ -151,7 +151,7 @@ async def get_specific_test_case(id: int, test_case_id : int = Body(), session=D
     """
 
     try:
-        problem_test_case = read_test_case(id, test_case_id, session)
+        problem_test_case = read_test_case(id, testcaseid, session)
         return problem_test_case
 
     except HTTPException as e:
@@ -241,7 +241,7 @@ async def list_problem_constraints(id: int, session=Depends(get_session)):
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 @router.get("/{id}/constraint", response_model=ProblemConstraintDTO, summary= "Get a specific constraint by language", dependencies=[Depends(RoleChecker(["admin", "user"]))])
-async def get_specific_constraint(id: int, language_id : int = Body(), session=Depends(get_session)):
+async def get_specific_constraint(id: int, languageid : int, session=Depends(get_session)):
     """
     Get a specific constraint by language
     
@@ -251,7 +251,7 @@ async def get_specific_constraint(id: int, language_id : int = Body(), session=D
     """
 
     try:
-        problem_constaint = read_constraint(id, language_id, session)
+        problem_constaint = read_constraint(id, languageid, session)
         return problem_constaint
 
     except HTTPException as e:
