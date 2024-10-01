@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from app.auth_util.role_checker import RoleChecker
 from app.auth_util.jwt import get_current_user
 from app.controllers.user import list, read, delete, update
+from app.router_util.params import pagination_params
 
 from app.database import get_session
 from app.models import ListResponse, UserDTO
@@ -14,7 +15,7 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=ListResponse, summary="List users", dependencies=[Depends(RoleChecker(["admin"]))])
-async def list_users(limit : int = 15, offset : int = 0,  user=Depends(get_current_user), session=Depends(get_session)):
+async def list_users(pagination : dict = Depends(pagination_params),  user=Depends(get_current_user), session=Depends(get_session)):
     """
     List users
     
@@ -23,7 +24,7 @@ async def list_users(limit : int = 15, offset : int = 0,  user=Depends(get_curre
     """
 
     try:
-        users = list(limit, offset, user, session)
+        users = list(pagination["limit"], pagination["offset"], user, session)
         return users
     
     except HTTPException as e:

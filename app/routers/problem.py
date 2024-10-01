@@ -6,6 +6,7 @@ from app.auth_util.jwt import get_current_user
 from app.controllers.problem import list, read, create, delete, update
 from app.controllers.problem import list_test_cases, read_test_case, create_test_case, delete_test_cases, update_test_case
 from app.controllers.problem import list_constraints, read_constraint, create_constraint, delete_constraints, update_constraint
+from app.router_util.params import pagination_params
 
 from app.database import get_session
 from app.models import ListResponse, IdListDTO, ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
@@ -18,7 +19,7 @@ router = APIRouter(
 #region Problem
 
 @router.get("/", response_model=ListResponse, summary="List problems", dependencies=[Depends(RoleChecker(["admin", "user"]))])
-async def list_problems(limit : int = 15, offset : int = 0,  user=Depends(get_current_user), session=Depends(get_session)):
+async def list_problems(pagination : dict = Depends(pagination_params),  user=Depends(get_current_user), session=Depends(get_session)):
     """
     List problems
     
@@ -27,7 +28,7 @@ async def list_problems(limit : int = 15, offset : int = 0,  user=Depends(get_cu
     """
 
     try:
-        problems = list(limit, offset, user, session)
+        problems = list(pagination["limit"], pagination["offset"], user, session)
         return problems
     
     except HTTPException as e:
