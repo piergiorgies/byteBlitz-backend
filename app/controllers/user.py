@@ -47,6 +47,7 @@ def read(id: int, current_user: User, session: Session) -> UserDTO:
     Returns:
         UserDTO: user
     """
+    
     try:
         user: User = get_object_by_id(User, session, id)
         if not user:
@@ -73,7 +74,7 @@ def delete(id: int, current_user: User, session: Session) -> bool:
         bool: the result of delete operation
     
     """
-    #TODO: problem here (somewhere, users cannot be deleted)
+
     try:
         user : User = get_object_by_id(User, session, id)
         if not user:
