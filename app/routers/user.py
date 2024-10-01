@@ -3,11 +3,11 @@ from fastapi.responses import JSONResponse
 
 from app.auth_util.role_checker import RoleChecker
 from app.auth_util.jwt import get_current_user
-from app.controllers.user import list, read, delete, update
+from app.controllers.user import list, read, delete, update_data, update_permissions
 from app.router_util.params import pagination_params
 
 from app.database import get_session
-from app.models import ListResponse, UserDTO
+from app.models import ListResponse, UserDTO, UserLoginDTO, UserPermissionsDTO
 
 router = APIRouter(
     tags=["Users"],
@@ -72,22 +72,44 @@ async def delete_user(id: int, user=Depends(get_current_user), session=Depends(g
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.put("/{id}", summary= "Update a user by id", dependencies=[Depends(RoleChecker(["admin"]))])
-async def update_user(id: int, updated_user: UserDTO = Body(), current_user=Depends(get_current_user), session=Depends(get_session)): 
+@router.patch("/{id}/data", summary= "Update username and/or password of a user by id", dependencies=[Depends(RoleChecker(["admin"]))])
+async def update_user_data(id: int, updated_user: UserLoginDTO = Body(), current_user=Depends(get_current_user), session=Depends(get_session)): 
     """
-    Update user by id
+    Update username and/or password of a user by id
     
     Args:
         id: int
-        updated_user: UserDTO
+        updated_user: UserLoginDTO
 
     Returns:
         JSONResponse
     """
 
     try:
-        user = update(id, updated_user, current_user, session)
-        return JSONResponse(status_code=200, content={"message": "User updated successfully"})
+        user = update_data(id, updated_user, current_user, session)
+        return JSONResponse(status_code=200, content={"message": "User data updated successfully"})
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+@router.patch("/{id}/permissions", summary= "Update permissions of a user by id", dependencies=[Depends(RoleChecker(["admin"]))])
+async def update_user_permissions(id: int, updated_user: UserPermissionsDTO = Body(), current_user=Depends(get_current_user), session=Depends(get_session)): 
+    """
+    Update permissions of user by id
+    
+    Args:
+        id: int
+        updated_user: UserPermissionsDTO
+
+    Returns:
+        JSONResponse
+    """
+
+    try:
+        user = update_permissions(id, updated_user, current_user, session)
+        return JSONResponse(status_code=200, content={"message": "User permissions updated successfully"})
     
     except HTTPException as e:
         raise e

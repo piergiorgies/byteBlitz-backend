@@ -3,4 +3,4 @@ from .base_dto import UserSignupDTO, UserLoginDTO, Token, ListResponse, IdListDT
 from .contest import ContestDTO, ContestUserDTO, ContestTeamDTO, ContestProblemDTO
 from .submission import SubmissionDTO, SubmissionTestCaseDTO, ResultDTO
 from .problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
-from .user import UserDTO
+from .user import UserDTO, UserPermissionsDTO
