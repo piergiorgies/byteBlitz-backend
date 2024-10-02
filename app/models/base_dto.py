@@ -50,15 +50,6 @@ class UserSignupDTO(BaseRequest):
     password: str
 
 @dataclass
-class ListDTOBase(BaseRequest):
-    """
-    List DTO
-
-    """
-    limit: int | None = None
-    offset: int | None = None
-
-@dataclass
 class ListResponse(BaseRequest):
     """
     List Response DTO

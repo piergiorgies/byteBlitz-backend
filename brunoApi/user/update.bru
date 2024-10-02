@@ -1,0 +1,21 @@
+meta {
+  name: update
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:9000/users/1
+  body: json
+  auth: none
+}
+
+body:json {
+   {
+     "username" : "updated",
+     "email" : "upd@upd.com"
+     //password,
+     // ? salt ?
+     // user_type
+   }
+}
