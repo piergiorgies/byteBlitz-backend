@@ -6,7 +6,7 @@ from app.controllers.contest import create, list, read, delete, update
 from app.controllers.contest import add_users, remove_users, list_users
 from app.controllers.contest import add_teams, remove_teams, list_teams
 from app.controllers.contest import list_problems, add_problems, remove_problems, update_problem
-from app.router_util.params import pagination_params
+from app.models.params import pagination_params
 
 from app.models import ContestDTO, ListResponse, ContestProblemDTO, IdListDTO
 from app.database import get_session

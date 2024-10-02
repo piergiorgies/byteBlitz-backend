@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from app.auth_util.role_checker import RoleChecker
 from app.auth_util.jwt import get_current_user
 from app.controllers.user import list, read, delete, update
-from app.router_util.params import pagination_params
+from app.models.params import pagination_params
 
 from app.database import get_session
 from app.models import ListResponse, UserDTO
