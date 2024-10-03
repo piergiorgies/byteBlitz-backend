@@ -1,14 +1,14 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
-import pika
+from datetime import datetime, timedelta
 
 from app.database import get_object_by_id
 from app.models import SubmissionDTO, Submission, User, Problem, Language, Contest, ContestSubmission, SubmissionTestCase
 from app.models import ContestSubmission, SubmissionTestCase, SubmissionTestCaseDTO, SubmissionResult
 from app.config import rabbitmq_connection
 
-def create(submission_dto: SubmissionDTO, session: Session):
+def create(submission_dto: SubmissionDTO, session: Session, user: User):
     """
     Create a submission
 
@@ -20,13 +20,7 @@ def create(submission_dto: SubmissionDTO, session: Session):
         created (bool): Whether the submission was created
     """
 
-    try:
-
-        # check if the user exists
-        user: User = get_object_by_id(User, session, submission_dto.user_id)
-        if not user:
-            raise HTTPException(status_code=400, detail="User not found")
-        
+    try:        
         # check if the problem exists
         problem: Problem = get_object_by_id(Problem, session, submission_dto.problem_id)
         if not problem:
@@ -47,8 +41,13 @@ def create(submission_dto: SubmissionDTO, session: Session):
             if contest.problems and problem not in contest.problems:
                 raise HTTPException(status_code=400, detail="Problem not in contest")
             
-        
-        # TODO: Implement a sort of submission rate limiting
+
+        # check if the user has submitted too many times in the last hour
+        last_hour = datetime.now() - timedelta(hours=1)
+        submissions_count = session.query(Submission).filter(Submission.user_id == user.id, Submission.created_at >= last_hour).count()
+
+        if submissions_count >= 15:
+            raise HTTPException(status_code=400, detail="Too many submissions")
         
         # create the submission
         submission = Submission(
@@ -75,7 +74,7 @@ def create(submission_dto: SubmissionDTO, session: Session):
 
         # send the submission to the queue
         rabbitmq_connection.try_send_to_queue('submissions', 'stocazzo')
-
+        
         return True
     
     except SQLAlchemyError as e:

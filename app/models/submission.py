@@ -16,7 +16,7 @@ class SubmissionDTO(BaseRequest):
     notes: str | None = None
     contest_id: int | None = None
     problem_id: int
-    user_id: int
+    user_id: int | None = 0
     language_id: int
     submitted_code: str
 

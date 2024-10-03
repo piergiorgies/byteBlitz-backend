@@ -7,6 +7,7 @@ from app.controllers.submission import create, accept, save_total
 from app.models import SubmissionDTO, SubmissionTestCaseDTO, ResultDTO
 from app.database import get_session
 from app.auth_util.role_checker import RoleChecker
+from app.auth_util.jwt import get_current_user
 
 router = APIRouter(
     prefix="/submissions",
@@ -14,7 +15,7 @@ router = APIRouter(
 )
 
 @router.post("/", summary="Submit a solution to a problem", dependencies=[Depends(RoleChecker(["admin"]))])
-async def submit_solution(submission: SubmissionDTO = Body(), session = Depends(get_session)):
+async def submit_solution(submission: SubmissionDTO = Body(), session = Depends(get_session), user = Depends(get_current_user)):
     """
     Submit a solution to a problem
 
@@ -25,7 +26,7 @@ async def submit_solution(submission: SubmissionDTO = Body(), session = Depends(
         JSONResponse: The response
     """
     try:
-        submission = create(submission, session)
+        submission = create(submission, session, user)
 
         return JSONResponse(content={"message": "submission sent successfully"}, status_code=201)
     
