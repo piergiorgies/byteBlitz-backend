@@ -67,31 +67,23 @@ def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
         raise credentials_exception
 
 def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
-    try: 
-        id, username = decode_token(token)
+    try:
+        if token == '':
+            user: User = session.query(User).filter(User.username == 'guest').first()
 
-        # get user from database filter by id, username and role
-        user : User = session.query(User).filter(User.id == id, User.username == username).first()
+            if user is None:
+                raise credentials_exception
+            return user
 
-        if user is None:
-            raise credentials_exception
+        else:
+            id, username = decode_token(token)
+            user: User = session.query(User).filter(User.id == id, User.username == username).first()
 
-        return user
+            if user is None:
+                raise credentials_exception
+
+            return user
 
     except HTTPException as e:
         raise e
-    
-
-# def get_refresh_token():
-#     refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
-#     refresh_token = _create_access_token(expires_delta=refresh_token_expires)
-#     return Token(access_token="", refresh_token=refresh_token)
-
-# def get_user_by_token(token: str):
-#     try:
-#         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-#         return payload
-#     except JWTError:
-#         return None
-
 
