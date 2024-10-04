@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from .config import settings
+from typing import Any
 
 SQLALCHEMY_DATABASE_URL = settings.get_connection_string
 
@@ -47,7 +48,7 @@ class QueryBuilder():
     def getCount(self):
         return self.record_count
     
-def get_object_by_id(model, session: Session, id: int):
+def get_object_by_id(model, session: Session, id: int) -> Any:
     """
     Get an object by its ID
 
