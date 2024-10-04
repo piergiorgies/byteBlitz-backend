@@ -1,0 +1,17 @@
+meta {
+  name: update_permissions
+  type: http
+  seq: 5
+}
+
+patch {
+  url: http://localhost:9000/users/1/permissions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_type_id" : 1
+  }
+}

@@ -1,0 +1,18 @@
+meta {
+  name: update_data
+  type: http
+  seq: 4
+}
+
+patch {
+  url: http://localhost:9000/users/1/data
+  body: json
+  auth: none
+}
+
+body:json {
+   {
+     "username" : "updated",
+     "password" : "upd_bipbip"
+   }
+}
