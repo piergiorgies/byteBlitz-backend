@@ -41,7 +41,7 @@ async def create_contest(contest: ContestDTO = Body(), session=Depends(get_sessi
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-@router.get("/", response_model=ListResponse, summary="List contests", dependencies=[Depends(RoleChecker(["admin", "user"]))])
+@router.get("/", response_model=ListResponse, summary="List contests", dependencies=[Depends(RoleChecker(["admin", "user", "guest"]))])
 async def list_contests(pagination : dict = Depends(pagination_params), session=Depends(get_session)):
     """
     List contests
