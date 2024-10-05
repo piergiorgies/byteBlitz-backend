@@ -61,3 +61,21 @@ def get_object_by_id(model, session: Session, id: int) -> Any:
         Base: The object
     """
     return session.query(model).filter(model.id == id).first()
+
+def get_object_by_id_joined_with(model, session: Session, id: int, join_fields: list[str]) -> Any:
+    """
+    Get an object by its ID
+
+    Args:
+        model (Base): The model class (has to be a subclass of Base)
+        session (Session): The session
+        id (int): The ID of the object
+        join_fields (list[str]): The fields to join with
+
+    Returns:
+        Base: The object
+    """
+    query = session.query(model)
+    for field in join_fields:
+        query = query.join(field)
+    return query.filter(model.id == id).first()
