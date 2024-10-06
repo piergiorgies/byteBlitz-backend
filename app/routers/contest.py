@@ -4,7 +4,7 @@ from typing import List
 
 from app.controllers.contest import create, list, read, delete, update
 from app.controllers.contest import add_users, remove_users, list_users
-from app.controllers.contest import add_teams, remove_teams, list_teams
+# from app.controllers.contest import add_teams, remove_teams, list_teams
 from app.controllers.contest import list_problems, add_problems, remove_problems, update_problem
 from app.models.params import pagination_params
 
@@ -41,7 +41,7 @@ async def create_contest(contest: ContestDTO = Body(), session=Depends(get_sessi
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-@router.get("/", response_model=ListResponse, summary="List contests", dependencies=[Depends(RoleChecker(["admin", "user"]))])
+@router.get("/", response_model=ListResponse, summary="List contests", dependencies=[Depends(RoleChecker(["admin", "user", "guest"]))])
 async def list_contests(pagination : dict = Depends(pagination_params), session=Depends(get_session)):
     """
     List contests
@@ -192,70 +192,70 @@ async def list_users_in_contest(id: int, session=Depends(get_session)):
 
 #region Contest Team
 
-@router.post("/{id}/teams", summary="Add a list of team to a contest", dependencies=[Depends(RoleChecker(["admin"]))])
-async def add_team_to_contest(id: int, team_ids: IdListDTO = Body(), session=Depends(get_session)):
-    """
-    Add a team to a contest
+# @router.post("/{id}/teams", summary="Add a list of team to a contest", dependencies=[Depends(RoleChecker(["admin"]))])
+# async def add_team_to_contest(id: int, team_ids: IdListDTO = Body(), session=Depends(get_session)):
+#     """
+#     Add a team to a contest
 
-    Args:
-        id: int
-        team_id: int
-    """
+#     Args:
+#         id: int
+#         team_id: int
+#     """
 
-    try:
-        # add team to contest
-        added = add_teams(id, team_ids.ids, session)
-        if not added:
-            raise HTTPException(status_code=404, detail="Team or contest not found")
+#     try:
+#         # add team to contest
+#         added = add_teams(id, team_ids.ids, session)
+#         if not added:
+#             raise HTTPException(status_code=404, detail="Team or contest not found")
 
-        return JSONResponse(status_code=201, content={"message": "Team added to contest successfully"})
+#         return JSONResponse(status_code=201, content={"message": "Team added to contest successfully"})
     
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.delete("/{id}/teams", summary="Remove a list of team from a contest", dependencies=[Depends(RoleChecker(["admin"]))])
-async def remove_team_from_contest(id: int, team_ids: IdListDTO = Body(), session=Depends(get_session)):
-    """
-    Remove a team from a contest
+# @router.delete("/{id}/teams", summary="Remove a list of team from a contest", dependencies=[Depends(RoleChecker(["admin"]))])
+# async def remove_team_from_contest(id: int, team_ids: IdListDTO = Body(), session=Depends(get_session)):
+#     """
+#     Remove a team from a contest
 
-    Args:
-        id: int
-        team_id: int
-    """
+#     Args:
+#         id: int
+#         team_id: int
+#     """
 
-    try:
-        # remove team from contest
-        removed = remove_teams(id, team_ids.ids, session)
-        if not removed:
-            raise HTTPException(status_code=404, detail="Team or contest not found")
+#     try:
+#         # remove team from contest
+#         removed = remove_teams(id, team_ids.ids, session)
+#         if not removed:
+#             raise HTTPException(status_code=404, detail="Team or contest not found")
 
-        return JSONResponse(status_code=200, content={"message": "Team removed from contest successfully"})
+#         return JSONResponse(status_code=200, content={"message": "Team removed from contest successfully"})
     
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.get("/{id}/teams", response_model=ListResponse, summary="List teams in a contest", dependencies=[Depends(RoleChecker(["admin"]))])
-async def list_teams_in_contest(id: int, session=Depends(get_session)):
-    """
-    List teams in a contest
+# @router.get("/{id}/teams", response_model=ListResponse, summary="List teams in a contest", dependencies=[Depends(RoleChecker(["admin"]))])
+# async def list_teams_in_contest(id: int, session=Depends(get_session)):
+#     """
+#     List teams in a contest
 
-    Args:
-        id: int
-    """
+#     Args:
+#         id: int
+#     """
 
-    try:
-        # list teams in contest
-        teams = list_teams(id, session)
-        return teams
+#     try:
+#         # list teams in contest
+#         teams = list_teams(id, session)
+#         return teams
     
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 #endregion
 
