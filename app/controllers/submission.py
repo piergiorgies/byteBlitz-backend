@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from datetime import datetime, timedelta
 
-from app.database import get_object_by_id
+from app.database import get_object_by_id, get_object_by_id_joined_with
 from app.models import SubmissionDTO, Submission, User, Problem, Language, Contest, ContestSubmission, SubmissionTestCase
 from app.models import ContestSubmission, SubmissionTestCase, SubmissionTestCaseDTO, SubmissionResult
 from app.config import rabbitmq_connection
@@ -21,43 +21,16 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
     """
 
     try:        
-        # check if the problem exists
-        problem: Problem = get_object_by_id(Problem, session, submission_dto.problem_id)
-        if not problem:
-            raise HTTPException(status_code=400, detail="Problem not found")
-        
-        # check if the language exists
-        language: Language = get_object_by_id(Language, session, submission_dto.language_id)
-        if not language:
-            raise HTTPException(status_code=400, detail="Language not found")
-        
-        if submission_dto.contest_id:
-            # check if the contest exists
-            contest: Contest = get_object_by_id(Contest, session, submission_dto.contest_id)
-            if not contest:
-                raise HTTPException(status_code=400, detail="Contest not found")
-            
-            # check if the problem is in the contest
-            if contest.problems and problem not in contest.problems:
-                raise HTTPException(status_code=400, detail="Problem not in contest")
-            
-
-        # check if the user has submitted too many times in the last hour
-        last_hour = datetime.now() - timedelta(hours=1)
-        submissions_count = session.query(Submission).filter(Submission.user_id == user.id, Submission.created_at >= last_hour).count()
-
-        if submissions_count >= 15:
-            raise HTTPException(status_code=400, detail="Too many submissions")
+        _validate_submission(submission_dto, session, user)
         
         # create the submission
         submission = Submission(
             submitted_code=submission_dto.submitted_code,
             notes=submission_dto.notes,
             problem_id=submission_dto.problem_id,
-            user_id=submission_dto.user_id,
+            user_id=user.id,
             language_id=submission_dto.language_id
         )
-        
         session.add(submission)
         session.commit()
         session.refresh(submission)
@@ -86,6 +59,46 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
         session.rollback()
         raise e
 
+def _validate_submission(submission_dto: SubmissionDTO, session: Session, user: User):
+    # check if the problem exists
+    problem: Problem = get_object_by_id(Problem, session, submission_dto.problem_id)
+    if not problem:
+        raise HTTPException(status_code=400, detail="Problem not found")
+    
+    # check if the language exists
+    language: Language = get_object_by_id(Language, session, submission_dto.language_id)
+    if not language:
+        raise HTTPException(status_code=400, detail="Language not found")
+    
+    # check if the problem has constraints for this language
+    if language.id not in [x.language_id for x in problem.constraints]:
+        raise HTTPException(status_code=400, detail="Language not supported by problem")
+    
+    if submission_dto.contest_id:
+        # check if the contest exists
+        contest: Contest = get_object_by_id_joined_with(Contest, session, submission_dto.contest_id, [Contest.problems, Contest.users])
+        if not contest:
+            raise HTTPException(status_code=400, detail="Contest not found")
+        
+        # check if the problem is in the contest
+        if contest.problems and problem not in contest.problems:
+            raise HTTPException(status_code=400, detail="Problem not in contest")
+        
+        # check if the user is in the contest
+        if contest.users and user not in contest.users:
+            raise HTTPException(status_code=400, detail="User not in contest")
+        
+        # check if the contest is active
+        if contest.end_datetime < datetime.now():
+            raise HTTPException(status_code=400, detail="Contest is over")
+        
+        
+    # check if the user has submitted too many times in the last hour
+    last_hour = datetime.now() - timedelta(hours=1)
+    submissions_count = session.query(Submission).filter(Submission.user_id == user.id, Submission.created_at >= last_hour).count()
+
+    if submissions_count >= 15:
+        raise HTTPException(status_code=400, detail="Too many submissions")
 
 def accept(submission_id: int, submission_test_case: SubmissionTestCaseDTO, session: Session):
     try:
