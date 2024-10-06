@@ -1,0 +1,18 @@
+meta {
+  name: problem config
+  type: http
+  seq: 17
+}
+
+post {
+  url: http://127.0.0.1:9000/problems/config/3
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "judge",
+    "key": "judge"
+  }
+}
