@@ -10,17 +10,37 @@ url = base_url + 'problems/'
 
 # GET list_problems
 def test_list_problems():
-    # authentication
     data = {}
 
+    limit = 20
+    offset = 0
+    params = "?limit=" + str(limit) + "&offset=" + str(offset)
+
+    # authentication
+    # [**LEO**] in questa sezione si controlla che, per ogni tipologia di utente,
+    # lo status code sia coerente con quello che abbiamo definito 
     response = requests.get(url=url, headers=admin_headers, json=data)
     assert response.status_code == 200
 
     response = requests.get(url=url, headers=user_headers, json=data)
-    assert response.status_code == 200
+    assert response.status_code == 200 #in case this could be 403/404 idk
+
     # base_functionalities
+    # [**LEO**] in questa sezione controlliamo che l'endpoint si comporti
+    # come vogliamo. In questo caso ciò significa:
+    # 1. l'admin deve ricevere un json con due parametri: data e count
+    # 2. l'utente deve ricevere un json uguale ma con un count inferiore
+    # (deve nascondere i problemi non false)
+
     # code_checks
+    # [**LEO**] qui invece andiamo a controllare che i controlli implementati
+    # a livello di codice funzionino correttamente. In questo caso dobbiamo controllare che
+    # modificando limit e offset questi vengano modificati realmente (MA COUNT DEVE RIMANERE UGUALE!!) 
+    
     # edge_cases
+    # [**LEO**] qui proviamo tutti i casi limite, principalmente quelli non realizzabili a livello di
+    # frontend per rendere l'applicazione robusta (es. offset = count, limit = 0)
+
 
 # GET read_problem
 def test_read_problem():
