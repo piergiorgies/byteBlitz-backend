@@ -35,6 +35,8 @@ class ProblemTestCaseDTO(BaseRequest):
     notes : str | None = None
     input_name : str
     output_name : str
+    input: str
+    output: str
     points : int
     is_pretest : bool | None = False
 
@@ -83,6 +85,8 @@ class TestCaseDTO(BaseRequest):
     is_pretest : bool
     input_name : str
     output_name : str
+    input: str
+    output: str
 
 class ProblemJudgeDTO(BaseRequest):
     """

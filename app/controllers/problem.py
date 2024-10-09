@@ -279,6 +279,8 @@ def create_test_case(problem_id: int, problemTestCaseDTO: ProblemTestCaseDTO, se
             notes=problemTestCaseDTO.notes,
             input_name=problemTestCaseDTO.input_name,
             output_name=problemTestCaseDTO.output_name,
+            input=problemTestCaseDTO.input,
+            output=problemTestCaseDTO.output,
             points=test_case_points,
             is_pretest=problemTestCaseDTO.is_pretest,
             problem_id=problem_id
@@ -609,11 +611,6 @@ def get_problem_info(id: int, body: JudgeDTO, session: Session):
     """
 
     try:
-        # check judge credentials
-        judge: User = session.query(User).filter(User.username == body.name, User.password_hash == body.key).first()
-        if not judge:
-            raise HTTPException(status_code=401, detail="Unauthorized")
-
         problem: Problem = get_object_by_id_joined_with(Problem, session, id, [Problem.constraints])
 
         if not problem or not problem.is_public:

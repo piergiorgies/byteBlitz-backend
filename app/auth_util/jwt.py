@@ -86,4 +86,15 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Ses
 
     except HTTPException as e:
         raise e
-
+    
+def get_judge(data: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
+    try:
+        if data == '' or not ':' in data:
+            return None
+        else:
+            name, hashed = data.split(':')
+            judge: User = session.query(User).filter(User.username == name, User.password_hash == hashed).first()
+            return judge
+        
+    except HTTPException as e:
+        raise e

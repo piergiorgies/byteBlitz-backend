@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
 
-from app.auth_util.role_checker import RoleChecker
+from app.auth_util.role_checker import RoleChecker, JudgeChecker
 from app.auth_util.jwt import get_current_user
 from app.controllers.problem import list, read, create, delete, update
 from app.controllers.problem import list_test_cases, read_test_case, create_test_case, delete_test_cases, update_test_case
@@ -328,7 +328,7 @@ judge_router = APIRouter(
     tags=["Judge"],
 )
 
-@judge_router.get("/problem_versions", summary="Get the problem versions", dependencies=[Depends(RoleChecker(["admin"]))])
+@judge_router.get("/problem_versions", summary="Get the problem versions", dependencies=[Depends(JudgeChecker())])
 async def get_problem_versions(session=Depends(get_session)):
     """
     Get the problem versions
@@ -344,7 +344,7 @@ async def get_problem_versions(session=Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@judge_router.post("/problems/config/{id}", summary="Get the problem configuration")
+@judge_router.post("/problems/config/{id}", summary="Get the problem configuration", dependencies=[Depends(JudgeChecker())])
 async def get_problem_config(id: int, body: JudgeDTO = Body(), session=Depends(get_session)):
     """
     Get the problem configuration
