@@ -75,35 +75,35 @@ try:
             file_extension = ".js"
         )
 
-        # submission_results TODO: here (idk the format of the response (the different cases))
+        # submission_results
         result1 = SubmissionResult(
             id = 1,
-            code = "TODO",
-            description = "idk"
+            code = 1,
+            description = "Accepted"
         )
         result2 = SubmissionResult(
             id = 2,
-            code = "TODO",
-            description = "idk"
+            code = 2,
+            description = "Time limit exceded"
         )
         result3 = SubmissionResult(
             id = 3,
-            code = "TODO",
-            description = "idk"
+            code = 3,
+            description = "Memory limit exceded"
         )
         result4 = SubmissionResult(
             id = 4,
-            code = "TODO",
-            description = "idk"
+            code = 4,
+            description = "Wrong answer"
         )
         result5 = SubmissionResult(
             id = 5,
-            code = "TODO",
-            description = "idk"
+            code = 5,
+            description = "Compilation error"
         )
 
         # teams
-        # FIXME: NO-NO
+        # FIXME: NOT IMPLEMENTED YET
 
         # user_types FIXME: incomplete (more types + wrong permissions)
         admin_type = UserType(
@@ -120,7 +120,7 @@ try:
         )
 
         # contest_teams
-        # FIXME: NO-NO
+        # FIXME: NOT IMPLEMENTED YET
 
         # users FIXME: incomplete (more users for different types)
         admin_password, admin_salt = _hash_password(password="admin123")
@@ -276,16 +276,117 @@ try:
         )
 
         # team_users
-        # FIXME: NO-NO
+        # FIXME: NOT IMPLEMENTED YET
 
         # contest_problems
-        # TODO: here
+        c1_p1 = ContestProblem(
+            contest_id = 1,
+            problem_id = 1,
+            publication_delay = 0
+        )
+        c1_p2 = ContestProblem(
+            contest_id = 1,
+            problem_id = 2,
+            publication_delay = 30
+        )
+        c1_p4 = ContestProblem(
+            contest_id = 1,
+            problem_id = 4,
+            publication_delay = 60
+        )
+        c1_p5 = ContestProblem(
+            contest_id = 1,
+            problem_id = 5,
+            publication_delay = 120
+        )
+        c2_p3 = ContestProblem(
+            contest_id = 2,
+            problem_id = 3,
+            publication_delay = 0
+        )
+        c2_p6 = ContestProblem(
+            contest_id = 2,
+            problem_id = 6,
+            publication_delay = 45
+        )
+        c2_p7 = ContestProblem(
+            contest_id = 2,
+            problem_id = 7,
+            publication_delay = 90
+        )
+        c3_p8 = ContestProblem(
+            contest_id = 3,
+            problem_id = 8,
+            publication_delay = 0
+        )
+        c3_p9 = ContestProblem(
+            contest_id = 3,
+            problem_id = 9,
+            publication_delay = 180
+        )
 
         # problem_constraints
-        # TODO: here
+        p1_l1 = ProblemConstraint(
+            problem_id = 1,
+            language_id = 1,
+            memory_limit = 512,
+            time_limit = 1000
+        )
+        p1_l2 = ProblemConstraint(
+            problem_id = 1,
+            language_id = 2,
+            memory_limit = 256,
+            time_limit = 2000
+        )
+        p1_l3 = ProblemConstraint(
+            problem_id = 1,
+            language_id = 3,
+            memory_limit = 128,
+            time_limit = 12500
+        )
+        p1_l4 = ProblemConstraint(
+            problem_id = 1,
+            language_id = 4,
+            memory_limit = 1024,
+            time_limit = 500
+        )
+        p2_l1 = ProblemConstraint(
+            problem_id = 2,
+            language_id = 1,
+            memory_limit = 512,
+            time_limit = 1500
+        )
+        p2_l2 = ProblemConstraint(
+            problem_id = 2,
+            language_id = 2,
+            memory_limit = 256,
+            time_limit = 2500
+        )
+        p4_l3 = ProblemConstraint(
+            problem_id = 4,
+            language_id = 3,
+            memory_limit = 512,
+            time_limit = 3000
+        )
+        p4_l4 = ProblemConstraint(
+            problem_id = 4,
+            language_id = 4,
+            memory_limit = 128,
+            time_limit = 5000
+        )
 
-        # problem_test_cases
+        # problem_test_cases FIXME: input_name and output_name must be exchanged with input and output
         # TODO: here
+        test_case1 = ProblemTestCase(
+            id = -1,
+            number = -1,
+            notes = "TODO",
+            # input = "todo",
+            # output = "todo",
+            points = 0,
+            is_pretest = True,
+            problem_id = 1
+        )
 
         # submissions
         # TODO: here
