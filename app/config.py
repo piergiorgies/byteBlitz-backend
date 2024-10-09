@@ -69,7 +69,7 @@ class RabbitMQConnection:
 
         try:
             channel = self.connection.channel()
-            channel.queue_declare(queue=queue_name)
+            channel.queue_declare(queue=queue_name, durable=True)
             channel.basic_publish(exchange='', routing_key=queue_name, body=json.dumps(body))
         except Exception as ex:
             print(f'Error while sending the message to the queue: {ex}')
