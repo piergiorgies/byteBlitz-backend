@@ -33,7 +33,8 @@ def test_list_problems():
     # 2. l'utente deve ricevere un json uguale ma con un count inferiore
     # (deve nascondere i problemi non false)
     response = requests.get(url=url + params, headers=admin_headers, json=data)
-    #assert isinstance(problem, Problem) #TODO: to be fixed. 
+    # assert isinstance(problem, Problem) #TODO: to be fixed. 
+    assert "data" in response.json() and "count" in response.json()
     assert response.json().get("count") == 9
 
     response = requests.get(url=url + params, headers=user_headers, json=data)
@@ -51,7 +52,13 @@ def test_list_problems():
 
     limit = 2
     offset = 0
-    response = requests.get(url=url + params, headers=admin_headers, json=data)
+    response = requests.get(url=url + params, headers=user_headers, json=data)
+    assert len(response.json().get("data")) == 2
+    assert response.json().get("count") == 5
+
+    limit = 3
+    offset = 0
+    response = requests.get(url=url + params, headers=user_headers, json=data)
     assert len(response.json().get("data")) == 2
     assert response.json().get("count") == 5
     # edge_cases
@@ -78,6 +85,11 @@ def test_list_problems():
     response = requests.get(url=url + params, headers=admin_headers, json=data)
     assert response.status_code == 422
 
+    limit = "limit"
+    offset = 1
+    response = requests.get(url=url + params, headers=admin_headers, json=data)
+    assert response.status_code == 422
+
 # GET read_problem
 def test_read_problem():
     # authentication
@@ -91,16 +103,46 @@ def test_read_problem():
     assert response.status_code == 404
     # base_functionalities
     response = requests.get(url=url + '3/', headers=admin_headers) #TODO: to be finished.
+    assert response.json().get("id") == 3
+    # assert response.json().get("name") == "Princess Kibo"
+    # assert response.json().get("description") == "Princess Kibo is a very simple problem."
+    # assert response.json().get("points") == 0
+    # assert response.json().get("is_public") == False
+    # assert response.json().get("authon_id") == 1
+
+    response = requests.get(url=url + '1/', headers=user_headers)
+    assert response.json().get("id") == 1
     # code_checks
+    response = requests.get(url=url + '11/', headers=admin_headers)
+    assert response.status_code == 404
     # edge_cases
+    response = requests.get(url=url + 'test/', headers=admin_headers)
+    assert response.status_code == 422
+
+    response = requests.get(url=url + '/', headers=admin_headers)
+    assert response.status_code == 404
 
 # POST create_problem
 def test_create_problem():
     # authentication
+    json = {"id": 10, "name": "JavaMaxxing", "description": "Motty needs to maximize his java skill.", "points": 0, "is_public": True, "author_id": 1}
+    response = requests.post(url=url, headers=user_headers, json=json)
+    assert response.status_code == 403
+
+    response = requests.post(url=url, headers=admin_headers, json=json)
+    if response.status_code == 201:
+        assert True
+        requests.delete(url=url + '10/', headers=admin_headers)
+    else:
+        assert response.status_code
+    # maybe with try except?
+
+
+    
     # base_functionalities
+    response = requests.get(url=url + '10/', headers=admin_headers)
     # code_checks
     # edge_cases
-    pass
 
 # DELETE delete_problem
 def test_delete_problem():
