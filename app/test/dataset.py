@@ -172,32 +172,32 @@ try:
         # contest_users
         c1_u1 = ContestUser(
             contest_id = 1,
-            user_id = 1,
+            user_id = 3,
             score = 200
         )
         c1_u2 = ContestUser(
             contest_id = 1,
-            user_id = 2,
+            user_id = 4,
             score = 130
         )
         c1_u3 = ContestUser(
             contest_id = 1,
-            user_id = 3,
+            user_id = 5,
             score = 345
         )
         c2_u1 = ContestUser(
             contest_id = 2,
-            user_id = 1,
+            user_id = 3,
             score = 90
         )
         c2_u3 = ContestUser(
             contest_id = 2,
-            user_id = 3,
+            user_id = 5,
             score = 69
         )
         c3_u2 = ContestUser(
             contest_id = 3,
-            user_id = 2,
+            user_id = 4,
             score = 0
         )
 
@@ -376,23 +376,224 @@ try:
         )
 
         # problem_test_cases FIXME: input_name and output_name must be exchanged with input and output
-        # TODO: here
+        # TODO: here --> input + output
         test_case1 = ProblemTestCase(
-            id = -1,
-            number = -1,
-            notes = "TODO",
+            id = 1,
+            number = 1,
+            notes = "Test notes",
             # input = "todo",
             # output = "todo",
             points = 0,
             is_pretest = True,
-            problem_id = 1
+            problem_id = 2
+        )
+        test_case2 = ProblemTestCase(
+            id = 2,
+            number = 2,
+            notes = "Test notes",
+            # input = "todo",
+            # output = "todo",
+            points = 20,
+            is_pretest = False,
+            problem_id = 2
+        )
+        test_case3 = ProblemTestCase(
+            id = 3,
+            number = 3,
+            notes = "Test notes",
+            # input = "todo",
+            # output = "todo",
+            points = 10,
+            is_pretest = False,
+            problem_id = 2
+        )
+        test_case4 = ProblemTestCase(
+            id = 4,
+            number = 1,
+            notes = "Test notes",
+            # input = "todo",
+            # output = "todo",
+            points = 0,
+            is_pretest = True,
+            problem_id = 4
+        )
+        test_case5 = ProblemTestCase(
+            id = 5,
+            number = 2,
+            notes = "Test notes",
+            # input = "todo",
+            # output = "todo",
+            points = 50,
+            is_pretest = False,
+            problem_id = 4
         )
 
         # submissions
-        # TODO: here
+        submission1 = Submission(
+            id = 1,
+            notes = "Test notes",
+            score = 0,
+            submitted_code = """
+                import java.util.Arrays;
+
+                public class Knapsack {
+                    public static int knapsack(int W, int[] weights, int[] values, int n) {
+                        int[][] dp = new int[n + 1][W + 1];
+
+                        for (int i = 0; i <= n; i++) {
+                            for (int w = 0; w <= W; w++) {
+                                if (i == 0 || w == 0) {
+                                    dp[i][w] = 0;
+                                } else if (weights[i - 1] <= w) {
+                                    dp[i][w] = Math.max(values[i - 1] + dp[i - 1][w - weights[i - 1]], dp[i - 1][w]);
+                                } else {
+                                    dp[i][w] = dp[i - 1][w];
+                                }
+                            }
+                        }
+                        return dp[n][W];
+                    }
+
+                    public static void main(String[] args) {
+                        int[] values = {60, 100, 120};
+                        int[] weights = {10, 20, 30};
+                        int W = 50;
+                        int n = values.length;
+                        System.out.println("Maximum value in Knapsack = " + knapsack(W, weights, values, n));
+                    }
+                }
+            """,
+            problem_id = 2,
+            user_id = 3,
+            language_id = 1,
+            submission_result_id = 2
+        )
+        submission2 = Submission(
+            id = 2,
+            notes = "Test notes",
+            score = 69,
+            submitted_code = """
+                def is_safe(board, row, col):
+                    for i in range(col):
+                        if board[row][i] == 1:
+                            return False
+                    for i, j in zip(range(row, -1, -1), range(col, -1, -1)):
+                        if board[i][j] == 1:
+                            return False
+                    for i, j in zip(range(row, len(board)), range(col, -1, -1)):
+                        if board[i][j] == 1:
+                            return False
+                    return True
+
+                def solve_n_queens_util(board, col):
+                    if col >= len(board):
+                        return True
+                    for i in range(len(board)):
+                        if is_safe(board, i, col):
+                            board[i][col] = 1
+                            if solve_n_queens_util(board, col + 1):
+                                return True
+                            board[i][col] = 0
+                    return False
+
+                def solve_n_queens(n):
+                    board = [[0 for _ in range(n)] for _ in range(n)]
+                    if not solve_n_queens_util(board, 0):
+                        return "Solution does not exist"
+                    return board
+
+                # Example usage
+                n = 4
+                solution = solve_n_queens(n)
+                for row in solution:
+                    print(row)
+            """,
+            problem_id = 2,
+            user_id = 3,
+            language_id = 2,
+            submission_result_id = 1
+        )
+        submission3 = Submission(
+            id = 3,
+            notes = "Test notes",
+            score = 0,
+            submitted_code = """
+                import numpy as np
+                from scipy.optimize import linprog
+
+                # Coefficients of the objective function
+                c = [-1, -2]  # Example coefficients for maximization
+
+                # Coefficients for the inequality constraints
+                A = [[1, 1], [2, 1], [1, 2]]
+                b = [10, 20, 15]
+
+                # Bounds for each variable
+                x0_bounds = (0, None)
+                x1_bounds = (0, None)
+
+                # Solve the linear programming problem
+                res = linprog(c, A_ub=A, b_ub=b, bounds=[x0_bounds, x1_bounds], method='highs')
+
+                # Output the results
+                print('Optimal value:', -res.fun)
+                print('Optimal solution:', res.x)
+            """,
+            problem_id = 4,
+            user_id = 4,
+            language_id = 2,
+            submission_result_id = 5
+        )
+        submission4 = Submission(
+            id = 4,
+            notes = "Test notes",
+            score = 100,
+            submitted_code = """
+                # Sorting Algorithm
+
+                function bubbleSort(arr) {
+                    let n = arr.length;
+                    let swapped;
+                    do {
+                        swapped = false;
+                        for (let i = 0; i < n - 1; i++) {
+                            if (arr[i] > arr[i + 1]) {
+                                [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+                                swapped = true;
+                            }
+                        }
+                        n--;
+                    } while (swapped);
+                    return arr;
+                }
+
+                // Example usage:
+                const array = [64, 34, 25, 12, 22, 11, 90];
+                console.log(bubbleSort(array));
+            """,
+            problem_id = 4,
+            user_id = 5,
+            language_id = 4,
+            submission_result_id = 1
+        )
 
         # contest_submissions
-        # TODO: here
+        c1_s1 = ContestSubmission(
+            contest_id = 1,
+            submission_id = 1
+        )
+        c1_s2 = ContestSubmission(
+            contest_id = 3,
+            submission_id = 2
+        )
+        c2_s3 = ContestSubmission(
+            contest_id = 1,
+            submission_id = 3
+        )
+        c2_s4 = ContestSubmission(
+            contest_id = 3,
+            submission_id = 4
+        )
 
         # submission_test_cases
         # TODO: here
