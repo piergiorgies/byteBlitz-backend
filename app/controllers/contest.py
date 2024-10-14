@@ -273,108 +273,108 @@ def list_users(id: int, session: Session) -> ListResponse:
 
 #region Contest Team
 
-def add_teams(id: int, team_ids: List[int], session: Session) -> bool:
-    """
-    Add team to contest
+# def add_teams(id: int, team_ids: List[int], session: Session) -> bool:
+#     """
+#     Add team to contest
 
-    Args:
-        id: int
-        team_id: int
+#     Args:
+#         id: int
+#         team_id: int
     
-    Returns:
-        bool: added
-    """
+#     Returns:
+#         bool: added
+#     """
 
-    try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
+#     try:
+#         contest: Contest = get_object_by_id(Contest, session, id)
+#         if not contest:
+#             raise HTTPException(status_code=404, detail="Contest not found")
         
-        for team_id in team_ids:
-            team: Team = get_object_by_id(Team, session, team_id)
+#         for team_id in team_ids:
+#             team: Team = get_object_by_id(Team, session, team_id)
 
-            if not team:
-                raise HTTPException(status_code=404, detail="Team not found")
+#             if not team:
+#                 raise HTTPException(status_code=404, detail="Team not found")
 
-            if team in contest.teams:
-                raise HTTPException(status_code=400, detail="Team already in contest")
+#             if team in contest.teams:
+#                 raise HTTPException(status_code=400, detail="Team already in contest")
 
-            contest.teams.append(team)
-        session.commit()
-        return True
+#             contest.teams.append(team)
+#         session.commit()
+#         return True
     
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+#     except SQLAlchemyError as e:
+#         session.rollback()
+#         raise HTTPException(status_code=500, detail="Database error: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         session.rollback()
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def remove_teams(id: int, team_ids: List[int], session: Session) -> bool:
-    """
-    Remove team from contest
+# def remove_teams(id: int, team_ids: List[int], session: Session) -> bool:
+#     """
+#     Remove team from contest
 
-    Args:
-        id: int
-        team_id: int
+#     Args:
+#         id: int
+#         team_id: int
 
-    Returns:
-        bool: removed
-    """
+#     Returns:
+#         bool: removed
+#     """
 
-    try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
+#     try:
+#         contest: Contest = get_object_by_id(Contest, session, id)
+#         if not contest:
+#             raise HTTPException(status_code=404, detail="Contest not found")
         
-        for team_id in team_ids:
-            team: Team = get_object_by_id(Team, session, team_id)
+#         for team_id in team_ids:
+#             team: Team = get_object_by_id(Team, session, team_id)
 
-            if not team:
-                raise HTTPException(status_code=404, detail="Team not found")
+#             if not team:
+#                 raise HTTPException(status_code=404, detail="Team not found")
 
-            if team not in contest.teams:
-                raise HTTPException(status_code=404, detail="Team not found in contest")
+#             if team not in contest.teams:
+#                 raise HTTPException(status_code=404, detail="Team not found in contest")
 
-            contest.teams.remove(team)
-        session.commit()
-        return True
+#             contest.teams.remove(team)
+#         session.commit()
+#         return True
     
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+#     except SQLAlchemyError as e:
+#         session.rollback()
+#         raise HTTPException(status_code=500, detail="Database error: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         session.rollback()
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def list_teams(id: int, session: Session) -> ListResponse:
-    """
-    List teams in a contest
+# def list_teams(id: int, session: Session) -> ListResponse:
+#     """
+#     List teams in a contest
 
-    Args:
-        id: int
+#     Args:
+#         id: int
 
-    Returns:
-        ListResponse: teams
-    """
+#     Returns:
+#         ListResponse: teams
+#     """
 
-    try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
+#     try:
+#         contest: Contest = get_object_by_id(Contest, session, id)
+#         if not contest:
+#             raise HTTPException(status_code=404, detail="Contest not found")
         
-        return {"data": [ContestTeamDTO.model_validate(obj=team) for team in contest.teams], "count": len(contest.teams)}
+#         return {"data": [ContestTeamDTO.model_validate(obj=team) for team in contest.teams], "count": len(contest.teams)}
     
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+#     except SQLAlchemyError as e:
+#         raise HTTPException(status_code=500, detail="Database error: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 #endregion
 

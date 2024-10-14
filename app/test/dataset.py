@@ -596,7 +596,42 @@ try:
         )
 
         # submission_test_cases
-        # TODO: here
+        test_case_s1 = SubmissionTestCase(
+            id = 1,
+            number = 1,
+            notes = "Test notes",
+            memory = 235,
+            time = 750,
+            result_id = 3,
+            submission_id = 4
+        )
+        test_case_s2 = SubmissionTestCase(
+            id = 2,
+            number = 1,
+            notes = "Test notes",
+            memory = 410,
+            time = 667,
+            result_id = 5,
+            submission_id = 3
+        )
+        test_case_s3 = SubmissionTestCase(
+            id = 3,
+            number = 1,
+            notes = "Test notes",
+            memory = 150,
+            time = 320,
+            result_id = 4,
+            submission_id = 2
+        )
+        test_case_s4 = SubmissionTestCase(
+            id = 4,
+            number = 1,
+            notes = "Test notes",
+            memory = 98,
+            time = 191,
+            result_id = 1,
+            submission_id = 1
+        )
 
         print("\nAll instances have been created")
         print("All instantances have been connected with each other\n")
