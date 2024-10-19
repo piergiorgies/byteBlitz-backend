@@ -13,7 +13,7 @@ services:
     ports:
       - "${DATABASE_PORT}:5432"
     networks:
-      - postgres
+      - byteblitz
     restart: unless-stopped
   
   pgadmin:
@@ -29,11 +29,24 @@ services:
     ports:
       - "15432:80"
     networks:
-      - postgres
+      - byteblitz
     restart: unless-stopped
 
+  app:
+    container_name: byteblitz-backend
+    build: .
+    ports:
+      - "9000:9000"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - byteblitz
+    command: python main.py
+
 networks:
-  postgres:
+  byteblitz:
     driver: bridge
 
 volumes:

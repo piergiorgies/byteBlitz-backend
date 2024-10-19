@@ -1,0 +1,8 @@
+.env.example
+README.md
+.gitignore
+useful_commands.md
+/brunoApi
+.vscode
+.venv
+.git
