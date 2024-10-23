@@ -19,5 +19,3 @@ class JudgeChecker:
         if judge:
             return True
         raise HTTPException(status_code=403, detail="You do not have permission to perform this action")
-
-        
