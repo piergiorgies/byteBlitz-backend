@@ -13,23 +13,26 @@ def cli():
 def migrate():
     """ Create the database if it doesn't exist and create all tables """
     db_name = settings.DATABASE_NAME
-
-    if not database_exists(engine.url):
-        create_database(engine.url)
-        click.echo(f"Database {db_name} created successfully")
-    else:
-        click.echo(f"Database {db_name} already exists")
-
-    click.echo("Creating tables...")
+    try:
+        if not database_exists(engine.url):
+            create_database(engine.url)
+            click.echo(f"Database {db_name} created successfully")
+        else:
+            click.echo(f"Database {db_name} already exists")
     
-    # run the alembic migrations
-    from alembic.config import Config
-    from alembic import command
+        click.echo("Creating tables...")
+        
+        # run the alembic migrations
+        from alembic.config import Config
+        from alembic import command
+    
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+    
+        click.echo("Tables created successfully")
 
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
-
-    click.echo("Tables created successfully")
+    except Exception as e:
+        click.echo(f"Error: {e}")
 
 @cli.command
 def load_data():
