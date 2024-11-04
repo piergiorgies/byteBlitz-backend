@@ -412,15 +412,14 @@ try:
         ]
         session.add_all(problem_constraints)
 
-        # problem_test_cases FIXME: input_name and output_name must be exchanged with input and output
-        # TODO: here --> input + output
+        # problem_test_cases
         problem_test_cases : List[ProblemTestCase] = [
             ProblemTestCase(
                 id = 1,
                 number = 1,
                 notes = "Test notes",
-                # input = "todo",
-                # output = "todo",
+                input = "a" * 10000,
+                output = "24",
                 points = 0,
                 is_pretest = True,
                 problem_id = 2
@@ -429,8 +428,8 @@ try:
                 id = 2,
                 number = 2,
                 notes = "Test notes",
-                # input = "todo",
-                # output = "todo",
+                input = "((()||((/))/))",
+                output = "(()())",
                 points = 20,
                 is_pretest = False,
                 problem_id = 2
@@ -439,8 +438,8 @@ try:
                 id = 3,
                 number = 3,
                 notes = "Test notes",
-                # input = "todo",
-                # output = "todo",
+                input = "bcc - Brixia Coding Challenge",
+                output = "|^_^|",
                 points = 10,
                 is_pretest = False,
                 problem_id = 2
@@ -449,8 +448,8 @@ try:
                 id = 4,
                 number = 1,
                 notes = "Test notes",
-                # input = "todo",
-                # output = "todo",
+                input = "1, 3, 5, 7, 9",
+                output = "11",
                 points = 0,
                 is_pretest = True,
                 problem_id = 4
@@ -459,8 +458,8 @@ try:
                 id = 5,
                 number = 2,
                 notes = "Test notes",
-                # input = "todo",
-                # output = "todo",
+                input = "phoenixInput",
+                output = "phoenixOutput",
                 points = 50,
                 is_pretest = False,
                 problem_id = 4
