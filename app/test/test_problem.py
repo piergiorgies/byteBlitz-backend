@@ -125,23 +125,20 @@ def test_read_problem():
 # POST create_problem
 def test_create_problem():
     # authentication
-    json = {"id": 10, "name": "JavaMaxxing", "description": "Motty needs to maximize his java skill.", "points": 0, "is_public": True, "author_id": 1}
+    json = {"name": "JavaMaxxing", "description": "Motty needs to maximize his java skills.", "points": 0, "is_public": True, "author_id": 1}
     response = requests.post(url=url, headers=user_headers, json=json)
     assert response.status_code == 403
 
     response = requests.post(url=url, headers=admin_headers, json=json)
-    if response.status_code == 201:
-        assert True
-        requests.delete(url=url + '10/', headers=admin_headers)
-    else:
-        assert response.status_code
-    # maybe with try except?
-
-
+    assert response.status_code == 201
     
     # base_functionalities
-    response = requests.get(url=url + '10/', headers=admin_headers)
     # code_checks
+    json = {"name": "JavaMaxxing", "description": "Motty needs to maximize his java skills.", "points": 0, "is_public": True, "author_id": 1}
+    response = requests.post(url=url, headers=admin_headers, json=json)
+    assert response.status_code == 409
+
+    
     # edge_cases
 
 # DELETE delete_problem
