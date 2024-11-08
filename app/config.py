@@ -4,6 +4,8 @@ import json
 
 class Settings(BaseSettings):
 
+    APP_NAME: str
+
     DATABASE_NAME: str
     DATABASE_USER: str
     DATABASE_PASSWORD: str
@@ -19,6 +21,10 @@ class Settings(BaseSettings):
     RABBITMQ_PORT: int
     RABBITMQ_USER: str
     RABBITMQ_PASS: str
+
+    LOG_LEVEL: str
+    LOGGER_URL: str
+    CONSOLE_LOG: bool
 
     model_config = SettingsConfigDict(env_file=".env")
     
@@ -75,6 +81,7 @@ class RabbitMQConnection:
             print(f'Error while sending the message to the queue: {ex}')
 
 settings = Settings()
+
 rabbitmq_connection = RabbitMQConnection(
     settings.RABBITMQ_HOST, 
     settings.RABBITMQ_PORT, 
