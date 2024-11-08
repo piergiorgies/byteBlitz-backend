@@ -63,8 +63,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         request_id_context.set(request_id)
 
         logger = get_logger()
-        logger = logging.LoggerAdapter(logger, extra={"request_id": request_id})
-        
+
         logger.info(f"Request {request.method} {request.url}")
 
         response = await call_next(request)
