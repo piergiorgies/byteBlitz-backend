@@ -2,7 +2,7 @@ import uuid
 import json
 import logging
 from logging_loki import LokiQueueHandler
-from queue import Queue
+from multiprocessing import Queue
 from contextvars import ContextVar
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import StreamingResponse
@@ -41,6 +41,7 @@ class LokiLogger:
         )
 
         logging.getLogger("urllib3").setLevel(logging.WARNING)
+        logging.getLogger("pika").setLevel(logging.WARNING)
 
         self.logger = logging.getLogger(self.name)
 
