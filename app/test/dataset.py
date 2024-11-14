@@ -92,12 +92,12 @@ try:
             SubmissionResult(
                 id = 2,
                 code = 2,
-                description = "Time limit exceded"
+                description = "Time limit exceeded"
             ),
             SubmissionResult(
                 id = 3,
                 code = 3,
-                description = "Memory limit exceded"
+                description = "Memory limit exceeded"
             ),
             SubmissionResult(
                 id = 4,
