@@ -18,6 +18,19 @@ class ContestDTO(BaseRequest):
     start_datetime: datetime
     end_datetime: datetime
 
+class ContestScoreboardDTO(BaseRequest):
+    """
+    Contest Scoreboard DTO
+
+    Attributes:
+        userteams (list[str]): oredered scoreboard rows
+        problems (list[str]): ordered scoreboard columns
+        scores (list[list[int]]): scores of each user/team for each problem (scoreboard cells)
+    """
+    userteams : list[str]
+    problems : list[str]
+    scores : list[list[int]]
+
 class ContestUserDTO(BaseRequest):
     """
     Contest User DTO
@@ -25,6 +38,7 @@ class ContestUserDTO(BaseRequest):
     Attributes:
         contest_id (int): The id of the contest
         user_id (int): The id of the user
+        score (int): The score of a user
     """
     id : int | None = 0
     username: str
@@ -53,3 +67,14 @@ class ContestProblemDTO(BaseRequest):
     id : int
     title: str | None = None
     publication_delay: int | None = 0
+
+class ContestSubmissionDTO(BaseRequest):
+    """
+    Contest Submission DTO
+
+    Attributes:
+        contest_id (int): The id of the contest
+        submission_id (int): The id of the submission
+    """
+    id : int
+    submission_id : int
