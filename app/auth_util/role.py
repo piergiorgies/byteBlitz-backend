@@ -1,6 +1,10 @@
 from enum import IntFlag
 
 class Role(IntFlag):
-    ADMIN = 1
-    USER = 1 << 1
-    GUEST = 1 << 2
+    GUEST = 0
+    USER = 1
+    PROBLEM_MAINTAINER = 2
+    CONTEST_MAINTAINER = 4
+    USER_MAINTAINER = 8
+    ADMIN = 127
+    JUDGE = 128
