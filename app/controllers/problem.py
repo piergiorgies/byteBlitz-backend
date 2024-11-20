@@ -602,7 +602,7 @@ def get_versions(session: Session):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def get_problem_info(id: int, body: JudgeDTO, session: Session):
+def get_problem_info(id: int, session: Session):
     """
     Get the problem configuration
     

@@ -345,7 +345,7 @@ async def get_problem_versions(session=Depends(get_session)):
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 @judge_router.post("/problems/config/{id}", summary="Get the problem configuration", dependencies=[Depends(JudgeChecker())])
-async def get_problem_config(id: int, body: JudgeDTO = Body(), session=Depends(get_session)):
+async def get_problem_config(id: int, session=Depends(get_session)):
     """
     Get the problem configuration
     
@@ -355,7 +355,7 @@ async def get_problem_config(id: int, body: JudgeDTO = Body(), session=Depends(g
 
     try:
         # get the problem configuration
-        problem = get_problem_info(id, body, session)
+        problem = get_problem_info(id, session)
         return problem
     
     except HTTPException as e:
