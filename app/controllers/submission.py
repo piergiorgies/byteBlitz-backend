@@ -22,7 +22,7 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
     """
 
     try:        
-        language: Language = session.query(Language).filter(Language.name == submission_dto.language_id).first()
+        language: Language = session.query(Language).filter(Language.id == submission_dto.language_id).first()
         _validate_submission(submission_dto, session, user)
         
         # create the submission
@@ -55,7 +55,7 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
         }
         # send the submission to the queue
         submission_dto.id = submission.id
-        rabbitmq_connection.try_send_to_queue('submissions', submission_dto.model_dump_json())
+        rabbitmq_connection.try_send_to_queue('submissions', body)
 
         return True
     
@@ -75,7 +75,7 @@ def _validate_submission(submission_dto: SubmissionDTO, session: Session, user: 
         raise HTTPException(status_code=400, detail="Problem not found")
     
     # check if the language exists
-    language: Language = session.query(Language).filter(Language.name == submission_dto.language_id).first()
+    language: Language = session.query(Language).filter(Language.id == submission_dto.language_id).first()
     if not language:
         raise HTTPException(status_code=400, detail="Language not found")
     
