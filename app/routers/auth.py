@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
+from app.auth_util.role import Role
 from app.models import UserSignupDTO, UserLoginDTO, Token
 from app.controllers.auth import signup as signup_controller, login as login_controller
 from app.database import get_session
@@ -77,7 +78,7 @@ async def login(body: UserLoginDTO = Body(), session = Depends(get_session)):
 #         JSONResponse: response
 #     """
 
-@router.get("/test", summary="Test", response_description="Test", dependencies=[Depends(RoleChecker(["admin"]))])
+@router.get("/test", summary="Test", response_description="Test", dependencies=[Depends(RoleChecker([Role.ADMIN]))])
 async def test():
     """
     Test

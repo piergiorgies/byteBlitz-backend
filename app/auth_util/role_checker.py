@@ -14,3 +14,7 @@ class RoleChecker:
             if user.user_type.permissions & required_role == required_role:    
                 return True
         raise HTTPException(status_code=403, detail="You do not have permission to perform this action")
+    
+    @staticmethod
+    def hasRole(user: User, required_role: Role) -> bool:
+        return (user.user_type.permissions & required_role) == required_role
