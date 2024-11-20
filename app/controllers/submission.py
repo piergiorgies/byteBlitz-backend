@@ -47,6 +47,12 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
 
         session.commit()
 
+        body = {
+            'code' : submission.submitted_code,
+            'problem_id' : submission.problem_id,
+            'language' : submission.language.name.strip(),
+            'submission_id' : submission.id
+        }
         # send the submission to the queue
         submission_dto.id = submission.id
         rabbitmq_connection.try_send_to_queue('submissions', submission_dto.model_dump_json())
