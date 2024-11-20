@@ -65,7 +65,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         logger = get_logger()
 
-        logger.info(f"Request {request.method} {request.url}")
+        logger.debug(f"Request {request.method} {request.url}")
 
         response = await call_next(request)
 
@@ -79,7 +79,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                     response_text = response_body.decode("utf-8")
                     response_json = json.loads(response_text)
 
-                    if response.status_code >= 400:
+                    if response.status_code >= 500:
                         logger.critical(f"Response error with status code {response.status_code}: {response_json}")
 
                 except json.JSONDecodeError:
