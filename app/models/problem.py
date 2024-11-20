@@ -35,6 +35,8 @@ class ProblemTestCaseDTO(BaseRequest):
     notes : str | None = None
     input_name : str
     output_name : str
+    input: str
+    output: str
     points : int
     is_pretest : bool | None = False
 
@@ -53,3 +55,48 @@ class ProblemConstraintDTO(BaseRequest):
     language_id : int = None
     memory_limit : int
     time_limit : int
+
+class ConstraintDTO(BaseRequest):
+    """
+    Languages DTO
+
+    Attributes:
+        id (int): The id of the language
+        name (str): The name of the language
+        version (str): The version of the language
+    """
+    language_id : int
+    memory_limit : int
+    time_limit : int
+
+class TestCaseDTO(BaseRequest):
+    """
+    Test Case DTO
+
+    Attributes:
+        id (int): The id of the test case
+        input_name (str): The name of the input file for the test case
+        output_name (str): The name of the output file with the expected results
+        points (int): The amount of points given for solving this test case
+        is_pretest (bool): If the test case is a pre-test or not
+    """
+    number : int
+    points : int
+    is_pretest : bool
+    input_name : str
+    output_name : str
+    input: str
+    output: str
+
+class ProblemJudgeDTO(BaseRequest):
+    """
+    Problem Judge DTO
+
+    Attributes:
+        problem_id (int): The id of the problem
+        judge_id (int): The id of the judge
+    """
+    id : int
+    config_version_number: int
+    constraints: list[ConstraintDTO]
+    test_cases: list[TestCaseDTO]
