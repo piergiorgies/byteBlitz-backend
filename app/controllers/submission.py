@@ -115,9 +115,13 @@ def accept(submission_id: int, submission_test_case: SubmissionTestCaseDTO, sess
         
         result: SubmissionResult = get_object_by_id(SubmissionResult, session, submission_test_case.result_id)
 
+        if not result:
+            raise HTTPException(status_code=400, detail="Result not found")
+
         submission_test_case = SubmissionTestCase(
             submission=submission,
             result=result,
+            result_id=submission_test_case.result_id,
             number=submission_test_case.number,
             notes=submission_test_case.notes,
             memory=submission_test_case.memory,
@@ -147,6 +151,8 @@ def save_total(submission_id: int, result: SubmissionResult, session: Session):
         submission_result: SubmissionResult = get_object_by_id(SubmissionResult, session, result.result_id)
         if not submission_result:
             raise HTTPException(status_code=400, detail="Result not found")
+        
+        test_submissions = submission.test_cases
         
         submission.result = submission_result
 

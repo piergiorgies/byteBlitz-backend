@@ -6,7 +6,7 @@ from app.controllers.submission import create, accept, save_total
 
 from app.models import SubmissionDTO, SubmissionTestCaseDTO, ResultDTO
 from app.database import get_session
-from app.auth_util.role_checker import RoleChecker
+from app.auth_util.role_checker import RoleChecker, JudgeChecker
 from app.auth_util.jwt import get_current_user
 
 router = APIRouter(
@@ -38,7 +38,7 @@ async def submit_solution(submission: SubmissionDTO = Body(), session = Depends(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@router.post("/{id}", summary="Accept the result of a submission", dependencies=[Depends(RoleChecker(["judge"]))])
+@router.post("/{id}", summary="Accept the result of a submission", dependencies=[Depends(JudgeChecker())])
 async def accept_submission(id: int, body: SubmissionTestCaseDTO = Body(), session = Depends(get_session)):
     """
     Accept the result of a submission
@@ -62,8 +62,8 @@ async def accept_submission(id: int, body: SubmissionTestCaseDTO = Body(), sessi
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
     
-@router.post("/{id}/total", summary="Get the total score of a submission", dependencies=[Depends(RoleChecker(["judge"]))])
-async def save_total(id: int, result_id: ResultDTO = Body(), session = Depends(get_session)):
+@router.post("/{id}/total", summary="Get the total score of a submission", dependencies=[Depends(JudgeChecker())])
+async def save_total_result(id: int, result_id: ResultDTO = Body(), session = Depends(get_session)):
     """
     Get the total test case of a submission
 
