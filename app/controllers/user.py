@@ -1,8 +1,11 @@
+from operator import is_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
 
+from app.auth_util.role import Role
+from app.auth_util.role_checker import RoleChecker
 from app.database import QueryBuilder, get_object_by_id
 from app.models import ListResponse, User, UserDTO, UserLoginDTO, UserPermissionsDTO
 from app.controllers.auth import _hash_password
@@ -47,8 +50,9 @@ def read(id: int, current_user: User, session: Session) -> UserDTO:
     """
     
     try:
+        is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
         user: User = get_object_by_id(User, session, id)
-        if not user or user.id != current_user.id:
+        if not user or (not is_admin_maintainer and user.id != current_user.id):
             raise HTTPException(status_code=404, detail="User not found")
         
         return UserDTO.model_validate(obj=user)
@@ -99,8 +103,9 @@ def delete(id: int, current_user: User, session: Session) -> bool:
     
     """
     try:
-        user : User = get_object_by_id(User, session, id)
-        if not user or user.id != current_user.id:
+        is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
+        user: User = get_object_by_id(User, session, id)
+        if not user or (not is_admin_maintainer and user.id != current_user.id):
             raise HTTPException(status_code=404, detail="User not found")
         
         session.delete(user)
@@ -129,8 +134,9 @@ def update_data(id: int, updated_user: UserLoginDTO, current_user: User, session
     """
 
     try:
-        user : User = get_object_by_id(User, session, id)
-        if not user or user.id != current_user.id:
+        is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
+        user: User = get_object_by_id(User, session, id)
+        if not user or (not is_admin_maintainer and user.id != current_user.id):
             raise HTTPException(status_code=404, detail="User not found")
         username_check : User = session.query(User).filter(User.username == updated_user.username).one_or_none()
         if username_check and username_check.id != id:

@@ -33,6 +33,21 @@ async def list_users(pagination : dict = Depends(pagination_params),  user=Depen
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
+@router.get("/me", response_model=UserDTO, summary="Get the logged user", dependencies=[Depends(RoleChecker([Role.USER]))])
+async def read_user_me(current_user=Depends(get_current_user), session=Depends(get_session)):
+    """
+    Get the logged user
+    """
+
+    try:
+        user: UserDTO = read_me(current_user, session)
+        return user
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
 @router.get("/{id}", response_model=UserDTO, summary="Get user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
 async def read_user(id: int, current_user=Depends(get_current_user), session=Depends(get_session)):
     """
@@ -51,21 +66,6 @@ async def read_user(id: int, current_user=Depends(get_current_user), session=Dep
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-@router.get("/me", response_model=UserDTO, summary="Get the logged user", dependencies=[Depends(RoleChecker([Role.USER]))])
-async def read_user_me(current_user=Depends(get_current_user), session=Depends(get_session)):
-    """
-    Get the logged user
-    """
-
-    try:
-        user: UserDTO = read_me(current_user, session)
-        return user
-
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
 @router.delete("/{id}", summary="Delete a user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
 async def delete_user(id: int, user=Depends(get_current_user), session=Depends(get_session)):
     """
