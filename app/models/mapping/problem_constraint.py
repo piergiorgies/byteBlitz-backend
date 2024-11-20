@@ -15,3 +15,7 @@ class ProblemConstraint(Base):
     # connected fields
     problem: Mapped['Problem'] = relationship('Problem', back_populates='constraints')
     language: Mapped['Language'] = relationship('Language', back_populates='constraints')
+
+    @property
+    def language_name(self) -> str:
+        return self.language.name
