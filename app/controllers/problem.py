@@ -29,10 +29,10 @@ def list(limit : int, offset : int, user: User, session: Session) -> ListRespons
         if is_user: 
             query = query.filter(Problem.is_public == True)
 
+        count = query.count()
         query = query.limit(limit).offset(offset)
 
-        problems : List[Problem] = query.all();
-        count = query.count();
+        problems : List[Problem] = query.all()
 
         return {"data": [ProblemDTO.model_validate(obj=obj) for obj in problems], "count": count}
     
@@ -602,7 +602,7 @@ def get_versions(session: Session):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def get_problem_info(id: int, body: JudgeDTO, session: Session):
+def get_problem_info(id: int, session: Session):
     """
     Get the problem configuration
     

@@ -65,7 +65,7 @@ class ConstraintDTO(BaseRequest):
         name (str): The name of the language
         version (str): The version of the language
     """
-    language_id : int
+    language_name : str
     memory_limit : int
     time_limit : int
 
