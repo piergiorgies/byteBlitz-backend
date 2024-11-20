@@ -29,10 +29,10 @@ def list(limit : int, offset : int, user: User, session: Session) -> ListRespons
         if is_user: 
             query = query.filter(Problem.is_public == True)
 
+        count = query.count()
         query = query.limit(limit).offset(offset)
 
-        problems : List[Problem] = query.all();
-        count = query.count();
+        problems : List[Problem] = query.all()
 
         return {"data": [ProblemDTO.model_validate(obj=obj) for obj in problems], "count": count}
     
