@@ -17,7 +17,7 @@ class SubmissionDTO(BaseRequest):
     contest_id: int | None = None
     problem_id: int
     user_id: int | None = 0
-    language_id: int
+    language_id: str
     submitted_code: str
 
 class SubmissionTestCaseDTO(BaseRequest):

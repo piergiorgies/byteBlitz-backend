@@ -7,4 +7,4 @@ class Role(IntFlag):
     CONTEST_MAINTAINER = 4  # 00000100
     USER_MAINTAINER = 8     # 00001000
     ADMIN = 127             # 01111111
-    JUDGE = 128             # 10000000
+  # JUDGE = 128             # 10000000
