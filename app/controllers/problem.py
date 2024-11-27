@@ -368,8 +368,8 @@ def update_test_case(problem_id: int, test_case_update: ProblemTestCaseDTO, sess
         test_case_points = test_case_update.points if not test_case_update.is_pretest else 0
 
         test_case.notes = test_case_update.notes
-        test_case.input_name = test_case_update.input_name
-        test_case.output_name = test_case_update.output_name
+        test_case.input = test_case_update.input
+        test_case.output = test_case_update.output
         test_case.points = test_case_points
         test_case.is_pretest = test_case_update.is_pretest
 

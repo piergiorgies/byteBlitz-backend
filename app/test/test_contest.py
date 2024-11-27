@@ -1,6 +1,6 @@
 import pytest
 import requests
-from mock import admin_headers, user_headers, base_url
+from app.test.mock import admin_headers, user_headers, base_url
 
 url = base_url + 'contests/'
 
