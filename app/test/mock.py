@@ -18,14 +18,14 @@ def _create_access_token(data: dict = None, expires_delta: timedelta = None):
     
     return jwt.encode(to_encode, key=SECRET_KEY, algorithm=ALGORITHM)
 
-def get_tokens(user_id, username, user_type):
+def get_tokens(user_id, username, user_permissions):
     # Generate access token
     access_token_expire = timedelta(minutes=60)
 
     data = {
         "user_id": user_id,
         "sub": username,
-        "user_type": user_type
+        "user_permissions": user_permissions
     }
 
     access_token = _create_access_token(data=data, expires_delta=access_token_expire)

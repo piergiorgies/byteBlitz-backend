@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Response
 from fastapi.responses import JSONResponse
 from app.auth_util.role import Role
 from app.models import UserSignupDTO, UserLoginDTO, Token
@@ -40,7 +40,7 @@ async def signup(body: UserSignupDTO = Body(), session = Depends(get_session)) -
         )
     
 @router.post("/login", summary="Login", response_description="User logged in", response_model=Token)
-async def login(body: UserLoginDTO = Body(), session = Depends(get_session)):
+async def login(response: Response, body: UserLoginDTO = Body(), session = Depends(get_session)):
     """
     Login a user
 
@@ -53,6 +53,7 @@ async def login(body: UserLoginDTO = Body(), session = Depends(get_session)):
 
     try:
         token: Token = login_controller(body, session)
+        response.set_cookie('byteblitz_token', token['access_token'], httponly=True)
         return token
         
     except HTTPException as http_exc:
