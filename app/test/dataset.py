@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import List
-from lorem_text import lorem
+# from lorem_text import lorem
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -27,7 +27,7 @@ try:
         for table in reversed(metadata.sorted_tables):
             if (table.name not in EXCLUDED_TABLES):
                 print(table) #TODO: delete
-                #session.execute(table.delete())
+                # session.execute(table.truncate())
         print("\nAll tables have been cleared\n")
 
         # Create data and bonds between tables
@@ -86,27 +86,27 @@ try:
         submission_results : List[SubmissionResult] = [
             SubmissionResult(
                 id = 1,
-                code = 1,
+                code = 'AC',
                 description = "Accepted"
             ),
             SubmissionResult(
                 id = 2,
-                code = 2,
+                code = 'TLE',
                 description = "Time limit exceded"
             ),
             SubmissionResult(
                 id = 3,
-                code = 3,
+                code = 'MLE',
                 description = "Memory limit exceded"
             ),
             SubmissionResult(
                 id = 4,
-                code = 4,
+                code = 'WA',
                 description = "Wrong answer"
             ),
             SubmissionResult(
                 id = 5,
-                code = 5,
+                code = 'CE',
                 description = "Compilation error"
             )
         ]
