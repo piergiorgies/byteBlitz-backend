@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import List
-# from lorem_text import lorem
+from lorem_text import lorem
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
