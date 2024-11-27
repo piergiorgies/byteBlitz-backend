@@ -1,15 +1,13 @@
 from app.config import settings
 from app.models import User
-from app.models.base_dto import Token
 from app.database import get_session
 
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, Query, WebSocket, status, Depends
 from typing import Annotated
 from sqlalchemy.orm import Session
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -86,4 +84,24 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Ses
 
     except HTTPException as e:
         raise e
+    
+def get_judge(data: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
+    try:
+        if data == '' or not ':' in data:
+            return None
+        else:
+            name, hashed = data.split(':')
+            judge: User = session.query(User).filter(User.username == name, User.password_hash == hashed).first()
+            return judge
+        
+    except HTTPException as e:
+        raise e
 
+def get_websocket_user(_: WebSocket, token: Annotated[str | None, Query()], session: Session = Depends(get_session)):
+    id, username = decode_token(token)
+    user: User = session.query(User).filter(User.id == id, User.username == username).first()
+
+    if user is None:
+        raise credentials_exception
+
+    return user
