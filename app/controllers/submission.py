@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import json
 
 from app.database import get_object_by_id, get_object_by_id_joined_with
-from app.models import SubmissionDTO, Submission, User, Problem, Language, Contest, ContestSubmission, SubmissionTestCase
+from app.models import SubmissionDTO, Submission, User, Problem, Language, Contest, ContestSubmission, SubmissionTestCase, ContestProblem
 from app.models import ContestSubmission, SubmissionTestCase, SubmissionTestCaseDTO, SubmissionResult
 from app.config import rabbitmq_connection
 
@@ -20,7 +20,7 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
     Returns:
         created (bool): Whether the submission was created
     """
-
+    
     try:        
         language: Language = session.query(Language).filter(Language.id == submission_dto.language_id).first()
         _validate_submission(submission_dto, session, user)
@@ -92,6 +92,11 @@ def _validate_submission(submission_dto: SubmissionDTO, session: Session, user: 
         # check if the problem is in the contest
         if contest.problems and problem not in contest.problems:
             raise HTTPException(status_code=400, detail="Problem not in contest")
+        
+        # check if problem has been published
+        contest_problem : ContestProblem = session.query(ContestProblem).filter(ContestProblem.contest_id == contest.id, ContestProblem.problem_id == problem.id).first()
+        if not contest_problem or contest_problem.publication_delay > (datetime.now() - Contest.start_datetime).total_seconds() / 60:
+            raise HTTPException(status_code=400, detail="Problem not published yet")
         
         # check if the user is in the contest
         if contest.users and user not in contest.users:

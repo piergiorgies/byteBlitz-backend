@@ -29,7 +29,7 @@ def _create_access_token(data: dict = None, expires_delta: timedelta = None):
     
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-def get_tokens(user_id, username, user_type):
+def get_tokens(user_id, username, user_permissions):
     # Generate access token
     access_token_expire = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expire = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
@@ -37,7 +37,7 @@ def get_tokens(user_id, username, user_type):
     data = {
         "user_id": user_id,
         "sub": username,
-        "user_type": user_type
+        "user_permissions": user_permissions
     }
 
     access_token = _create_access_token(data=data, expires_delta=access_token_expire)
@@ -53,7 +53,7 @@ def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
         
         user_id = payload.get("user_id")
         username = payload.get("sub")
-        role = payload.get("user_type")
+        role = payload.get("user_permissions")
 
         if not user_id or not username or not role:
             raise credentials_exception

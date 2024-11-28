@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
 
+from app.auth_util.role import Role
 from app.auth_util.role_checker import RoleChecker
 from app.auth_util.jwt import get_current_user
-from app.controllers.user import list, read, delete, update_data, update_permissions
+from app.controllers.user import list, read, read_me, delete, update_data, update_permissions
 from app.models.params import pagination_params
 from app.models import ListResponse, UserDTO, UserLoginDTO, UserPermissionsDTO
 
@@ -14,7 +15,7 @@ router = APIRouter(
     prefix="/users"
 )
 
-@router.get("/", response_model=ListResponse, summary="List users", dependencies=[Depends(RoleChecker(["admin"]))])
+@router.get("/", response_model=ListResponse, summary="List users", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
 async def list_users(pagination : dict = Depends(pagination_params),  user=Depends(get_current_user), session=Depends(get_session)):
     """
     List users
@@ -32,7 +33,22 @@ async def list_users(pagination : dict = Depends(pagination_params),  user=Depen
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.get("/{id}", response_model=UserDTO, summary="Get user by id", dependencies=[Depends(RoleChecker(["admin"]))])
+@router.get("/me", response_model=UserDTO, summary="Get the logged user", dependencies=[Depends(RoleChecker([Role.USER]))])
+async def read_user_me(current_user=Depends(get_current_user), session=Depends(get_session)):
+    """
+    Get the logged user
+    """
+
+    try:
+        user: UserDTO = read_me(current_user, session)
+        return user
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+@router.get("/{id}", response_model=UserDTO, summary="Get user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
 async def read_user(id: int, current_user=Depends(get_current_user), session=Depends(get_session)):
     """
     Get user by id
@@ -49,8 +65,8 @@ async def read_user(id: int, current_user=Depends(get_current_user), session=Dep
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-@router.delete("/{id}", summary="Delete a user by id", dependencies=[Depends(RoleChecker(["admin"]))])
+    
+@router.delete("/{id}", summary="Delete a user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
 async def delete_user(id: int, user=Depends(get_current_user), session=Depends(get_session)):
     """
     Delete user by id
@@ -72,7 +88,7 @@ async def delete_user(id: int, user=Depends(get_current_user), session=Depends(g
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.patch("/{id}/data", summary= "Update username and/or password of a user by id", dependencies=[Depends(RoleChecker(["admin"]))])
+@router.patch("/{id}/data", summary= "Update username and/or password of a user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
 async def update_user_data(id: int, updated_user: UserLoginDTO = Body(), current_user=Depends(get_current_user), session=Depends(get_session)):
     """
     Update username and/or password of a user by id
@@ -94,7 +110,7 @@ async def update_user_data(id: int, updated_user: UserLoginDTO = Body(), current
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.patch("/{id}/permissions", summary= "Update permissions of a user by id", dependencies=[Depends(RoleChecker(["admin"]))])
+@router.patch("/{id}/permissions", summary= "Update permissions of a user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
 async def update_user_permissions(id: int, updated_user: UserPermissionsDTO = Body(), current_user=Depends(get_current_user), session=Depends(get_session)):
     """
     Update permissions of user by id

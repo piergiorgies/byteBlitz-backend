@@ -3,6 +3,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
 
+from app.auth_util.role import Role
+from app.auth_util.role_checker import RoleChecker
 from app.database import get_object_by_id, get_object_by_id_joined_with
 from app.models import ListResponse, User, Problem, ProblemTestCase, ProblemConstraint, Language, JudgeDTO
 from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO, TestCaseDTO, ConstraintDTO, ProblemJudgeDTO
@@ -24,9 +26,9 @@ def list(limit : int, offset : int, user: User, session: Session) -> ListRespons
     """
 
     try:
-        is_user = user.user_type.code == "user"
+        is_admin_maintainer = RoleChecker.hasRole(user, Role.PROBLEM_MAINTAINER)
         query = session.query(Problem)
-        if is_user: 
+        if not is_admin_maintainer: 
             query = query.filter(Problem.is_public == True)
 
         count = query.count()
@@ -61,8 +63,8 @@ def read(id: int, user: User, session: Session) -> ProblemDTO:
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
         
-        is_user = user.user_type.code == "user"
-        if is_user and not problem.is_public:
+        is_admin_maintainer = RoleChecker.hasRole(user, Role.PROBLEM_MAINTAINER)
+        if not is_admin_maintainer and not problem.is_public:
             raise HTTPException(status_code=404, detail="Problem not found")
 
         return ProblemDTO.model_validate(obj=problem)
@@ -389,7 +391,7 @@ def update_test_case(problem_id: int, test_case_update: ProblemTestCaseDTO, sess
 
 #region Problem Constraints
 
-def list_constraints(problem_id: int, session: Session) -> ListResponse:
+def list_constraints(problem_id: int, user: User, session: Session) -> ListResponse:
     """
    List all constraints for a specific problem
     
@@ -403,8 +405,10 @@ def list_constraints(problem_id: int, session: Session) -> ListResponse:
 
     try:
         problem : Problem = get_object_by_id(Problem, session, problem_id)
-        if not problem:
+        is_admin_maintainer = RoleChecker.hasRole(user, Role.PROBLEM_MAINTAINER)
+        if not problem or (not is_admin_maintainer and not problem.is_public):
             raise HTTPException(status_code=404, detail="Problem not found")
+        
         query = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id)
         constraints : List[ProblemConstraint] = query.all()
         count : int = query.count()
@@ -417,7 +421,7 @@ def list_constraints(problem_id: int, session: Session) -> ListResponse:
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def read_constraint(problem_id: int, language_id: int, session: Session) -> ProblemConstraintDTO:
+def read_constraint(problem_id: int, language_id: int, user: User, session: Session) -> ProblemConstraintDTO:
     """
     Get constraint by id
 
@@ -432,8 +436,10 @@ def read_constraint(problem_id: int, language_id: int, session: Session) -> Prob
     
     try:
         problem : Problem = get_object_by_id(Problem, session, problem_id)
-        if not problem:
+        is_admin_maintainer = RoleChecker.hasRole(user, Role.PROBLEM_MAINTAINER)
+        if not problem or (not is_admin_maintainer and not problem.is_public):
             raise HTTPException(status_code=404, detail="Problem not found")
+        
         constraint : ProblemConstraint = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id,
                                                              ProblemConstraint.language_id == language_id).first()
         if not constraint:
