@@ -1,6 +1,6 @@
 from .mapping import *
 from .base_dto import UserSignupDTO, UserLoginDTO, Token, ListResponse, IdListDTO, JudgeDTO
-from .contest import ContestDTO, ContestUserDTO, ContestTeamDTO, ContestProblemDTO
+from .contest import ContestDTO, ContestUserDTO, ContestTeamDTO, ContestProblemDTO, ContestScoreboardDTO, ContestSubmissionDTO
 from .submission import SubmissionDTO, SubmissionTestCaseDTO, ResultDTO
 from .problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
 from .user import UserDTO, UserPermissionsDTO

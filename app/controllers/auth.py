@@ -8,7 +8,7 @@ from app.models import UserSignupDTO, UserLoginDTO
 from app.models import User, UserType
 from app.auth_util.jwt import get_tokens
 
-def _hash_password(password: str, salt: str):
+def _hash_password(password: str, salt: str = None):
     if not salt:
         salt = os.urandom(32)
     key = sha256(salt + password.encode()).hexdigest()
@@ -29,7 +29,7 @@ def signup(userDTO: UserSignupDTO, session: Session):
         if not user_type:
             raise HTTPException(status_code=500, detail="User type not found in the database")
 
-        password_hash, salt = _hash_password(password=userDTO.password, salt=None)
+        password_hash, salt = _hash_password(password=userDTO.password)
 
         user = User(username=userDTO.username, email=userDTO.email, password_hash=password_hash, salt=salt, user_type_id=user_type.id)
 

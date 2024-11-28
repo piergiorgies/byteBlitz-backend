@@ -35,12 +35,12 @@ def get_tokens(user_id, username, user_permissions):
     }
 
 admin_headers = {
-    'Authorization': 'Bearer ' + get_tokens(3, 'admin', 'admin')["access_token"],
+    'Authorization': 'Bearer ' + get_tokens(2, 'admin', 'admin')["access_token"],
     'Content-Type': 'application/json'
 }
 
 user_headers = {
-    'Authorization': 'Bearer ' + get_tokens(4, 'user', 'user')["access_token"],
+    'Authorization': 'Bearer ' + get_tokens(3, 'user', 'user')["access_token"],
     'Content-Type': 'application/json'
 }
 

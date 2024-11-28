@@ -56,3 +56,11 @@ You can now start the application (without debug) with
 `python main.py`
 
 See if it works correctly by open http://127.0.0.1:9000/docs (this page is the integrated documentation od the api)
+
+## Tests
+
+If you want to test the application don't forget to run the following command in order to load the test dataset into your local instance of the database:
+
+`python -m app.test.dataset`
+
+**ATTENTION!** This operation will dump all your data from the database, so make sure not to run this unless you are completely sure about what you are about to do.
