@@ -51,7 +51,7 @@ def create(contest: ContestDTO, session: Session) -> ContestDTO:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def list(limit : int, offset : int, user : User, session : Session) -> ListResponse:
+def list(limit : int, offset : int, searchFilter: str, user : User, session : Session) -> ListResponse:
     """
     List contests
     
@@ -79,6 +79,8 @@ def list(limit : int, offset : int, user : User, session : Session) -> ListRespo
             else:
                 query = query.filter(Contest.end_datetime <= datetime.now())
 
+        if searchFilter:
+            query = query.filter(Contest.name.ilike(f"%{searchFilter}%"))
         count = query.count()
         query = query.limit(limit).offset(offset)
         contests : List[Contest] = query.all()

@@ -54,7 +54,7 @@ async def list_contests(pagination : dict = Depends(pagination_params), user = D
     """
 
     try:
-        contests = list(pagination["limit"], pagination["offset"], user, session)
+        contests = list(pagination["limit"], pagination["offset"], pagination["search"], user, session)
         return contests
     
     except HTTPException as e:

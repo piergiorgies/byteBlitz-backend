@@ -11,7 +11,7 @@ from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraint
 
 #region Problem
 
-def list(limit : int, offset : int, user: User, session: Session) -> ListResponse:
+def list(limit : int, offset : int, searchFilter: str, user: User, session: Session) -> ListResponse:
     """
     List problems according to visibility
     
@@ -31,6 +31,9 @@ def list(limit : int, offset : int, user: User, session: Session) -> ListRespons
         if not is_admin_maintainer: 
             query = query.filter(Problem.is_public == True)
 
+        if searchFilter:
+            query = query.filter(Problem.title.ilike(f"%{searchFilter}%"))
+            
         count = query.count()
         query = query.limit(limit).offset(offset)
 
