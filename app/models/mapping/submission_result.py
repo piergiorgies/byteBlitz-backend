@@ -8,7 +8,7 @@ class SubmissionResult(Base):
     __tablename__ = 'submission_results'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
-    code: Mapped[int] = mapped_column(Integer, nullable=False)
+    code: Mapped[int] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
 
     # connected fields
