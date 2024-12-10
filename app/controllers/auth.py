@@ -59,7 +59,7 @@ def login(userDTO: UserLoginDTO, session: Session):
         if password_hash != userMap.password_hash:
             raise HTTPException(status_code=401, detail="Invalid password")
 
-        return get_tokens(userMap.id, userMap.username, userMap.user_type.code)
+        return get_tokens(userMap.id, userMap.username, userMap.user_type.permissions)
     
     except SQLAlchemyError as e:
         session.rollback()
