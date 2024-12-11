@@ -7,7 +7,7 @@ import json
 from app.database import get_object_by_id, get_object_by_id_joined_with
 from app.models import SubmissionDTO, Submission, User, Problem, Language, Contest, ContestSubmission, SubmissionTestCase, ContestProblem
 from app.models import ContestSubmission, SubmissionTestCase, SubmissionTestCaseDTO, SubmissionResult
-from app.config import rabbitmq_connection
+from app.connections.rabbitmq import rabbitmq_connection
 
 def create(submission_dto: SubmissionDTO, session: Session, user: User):
     """

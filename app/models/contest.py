@@ -35,7 +35,7 @@ class ContestUserDTO(BaseRequest):
     """
     Contest User DTO
 
-    Attributes:
+    Attributes: 
         contest_id (int): The id of the contest
         user_id (int): The id of the user
         score (int): The score of a user
