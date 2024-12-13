@@ -15,6 +15,7 @@ class User(Base):
     salt: Mapped[str] = mapped_column(String, nullable=False)
     registered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
     user_type_id: Mapped[int] = mapped_column(Integer, FK('user_types.id'), nullable=False)
+    deletion_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     # connected fields
     user_type: Mapped['UserType'] = relationship('UserType', back_populates='users')

@@ -31,7 +31,7 @@ def signup(userDTO: UserSignupDTO, session: Session):
 
         password_hash, salt = _hash_password(password=userDTO.password)
 
-        user = User(username=userDTO.username, email=userDTO.email, password_hash=password_hash, salt=salt, user_type_id=user_type.id)
+        user = User(username=userDTO.username, email=userDTO.email, password_hash=password_hash, salt=salt, user_type_id=user_type.id, deletion_date=None)
 
         session.add(user)
         session.commit()
@@ -50,6 +50,9 @@ def signup(userDTO: UserSignupDTO, session: Session):
 def login(userDTO: UserLoginDTO, session: Session):
     try:
         userMap = session.query(User).filter(User.username == userDTO.username).one_or_none()
+
+        if userMap.deletion_date is not None:
+            raise HTTPException(status_code=404, detail="User not found")
 
         if not userMap:
             raise HTTPException(status_code=404, detail="User not found")
