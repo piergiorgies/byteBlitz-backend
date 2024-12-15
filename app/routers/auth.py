@@ -67,7 +67,37 @@ async def login(response: Response, body: UserLoginDTO = Body(), session = Depen
             status_code=500,
             content={"detail": "An unexpected error occurred", "error": str(e)}
         )
+
+@router.get("/logout", summary="Logout", response_description="User logged out")
+def logout(response: Response) -> JSONResponse:
+    """
+    Logout a user clearing the cookies
     
+    Returns:
+        JSONResponse: response
+    """
+
+    # response.delete_cookie('token', httponly=True)
+    try:
+        response.delete_cookie('token', httponly=True)
+        return JSONResponse(
+            status_code=200,
+            content={"detail": "Logout successful"},
+            headers=response.headers
+        )
+        
+    except HTTPException as http_exc:
+        # Handle known HTTP exceptions raised within the controller
+        return JSONResponse(
+            status_code=http_exc.status_code,
+            content={"detail": http_exc.detail}
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "An unexpected error occurred", "error": str(e)}
+        )
+
 # @router.post("/refresh", summary="Refresh token", response_description="Token refreshed", response_model=Token)
 # async def refresh_token(token):
 
