@@ -4,12 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.logger import LoggingMiddleware, get_logger
 from app.routers import auth, contest, problem, submission, user, general
+from app.config import settings
 
 app = FastAPI(title="ByteBlitz", description="API for ByteBlitz", version="0.1")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.APP_DOMAIN],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True

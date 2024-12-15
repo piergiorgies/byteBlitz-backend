@@ -53,7 +53,7 @@ async def login(response: Response, body: UserLoginDTO = Body(), session = Depen
 
     try:
         token: Token = login_controller(body, session)
-        response.set_cookie('byteblitz_token', token['access_token'], httponly=True)
+        response.set_cookie('token', token['access_token'], httponly=True)
         return token
         
     except HTTPException as http_exc:

@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     LOGGER_URL: str
     CONSOLE_LOG: bool
 
+    APP_DOMAIN: str
+
     model_config = SettingsConfigDict(env_file=".env")
     
     @property
