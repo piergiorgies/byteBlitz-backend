@@ -1,17 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
 
-from app.auth_util.role import Role
+from app.models.role import Role
 from app.auth_util.role_checker import RoleChecker, JudgeChecker
 from app.auth_util.jwt import get_current_user
 from app.controllers.problem import list, read, create, delete, update
 from app.controllers.problem import list_test_cases, read_test_case, create_test_case, delete_test_cases, update_test_case
 from app.controllers.problem import list_constraints, read_constraint, create_constraint, delete_constraints, update_constraint
-from app.controllers.problem import get_versions, get_problem_info
 from app.models.params import pagination_params
 
 from app.database import get_session
-from app.models import ListResponse, IdListDTO, ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO, JudgeDTO
+from app.models import ListResponse, IdListDTO, ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
 
 router = APIRouter(
     tags=["Problems"],
@@ -316,48 +315,6 @@ async def update_problem_constraint(id: int, constraint: ProblemConstraintDTO = 
     try:
         updated = update_constraint(id, constraint, session)
         return JSONResponse(status_code=200, content={"message": "Problem constraint updated"})
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-#endregion
-
-#region Judge
-judge_router = APIRouter(
-    tags=["Judge"],
-)
-
-@judge_router.get("/problem_versions", summary="Get the problem versions", dependencies=[Depends(JudgeChecker())])
-async def get_problem_versions(session=Depends(get_session)):
-    """
-    Get the problem versions
-    """
-
-    try:
-        # get the problem versions
-        problems = get_versions(session)
-        return problems
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-@judge_router.post("/problems/config/{id}", summary="Get the problem configuration", dependencies=[Depends(JudgeChecker())])
-async def get_problem_config(id: int, session=Depends(get_session)):
-    """
-    Get the problem configuration
-    
-    Args:
-        id: int
-    """
-
-    try:
-        # get the problem configuration
-        problem = get_problem_info(id, session)
-        return problem
     
     except HTTPException as e:
         raise e

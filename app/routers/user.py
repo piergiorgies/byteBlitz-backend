@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
 
-from app.auth_util.role import Role
+from app.models.role import Role
 from app.auth_util.role_checker import RoleChecker
 from app.auth_util.jwt import get_current_user
 from app.controllers.user import list, read, read_me, delete, update_data, update_permissions

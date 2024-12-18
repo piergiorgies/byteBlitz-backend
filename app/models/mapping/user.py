@@ -6,6 +6,18 @@ from typing import List
 from . import *
 
 class User(Base):
+    """
+    Attributes:
+
+        id (int): The id of the user
+        username (str): The username of the user
+        email (str): The email of the user
+        password_hash (str): The password hash of the user
+        salt (str): The salt of the user
+        registered_at (datetime): The date and time of the registration
+        user_type_id (int) : The id of the the user type
+        deletion_date (datetime): The date and time of the deletion
+    """
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)

@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
 
-from app.auth_util.role import Role
+from app.models.role import Role
 from app.auth_util.role_checker import RoleChecker
 from app.database import QueryBuilder, get_object_by_id
 from app.models import ContestDTO, ContestScoreboardDTO, Contest, ListResponse
