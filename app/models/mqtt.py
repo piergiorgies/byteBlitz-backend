@@ -20,4 +20,13 @@ class ScoreboardDTO(BaseRequest):
 
     """
     classifica: list[Row]
+    
+class NotificationDTO(BaseRequest):
+    """
+    Notification DTO
+
+    Attributes:
+        message (str): The message of the notification
+    """
+    message: str
 

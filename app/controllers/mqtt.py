@@ -1,14 +1,29 @@
 import json
 import random
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.connections.mqtt import MQTTClient
 from app.database import get_session
 from app.controllers.contest import get_scoreboard
-from app.models.mqtt import Row, ScoreboardDTO
+from app.models.mqtt import Row, ScoreboardDTO, NotificationDTO
 
 
+def notification(mqtt_client: MQTTClient, contest_id: int, message: str):
+    session_generator = get_session()
+    session: Session = next(session_generator)
 
+    # Ottieni l'ora corrente nel formato HH:MM
+    current_time = datetime.now().strftime("%H:%M")
+    
+    # Crea il dizionario con il formato desiderato
+    notification_data = {'n': message, 't': current_time}
+    
+    # Converti il dizionario in JSON
+    dto_json = json.dumps(notification_data)
+    
+    print(dto_json)
+    mqtt_client.publish("notificaBerna", dto_json)
 
 def scoreboard(mqtt_client: MQTTClient, contest_id: int):
     session_generator = get_session()
@@ -25,6 +40,7 @@ def scoreboard(mqtt_client: MQTTClient, contest_id: int):
     rows.sort(key=lambda row: row.p, reverse=True)
 
     scoreboard_dto = ScoreboardDTO(classifica=rows)
+    
 
     # Convert to JSON
     dto_json = json.dumps(scoreboard_dto.model_dump())
