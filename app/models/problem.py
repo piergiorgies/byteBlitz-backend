@@ -18,6 +18,7 @@ class ProblemDTO(BaseRequest):
     description : str | None = None
     points : int
     is_public : bool | None
+    constraints : list["ProblemConstraintDTO"] | None = None
 
 class ProblemTestCaseDTO(BaseRequest):
     """
@@ -33,10 +34,8 @@ class ProblemTestCaseDTO(BaseRequest):
     """
     id : int = None
     notes : str | None = None
-    input_name : str
-    output_name : str
-    input: str
-    output: str
+    input : str
+    output : str
     points : int
     is_pretest : bool | None = False
 
@@ -53,6 +52,7 @@ class ProblemConstraintDTO(BaseRequest):
     """
     problem_id : int = None
     language_id : int = None
+    language_name : str = None
     memory_limit : int
     time_limit : int
 
@@ -65,7 +65,7 @@ class ConstraintDTO(BaseRequest):
         name (str): The name of the language
         version (str): The version of the language
     """
-    language_id : int
+    language_name : str
     memory_limit : int
     time_limit : int
 

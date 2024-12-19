@@ -1,13 +1,14 @@
+from operator import is_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
 
+from app.models.role import Role
+from app.auth_util.role_checker import RoleChecker
 from app.database import QueryBuilder, get_object_by_id
 from app.models import ListResponse, User, UserDTO, UserLoginDTO, UserPermissionsDTO
 from app.controllers.auth import _hash_password
-
-#TODO: aggiungere controlli di user type (cosa può fare per esempio uno user sul suo stesso account)
 
 def list(limit : int, offset : int, user: User, session: Session) -> ListResponse:
     """
@@ -22,7 +23,7 @@ def list(limit : int, offset : int, user: User, session: Session) -> ListRespons
     Returns:
         [ListResponse]: list of users
     """
-    #TODO: show password hash or not ?? join user_type_id with code ??
+    
     try:
         builder = QueryBuilder(User, session, limit, offset)
         users: List[User] = builder.getQuery().all()
@@ -49,7 +50,33 @@ def read(id: int, current_user: User, session: Session) -> UserDTO:
     """
     
     try:
+        is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
         user: User = get_object_by_id(User, session, id)
+        if not user or (not is_admin_maintainer and user.id != current_user.id):
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return UserDTO.model_validate(obj=user)
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+def read_me(current_user: User, session: Session) -> UserDTO:
+    """
+    Read the information of the logged user
+    
+    Args: 
+        session (Session):
+    
+    Returns:
+        UserDTO: user
+    """
+    
+    try:
+        user: User = get_object_by_id(User, session, current_user.id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
@@ -61,7 +88,8 @@ def read(id: int, current_user: User, session: Session) -> UserDTO:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
+
+
 def delete(id: int, current_user: User, session: Session) -> bool:
     """
     Delete user by id
@@ -75,8 +103,9 @@ def delete(id: int, current_user: User, session: Session) -> bool:
     
     """
     try:
-        user : User = get_object_by_id(User, session, id)
-        if not user:
+        is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
+        user: User = get_object_by_id(User, session, id)
+        if not user or (not is_admin_maintainer and user.id != current_user.id):
             raise HTTPException(status_code=404, detail="User not found")
         
         session.delete(user)
@@ -105,8 +134,9 @@ def update_data(id: int, updated_user: UserLoginDTO, current_user: User, session
     """
 
     try:
-        user : User = get_object_by_id(User, session, id)
-        if not user:
+        is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
+        user: User = get_object_by_id(User, session, id)
+        if not user or (not is_admin_maintainer and user.id != current_user.id):
             raise HTTPException(status_code=404, detail="User not found")
         username_check : User = session.query(User).filter(User.username == updated_user.username).one_or_none()
         if username_check and username_check.id != id:

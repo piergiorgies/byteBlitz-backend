@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Response
 from fastapi.responses import JSONResponse
+from app.models.role import Role
 from app.models import UserSignupDTO, UserLoginDTO, Token
 from app.controllers.auth import signup as signup_controller, login as login_controller
 from app.database import get_session
@@ -39,7 +40,7 @@ async def signup(body: UserSignupDTO = Body(), session = Depends(get_session)) -
         )
     
 @router.post("/login", summary="Login", response_description="User logged in", response_model=Token)
-async def login(body: UserLoginDTO = Body(), session = Depends(get_session)):
+async def login(response: Response, body: UserLoginDTO = Body(), session = Depends(get_session)):
     """
     Login a user
 
@@ -52,6 +53,7 @@ async def login(body: UserLoginDTO = Body(), session = Depends(get_session)):
 
     try:
         token: Token = login_controller(body, session)
+        response.set_cookie('token', token['access_token'], httponly=True)
         return token
         
     except HTTPException as http_exc:
@@ -65,7 +67,37 @@ async def login(body: UserLoginDTO = Body(), session = Depends(get_session)):
             status_code=500,
             content={"detail": "An unexpected error occurred", "error": str(e)}
         )
+
+@router.get("/logout", summary="Logout", response_description="User logged out")
+def logout(response: Response) -> JSONResponse:
+    """
+    Logout a user clearing the cookies
     
+    Returns:
+        JSONResponse: response
+    """
+
+    # response.delete_cookie('token', httponly=True)
+    try:
+        response.delete_cookie('token', httponly=True)
+        return JSONResponse(
+            status_code=200,
+            content={"detail": "Logout successful"},
+            headers=response.headers
+        )
+        
+    except HTTPException as http_exc:
+        # Handle known HTTP exceptions raised within the controller
+        return JSONResponse(
+            status_code=http_exc.status_code,
+            content={"detail": http_exc.detail}
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "An unexpected error occurred", "error": str(e)}
+        )
+
 # @router.post("/refresh", summary="Refresh token", response_description="Token refreshed", response_model=Token)
 # async def refresh_token(token):
 
@@ -77,7 +109,7 @@ async def login(body: UserLoginDTO = Body(), session = Depends(get_session)):
 #         JSONResponse: response
 #     """
 
-@router.get("/test", summary="Test", response_description="Test", dependencies=[Depends(RoleChecker(["admin"]))])
+@router.get("/test", summary="Test", response_description="Test", dependencies=[Depends(RoleChecker([Role.ADMIN]))])
 async def test():
     """
     Test

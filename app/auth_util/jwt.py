@@ -1,15 +1,13 @@
 from app.config import settings
 from app.models import User
-from app.models.base_dto import Token
 from app.database import get_session
 
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, Query, WebSocket, status, Depends
 from typing import Annotated
 from sqlalchemy.orm import Session
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -31,7 +29,7 @@ def _create_access_token(data: dict = None, expires_delta: timedelta = None):
     
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-def get_tokens(user_id, username, user_type):
+def get_tokens(user_id, username, user_permissions):
     # Generate access token
     access_token_expire = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expire = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
@@ -39,7 +37,7 @@ def get_tokens(user_id, username, user_type):
     data = {
         "user_id": user_id,
         "sub": username,
-        "user_type": user_type
+        "user_permissions": user_permissions
     }
 
     access_token = _create_access_token(data=data, expires_delta=access_token_expire)
@@ -55,7 +53,7 @@ def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
         
         user_id = payload.get("user_id")
         username = payload.get("sub")
-        role = payload.get("user_type")
+        role = payload.get("user_permissions")
 
         if not user_id or not username or not role:
             raise credentials_exception
@@ -98,3 +96,12 @@ def get_judge(data: Annotated[str, Depends(oauth2_scheme)], session: Session = D
         
     except HTTPException as e:
         raise e
+
+def get_websocket_user(_: WebSocket, token: Annotated[str | None, Query()], session: Session = Depends(get_session)):
+    id, username = decode_token(token)
+    user: User = session.query(User).filter(User.id == id, User.username == username).first()
+
+    if user is None:
+        raise credentials_exception
+
+    return user

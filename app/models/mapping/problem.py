@@ -21,10 +21,10 @@ class Problem(Base):
 
     # connected fields
     author: Mapped['User'] = relationship('User', back_populates='created_problems')
-    constraints: Mapped[List['ProblemConstraint']] = relationship('ProblemConstraint', back_populates='problem')
-    test_cases: Mapped[List['ProblemTestCase']] = relationship('ProblemTestCase', back_populates='problem')
-    contests: Mapped[List['Contest']] = relationship('Contest', secondary='contest_problems', back_populates='problems')
-    submissions: Mapped[List['Submission']] = relationship('Submission', back_populates='problem')
+    constraints: Mapped[List['ProblemConstraint']] = relationship('ProblemConstraint', back_populates='problem', cascade='all, delete', passive_deletes=True)
+    test_cases: Mapped[List['ProblemTestCase']] = relationship('ProblemTestCase', back_populates='problem', cascade='all, delete', passive_deletes=True)
+    submissions: Mapped[List['Submission']] = relationship('Submission', back_populates='problem', cascade='all, delete', passive_deletes=True)
+    contests: Mapped[List['Contest']] = relationship('Contest', secondary='contest_problems', back_populates='problems', cascade='all, delete', passive_deletes=True)
 
     def increment_version_number(self):
         self.config_version_number += 1
