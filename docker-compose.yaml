@@ -87,8 +87,7 @@ services:
       - byteblitz
 
 networks:
-  backend:
-  bridge:
+  byteblitz:
     driver: bridge
 
 volumes:
