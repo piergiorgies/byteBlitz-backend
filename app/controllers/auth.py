@@ -1,5 +1,3 @@
-import os
-from hashlib import sha256
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -8,14 +6,8 @@ from app.models import UserSignupDTO, UserLoginDTO
 from app.models import User, UserType
 from app.models.role import Role
 from app.auth_util.jwt import get_tokens
-
-
-def _hash_password(password: str, salt: str = None):
-    if not salt:
-        salt = os.urandom(32)
-    key = sha256(salt + password.encode()).hexdigest()
-    return key, salt.hex()
-    
+from app.auth_util.pwd_util import _hash_password
+  
 def signup(userDTO: UserSignupDTO, session: Session):
     try:
         user = session.query(User).filter(
@@ -74,13 +66,3 @@ def login(userDTO: UserLoginDTO, session: Session):
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-
-# def refresh_token(token: str):
-#     try:
-#         user_type = get_user_by_token(token)
-
-#     except Exception as e:
-#         raise HTTPException(status_code=401, detail="Invalid token")
-
-#     return get_tokens(user_type)

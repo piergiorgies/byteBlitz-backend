@@ -177,8 +177,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_submission_test_cases_id'), 'submission_test_cases', ['id'], unique=False)
-    
-    op.execute("INSERT INTO user_types (code, description, permissions) VALUES ('user', 'User', 0)");
     # ### end Alembic commands ###
 
 

@@ -309,8 +309,6 @@ def create_test_case(problem_id: int, problemTestCaseDTO: ProblemTestCaseDTO, se
         problemTestCase = ProblemTestCase(
             number=test_case_number,
             notes=problemTestCaseDTO.notes,
-            input_name=problemTestCaseDTO.input_name,
-            output_name=problemTestCaseDTO.output_name,
             input=problemTestCaseDTO.input,
             output=problemTestCaseDTO.output,
             points=test_case_points,
