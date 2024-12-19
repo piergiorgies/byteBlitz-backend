@@ -89,7 +89,7 @@ def get_judges(limit : int, offset : int, searchFilter: str, session: Session) -
             status = False
             if judge.registered_at > datetime.now() - timedelta(minutes=30):
                 status = True
-            dto.append(JudgeDTO(name=judge.username, status=status, last_connection=judge.registered_at))
+            dto.append(JudgeDTO(id=judge.id, name=judge.username, status=status, last_connection=judge.registered_at))
         
         return dto
 

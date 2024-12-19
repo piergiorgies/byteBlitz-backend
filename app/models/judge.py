@@ -23,6 +23,7 @@ class JudgeDTO(BaseRequest):
         key (str): hashed password
 
     """
+    id: int
     name: str
     last_connection: datetime
     status: bool
