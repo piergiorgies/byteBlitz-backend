@@ -3,10 +3,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
 
-from app.auth_util.role import Role
+from app.models.role import Role
 from app.auth_util.role_checker import RoleChecker
 from app.database import get_object_by_id, get_object_by_id_joined_with
-from app.models import ListResponse, User, Problem, ProblemTestCase, ProblemConstraint, Language, JudgeDTO
+from app.models import ListResponse, User, Problem, ProblemTestCase, ProblemConstraint, Language
 from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO, TestCaseDTO, ConstraintDTO, ProblemJudgeDTO
 
 #region Problem
@@ -188,6 +188,33 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
         raise e
     except Exception as e:
         session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+def list_available_languages(session: Session) -> ListResponse:
+    """
+    List problems according to visibility
+    
+    Args:
+        limit (int):
+        offset (int):
+        user (User):
+        session (Session):
+    
+    Returns:
+        [ListResponse]: list of problems
+    """
+
+    try:
+        query = session.query(Language)
+        languages : List[Language] = query.all()
+
+        return languages
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 #endregion
@@ -584,58 +611,5 @@ def update_constraint(problem_id: int, constraint_update: ProblemConstraintDTO, 
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-#endregion
-
-#regiorn Judge
-
-def get_versions(session: Session):
-    """
-    Get the problem versions
-    """
-
-    try:
-        problems = session.query(Problem).where(Problem.is_public == True).all()
-        response = {}
-        for problem in problems:
-            response[problem.id] = problem.config_version_number
-
-        return response
-         
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def get_problem_info(id: int, session: Session):
-    """
-    Get the problem configuration
-    
-    Args:
-        id: int
-    """
-
-    try:
-        problem: Problem = get_object_by_id_joined_with(Problem, session, id, [Problem.constraints])
-
-        if not problem or not problem.is_public:
-            raise HTTPException(status_code=404, detail="Problem not found")
-
-        # serialize the problem
-        problem_dto = ProblemJudgeDTO.model_validate(obj=problem)
-        problem_dto.constraints = [ConstraintDTO.model_validate(obj=constraint) for constraint in problem.constraints]
-        problem_dto.test_cases = [TestCaseDTO.model_validate(obj=test_case) for test_case in problem.test_cases]
-
-        return problem_dto
-    
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
 
 #endregion

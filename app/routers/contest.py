@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from typing import List
 
 from app.auth_util.jwt import get_current_user
-from app.auth_util.role import Role
+from app.models.role import Role
 from app.controllers.contest import create, list, read, delete, update
 from app.controllers.contest import get_scoreboard
 from app.controllers.contest import add_users, remove_users, list_users

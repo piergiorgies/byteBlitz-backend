@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from app.models import UserSignupDTO, UserLoginDTO
 from app.models import User, UserType
+from app.models.role import Role
 from app.auth_util.jwt import get_tokens
 from app.auth_util.pwd_util import _hash_password
   
@@ -16,7 +17,7 @@ def signup(userDTO: UserSignupDTO, session: Session):
         if user:
             raise HTTPException(status_code=409, detail="Email or username already exists")
 
-        user_type = session.query(UserType).filter(UserType.code == "user").one_or_none()
+        user_type = session.query(UserType).filter(UserType.permissions == Role.USER).one_or_none()
 
         # Assuming user_type should always be present in the database
         if not user_type:
@@ -24,7 +25,7 @@ def signup(userDTO: UserSignupDTO, session: Session):
 
         password_hash, salt = _hash_password(password=userDTO.password)
 
-        user = User(username=userDTO.username, email=userDTO.email, password_hash=password_hash, salt=salt, user_type_id=user_type.id)
+        user = User(username=userDTO.username, email=userDTO.email, password_hash=password_hash, salt=salt, user_type_id=user_type.id, deletion_date=None)
 
         session.add(user)
         session.commit()
@@ -43,6 +44,9 @@ def signup(userDTO: UserSignupDTO, session: Session):
 def login(userDTO: UserLoginDTO, session: Session):
     try:
         userMap = session.query(User).filter(User.username == userDTO.username).one_or_none()
+
+        if userMap.deletion_date is not None:
+            raise HTTPException(status_code=404, detail="User not found")
 
         if not userMap:
             raise HTTPException(status_code=404, detail="User not found")
