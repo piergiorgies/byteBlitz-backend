@@ -6,7 +6,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from app.models import UserSignupDTO, UserLoginDTO
 from app.models import User, UserType
+from app.models.role import Role
 from app.auth_util.jwt import get_tokens
+
 
 def _hash_password(password: str, salt: str = None):
     if not salt:
@@ -23,7 +25,7 @@ def signup(userDTO: UserSignupDTO, session: Session):
         if user:
             raise HTTPException(status_code=409, detail="Email or username already exists")
 
-        user_type = session.query(UserType).filter(UserType.code == "user").one_or_none()
+        user_type = session.query(UserType).filter(UserType.permissions == Role.USER).one_or_none()
 
         # Assuming user_type should always be present in the database
         if not user_type:

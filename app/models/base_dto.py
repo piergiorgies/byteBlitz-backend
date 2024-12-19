@@ -72,16 +72,3 @@ class IdListDTO(BaseRequest):
 
     """
     ids: list[int]
-
-@dataclass
-class JudgeDTO(BaseRequest):
-    """
-    Judge DTO
-
-    Attributes
-        name (str): The name of the judge
-        key (str): hashed password
-
-    """
-    name: str
-    key: str
