@@ -7,5 +7,5 @@ from . import *
 class ContestSubmission(Base):
     __tablename__ = 'contest_submissions'
 
-    contest_id : Mapped[int] = mapped_column(Integer, FK('contests.id'), nullable=False, primary_key=True)
-    submission_id : Mapped[int] = mapped_column(Integer, FK('submissions.id'), nullable=False, primary_key=True)
+    contest_id : Mapped[int] = mapped_column(Integer, FK('contests.id', ondelete='cascade'), nullable=False, primary_key=True)
+    submission_id : Mapped[int] = mapped_column(Integer, FK('submissions.id', ondelete='cascade'), nullable=False, primary_key=True)
