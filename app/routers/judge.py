@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from app.auth_util.role_checker import JudgeChecker, RoleChecker
 from app.database import get_session
-from app.controllers.judge import get_versions, get_problem_info, get_judges, create_judge
+from app.controllers.judge import get_versions, get_problem_info, get_judges, create_judge, delete_judge
 from app.models.params import pagination_params
 from app.models.role import Role
 from app.models.judge import JudgeCreateDTO
@@ -72,6 +72,24 @@ async def create(judge: JudgeCreateDTO, session=Depends(get_session)):
         # create the judge
         response, status_code = create_judge(judge, session)
         return JSONResponse(status_code=status_code, content=response)
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+@router.delete("/judges/{id}", summary="Delete a judge", dependencies=[Depends(RoleChecker(Role.ADMIN))])
+async def delete(id: int, session=Depends(get_session)):
+    """
+    Delete a judge
+    
+    Args:
+        id: int
+    """
+    try:
+        # delete the judge
+        delete_judge(id, session)
+        return JSONResponse(status_code=200, content={"message": "Judge deleted successfully"})
     
     except HTTPException as e:
         raise e

@@ -133,4 +133,29 @@ def create_judge(judge: JudgeCreateDTO, session: Session):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
+def delete_judge(id: int, session: Session):
+    """
+    Delete a judge
+    
+    Args:
+        id: int
+    """
+    try:
+        # get the judge
+        judge = session.query(User).where(User.id == id).one_or_none()
+
+        if not judge:
+            raise HTTPException(status_code=404, detail="Judge not found")
+
+        # delete the judge
+        session.delete(judge)
+        session.commit()
+        
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 #endregion
