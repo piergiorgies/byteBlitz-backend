@@ -190,6 +190,33 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
+def list_available_languages(session: Session) -> ListResponse:
+    """
+    List problems according to visibility
+    
+    Args:
+        limit (int):
+        offset (int):
+        user (User):
+        session (Session):
+    
+    Returns:
+        [ListResponse]: list of problems
+    """
+
+    try:
+        query = session.query(Language)
+        languages : List[Language] = query.all()
+
+        return languages
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
 #endregion
 
 #region Problem Test Cases

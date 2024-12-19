@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from app.models.role import Role
 from app.auth_util.role_checker import RoleChecker, JudgeChecker
 from app.auth_util.jwt import get_current_user
-from app.controllers.problem import list, read, create, delete, update
+from app.controllers.problem import list, list_available_languages, read, create, delete, update
 from app.controllers.problem import list_test_cases, read_test_case, create_test_case, delete_test_cases, update_test_case
 from app.controllers.problem import list_constraints, read_constraint, create_constraint, delete_constraints, update_constraint
 from app.models.params import pagination_params
@@ -114,6 +114,24 @@ async def update_problem(id: int, problem: ProblemDTO = Body(), session=Depends(
     try:
         problem = update(id, problem, session)
         return JSONResponse(status_code=200, content={"message": "Problem update successfully"})
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+@router.get("/languages/available", summary="Get the available languages", dependencies=[Depends(RoleChecker([Role.PROBLEM_MAINTAINER]))])
+async def list_languages(session=Depends(get_session)):
+    """
+    Get all available languages
+
+    Returns:
+        JSONResponse
+    """
+
+    try:
+        languages = list_available_languages(session)
+        return languages
     
     except HTTPException as e:
         raise e
