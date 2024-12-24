@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     DATABASE_HOST: str
     DATABASE_PORT: str
 
-    SECRET_KEY: str
+    # SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_MINUTES: int
@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     CONSOLE_LOG: bool
 
     APP_DOMAIN: str
+
+    PUBLIC_KEY: str
+    PRIVATE_KEY: str
 
     model_config = SettingsConfigDict(env_file=".env")
     
@@ -83,6 +86,9 @@ class RabbitMQConnection:
             print(f'Error while sending the message to the queue: {ex}')
 
 settings = Settings()
+
+print(settings.PRIVATE_KEY)
+print(settings.PUBLIC_KEY)
 
 rabbitmq_connection = RabbitMQConnection(
     settings.RABBITMQ_HOST, 

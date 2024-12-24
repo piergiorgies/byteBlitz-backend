@@ -27,7 +27,7 @@ def _create_access_token(data: dict = None, expires_delta: timedelta = None):
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return jwt.encode(to_encode, settings.PRIVATE_KEY, algorithm=settings.ALGORITHM)
 
 def get_tokens(user_id, username, user_permissions):
     # Generate access token
@@ -49,7 +49,7 @@ def get_tokens(user_id, username, user_permissions):
 
 def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(token, settings.PUBLIC_KEY, algorithms=[settings.ALGORITHM])
         
         user_id = payload.get("user_id")
         username = payload.get("sub")
