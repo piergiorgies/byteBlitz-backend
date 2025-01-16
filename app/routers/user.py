@@ -25,7 +25,7 @@ async def list_users(pagination : dict = Depends(pagination_params),  user=Depen
     """
 
     try:
-        users = list(pagination["limit"], pagination["offset"], user, session)
+        users = list(pagination["limit"], pagination["offset"], pagination["search"], user, session)
         return users
 
     except HTTPException as e:

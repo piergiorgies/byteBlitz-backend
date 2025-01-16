@@ -3,14 +3,15 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
+from datetime import datetime
 
 from app.models.role import Role
 from app.auth_util.role_checker import RoleChecker
 from app.database import QueryBuilder, get_object_by_id
-from app.models import ListResponse, User, UserDTO, UserLoginDTO, UserPermissionsDTO
+from app.models import ListResponse, User, UserDTO, UserLoginDTO, UserPermissionsDTO, UserType
 from app.controllers.auth import _hash_password
 
-def list(limit : int, offset : int, user: User, session: Session) -> ListResponse:
+def list(limit: int, offset: int, searchFilter: str, user: User, session: Session) -> ListResponse:
     """
     List all users
     
@@ -25,9 +26,15 @@ def list(limit : int, offset : int, user: User, session: Session) -> ListRespons
     """
     
     try:
-        builder = QueryBuilder(User, session, limit, offset)
-        users: List[User] = builder.getQuery().all()
-        count = builder.getCount()
+        judge_type = session.query(UserType).filter(UserType.permissions == Role.JUDGE).one_or_none()
+        if not judge_type:
+            raise HTTPException(status_code=500, detail="Judge user type not found")
+        
+        builder = session.query(User).filter(User.deletion_date == None, User.user_type_id != judge_type.id)
+        if searchFilter:
+            builder = builder.filter(User.username.ilike(f"%{searchFilter}%"))
+        users: List[User] = builder.limit(limit).offset(offset).all()
+        count = builder.count()
         return {"data": [UserDTO.model_validate(obj=obj) for obj in users], "count": count}
 
     except SQLAlchemyError as e:
@@ -103,12 +110,13 @@ def delete(id: int, current_user: User, session: Session) -> bool:
     
     """
     try:
-        is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
+        is_admin = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
         user: User = get_object_by_id(User, session, id)
-        if not user or (not is_admin_maintainer and user.id != current_user.id):
+
+        if not user or (not is_admin and user.id != current_user.id):
             raise HTTPException(status_code=404, detail="User not found")
         
-        session.delete(user)
+        user.deletion_date = datetime.now()
         session.commit()
         return True
 
