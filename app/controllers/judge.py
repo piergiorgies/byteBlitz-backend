@@ -81,6 +81,8 @@ def get_judges(limit : int, offset : int, searchFilter: str, session: Session) -
         if searchFilter:
             query = query.filter(User.username.ilike(f"%{searchFilter}%"))
         
+        
+        count = query.count()
         judges = query.limit(limit).offset(offset).all()
 
         dto = []
@@ -91,7 +93,7 @@ def get_judges(limit : int, offset : int, searchFilter: str, session: Session) -
                 status = True
             dto.append(JudgeDTO(id=judge.id, name=judge.username, status=status, last_connection=judge.registered_at))
         
-        return dto
+        return {"data": dto, "count": count}
 
     except HTTPException as e:
         raise e
@@ -106,6 +108,11 @@ def create_judge(judge: JudgeCreateDTO, session: Session):
     try:
         # get the judge type
         judge_type = session.query(UserType).filter(UserType.permissions == Role.JUDGE).one_or_none()
+
+        existing = session.query(User).where(User.username == judge.name).one_or_none()
+
+        if existing:
+            raise HTTPException(status_code=400, detail="Judge already exists")
 
         if not judge_type:
             raise HTTPException(status_code=500, detail="Judge type not found in the database")
