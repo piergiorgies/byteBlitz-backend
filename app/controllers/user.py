@@ -197,3 +197,26 @@ def update_permissions(id: int, updated_user: UserPermissionsDTO, current_user: 
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+def available_user_types_list(session: Session) -> List[UserType]:
+    """
+    Get all user types
+    
+    Args:
+        session (Session):
+    
+    Returns:
+        List[UserType]: list of user types
+    """
+    try:
+        # exclude judge and guest user types
+        to_exclude = [Role.JUDGE, Role.GUEST]
+        user_types: List[UserType] = session.query(UserType).filter(UserType.permissions.notin_(to_exclude)).all()
+        return user_types
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))

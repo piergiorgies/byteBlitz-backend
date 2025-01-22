@@ -87,9 +87,6 @@ class RabbitMQConnection:
 
 settings = Settings()
 
-print(settings.PRIVATE_KEY)
-print(settings.PUBLIC_KEY)
-
 rabbitmq_connection = RabbitMQConnection(
     settings.RABBITMQ_HOST, 
     settings.RABBITMQ_PORT, 

@@ -5,6 +5,7 @@ from app.models import UserSignupDTO, UserLoginDTO, Token
 from app.controllers.auth import signup as signup_controller, login as login_controller
 from app.database import get_session
 from app.auth_util.role_checker import RoleChecker
+from app.auth_util.jwt import get_current_user
 
 router = APIRouter(
     tags=["Authentication"],
@@ -12,7 +13,7 @@ router = APIRouter(
 )
 
 @router.post("/signup", summary="Create a new user", response_description="User created")
-async def signup(body: UserSignupDTO = Body(), session = Depends(get_session)) -> JSONResponse:
+async def signup(body: UserSignupDTO = Body(), session = Depends(get_session), logged_user = Depends(get_current_user)) -> JSONResponse:
     """
     Create a new user
 
@@ -24,7 +25,7 @@ async def signup(body: UserSignupDTO = Body(), session = Depends(get_session)) -
     """
 
     try:
-        response, status_code = signup_controller(body, session)
+        response, status_code = signup_controller(body, session, logged_user)
         return JSONResponse(status_code=status_code, content=response)
     except HTTPException as http_exc:
         # Handle known HTTP exceptions raised within the controller

@@ -1,6 +1,7 @@
 from app.config import settings
-from app.models import User
+from app.models import User, UserType
 from app.database import get_session
+from app.models.role import Role
 
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
@@ -67,7 +68,11 @@ def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
 def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
     try:
         if token == '':
-            user: User = session.query(User).filter(User.username == 'guest').first()
+            user_type = session.query(UserType).filter(UserType.permissions == Role.GUEST).one_or_none()
+            if not user_type:
+                raise HTTPException(status_code=500, detail="Guest user type not found")
+            
+            user: User = session.query(User).filter(User.user_type_id == user_type.id).first()
 
             if user is None:
                 raise credentials_exception

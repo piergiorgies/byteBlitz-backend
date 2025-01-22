@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from app.models.role import Role
 from app.auth_util.role_checker import RoleChecker
 from app.auth_util.jwt import get_current_user
-from app.controllers.user import list, read, read_me, delete, update_data, update_permissions
+from app.controllers.user import list, read, read_me, delete, update_data, update_permissions, available_user_types_list
 from app.models.params import pagination_params
 from app.models import ListResponse, UserDTO, UserLoginDTO, UserPermissionsDTO
 
@@ -131,3 +131,19 @@ async def update_user_permissions(id: int, updated_user: UserPermissionsDTO = Bo
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+@router.get("/types/available", summary="Get available UserType", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
+async def get_user_types(session=Depends(get_session)):
+    """
+    Get available UserType
+
+    Returns:
+        List[UserType]
+    """
+    try:
+        return available_user_types_list(session)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    

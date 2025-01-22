@@ -48,6 +48,7 @@ class UserSignupDTO(BaseRequest):
     username: str
     email: str
     password: str
+    user_type_id: int | None = None
 
 @dataclass
 class ListResponse(BaseRequest):

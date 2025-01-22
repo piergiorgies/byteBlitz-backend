@@ -107,6 +107,13 @@ def loaddata():
         password_hash, salt = _hash_password(password)
         users : List[User] = [
             User(
+                username="guest",
+                email="guest@guest.com",
+                password_hash="guest",
+                salt="guest",
+                user_type_id=1
+            ),
+            User(
                 username="admin",
                 email="admin@admin.com",
                 password_hash=password_hash,
