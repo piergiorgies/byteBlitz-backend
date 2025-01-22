@@ -29,8 +29,11 @@ def list(limit: int, offset: int, searchFilter: str, user: User, session: Sessio
         judge_type = session.query(UserType).filter(UserType.permissions == Role.JUDGE).one_or_none()
         if not judge_type:
             raise HTTPException(status_code=500, detail="Judge user type not found")
+        guest_type = session.query(UserType).filter(UserType.permissions == Role.GUEST).one_or_none()
+        if not guest_type:
+            raise HTTPException(status_code=500, detail="Guest user type not found")
         
-        builder = session.query(User).filter(User.deletion_date == None, User.user_type_id != judge_type.id)
+        builder = session.query(User).filter(User.deletion_date == None, User.user_type_id != judge_type.id, User.user_type_id != guest_type.id)
         if searchFilter:
             builder = builder.filter(User.username.ilike(f"%{searchFilter}%"))
         users: List[User] = builder.limit(limit).offset(offset).all()

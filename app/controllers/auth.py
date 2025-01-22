@@ -47,9 +47,7 @@ def signup(userDTO: UserSignupDTO, session: Session, logged_user: User):
 
 def login(userDTO: UserLoginDTO, session: Session):
     try:
-        userMap = session.query(User).filter(
-            or_(User.email == userDTO.email, User.username == userDTO.username)
-        ).one_or_none()
+        userMap = session.query(User).filter(User.username == userDTO.username).one_or_none()
 
         if userMap.deletion_date is not None:
             raise HTTPException(status_code=404, detail="User not found")
