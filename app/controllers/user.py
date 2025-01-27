@@ -132,18 +132,20 @@ def delete(id: int, current_user: User, session: Session) -> bool:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def update_data(id: int, updated_user: UserLoginDTO, current_user: User, session: Session) -> UserDTO:
-    """
-    Update username and/or password by id
-    
-    Args:
-        id (int):
-        updated_user (UserLoginDTO):
-    
-    Returns:
-        user (UserDTO):
-    """
 
+
+def update(id: int, updated_user: UserDTO, current_user: User, session: Session) -> UserDTO:
+    """update user by id
+
+    Args:
+        id (int): the id of the user
+        updated_user (UserDTO): the updated user DTO
+        current_user (User): the current user
+        session (Session): session
+
+    Returns:
+        UserDTO: the updated user
+    """
     try:
         is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
         user: User = get_object_by_id(User, session, id)
@@ -153,40 +155,12 @@ def update_data(id: int, updated_user: UserLoginDTO, current_user: User, session
         if username_check and username_check.id != id:
             raise HTTPException(status_code=409, detail="Username already exists")
 
-        password_hash, _ = _hash_password(password=updated_user.password, salt=bytes.fromhex(user.salt))
+        user_type = session.query(UserType).filter(UserType.id == updated_user.user_type_id).one_or_none()
+        if not user_type:
+            raise HTTPException(status_code=404, detail="User type not found")
 
         user.username = updated_user.username
-        user.password_hash = password_hash
-
-        session.commit()
-        return UserDTO.model_validate(obj=user)
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def update_permissions(id: int, updated_user: UserPermissionsDTO, current_user: User, session: Session) -> UserDTO:
-    """
-    Update permissions of a user by id
-    
-    Args:
-        id (int):
-        updated_user (UserPermissionsDTO):
-    
-    Returns:
-        user (UserDTO):
-    """
-
-    try:
-        user : User = get_object_by_id(User, session, id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
+        user.email = updated_user.email
         user.user_type_id = updated_user.user_type_id
 
         session.commit()
@@ -200,6 +174,76 @@ def update_permissions(id: int, updated_user: UserPermissionsDTO, current_user: 
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+
+# def update_data(id: int, updated_user: UserLoginDTO, current_user: User, session: Session) -> UserDTO:
+#     """
+#     Update username and/or password by id
+    
+#     Args:
+#         id (int):
+#         updated_user (UserLoginDTO):
+    
+#     Returns:
+#         user (UserDTO):
+#     """
+
+#     try:
+#         is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
+#         user: User = get_object_by_id(User, session, id)
+#         if not user or (not is_admin_maintainer and user.id != current_user.id):
+#             raise HTTPException(status_code=404, detail="User not found")
+#         username_check : User = session.query(User).filter(User.username == updated_user.username).one_or_none()
+#         if username_check and username_check.id != id:
+#             raise HTTPException(status_code=409, detail="Username already exists")
+
+#         password_hash, _ = _hash_password(password=updated_user.password, salt=bytes.fromhex(user.salt))
+
+#         user.username = updated_user.username
+#         user.password_hash = password_hash
+
+#         session.commit()
+#         return UserDTO.model_validate(obj=user)
+    
+#     except SQLAlchemyError as e:
+#         session.rollback()
+#         raise HTTPException(status_code=500, detail="Database error: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         session.rollback()
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+# def update_permissions(id: int, updated_user: UserPermissionsDTO, current_user: User, session: Session) -> UserDTO:
+#     """
+#     Update permissions of a user by id
+    
+#     Args:
+#         id (int):
+#         updated_user (UserPermissionsDTO):
+    
+#     Returns:
+#         user (UserDTO):
+#     """
+
+#     try:
+#         user : User = get_object_by_id(User, session, id)
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+
+#         user.user_type_id = updated_user.user_type_id
+
+#         session.commit()
+#         return UserDTO.model_validate(obj=user)
+    
+#     except SQLAlchemyError as e:
+#         session.rollback()
+#         raise HTTPException(status_code=500, detail="Database error: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         session.rollback()
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 def available_user_types_list(session: Session) -> List[UserType]:
     """

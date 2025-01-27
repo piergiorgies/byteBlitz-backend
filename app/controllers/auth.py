@@ -49,12 +49,11 @@ def login(userDTO: UserLoginDTO, session: Session):
     try:
         userMap = session.query(User).filter(User.username == userDTO.username).one_or_none()
 
-        if userMap.deletion_date is not None:
-            raise HTTPException(status_code=404, detail="User not found")
-
         if not userMap:
             raise HTTPException(status_code=404, detail="User not found")
-
+        
+        if userMap.deletion_date is not None:
+            raise HTTPException(status_code=404, detail="User not found")
         password_hash, _ = _hash_password(password=userDTO.password, salt=bytes.fromhex(userMap.salt))
 
         if password_hash != userMap.password_hash:
