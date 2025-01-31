@@ -69,7 +69,7 @@ async def create_problem(problem: ProblemDTO = Body(), user=Depends(get_current_
 
     try:
         problem = create(problem, user, session)
-        return JSONResponse(status_code=201, content={"message": "Problem created successfully"})
+        return JSONResponse(status_code=201, content={"message": "Problem created successfully", "created_id": problem.id})
     
     except HTTPException as e:
         raise e
