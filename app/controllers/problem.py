@@ -65,10 +65,15 @@ def read(id: int, user: User, session: Session) -> ProblemDTO:
         problem: Problem = get_object_by_id(Problem, session, id)
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
-        
+
         is_admin_maintainer = RoleChecker.hasRole(user, Role.PROBLEM_MAINTAINER)
         if not is_admin_maintainer and not problem.is_public:
             raise HTTPException(status_code=404, detail="Problem not found")
+
+        query = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem.id)
+        constraints : List[ProblemConstraint] = query.all()
+        problem.constraints = constraints
+        print(constraints)
 
         return ProblemDTO.model_validate(obj=problem)
     
@@ -98,12 +103,21 @@ def create(problemDTO: ProblemDTO, user: User, session: Session) -> ProblemDTO:
         if problemDTO.points < 0:
             raise HTTPException(status_code=400, detail="Points cannot be negative")
 
+        constraints = []
+        for constraint in problemDTO.constraints:
+            constraints.append(ProblemConstraint(
+                language_id=constraint.language_id,
+                memory_limit=constraint.memory_limit,
+                time_limit=constraint.time_limit
+            ))
+
         problem = Problem(
             title=problemDTO.title,
             description=problemDTO.description,
             points=problemDTO.points,
             is_public=problemDTO.is_public,
-            author_id=user.id
+            author_id=user.id,
+            constraints=constraints
         )
 
         session.add(problem)
@@ -177,6 +191,20 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
         problem.is_public=problem_update.is_public
 
         problem.increment_version_number()
+
+        found = set()
+        for constraint in problem.constraints:
+            new_constraint = next((x for x in problem_update.constraints if x.language_id == constraint.language_id), None)
+            if new_constraint == None:
+                continue
+
+            found.add(new_constraint.language_id)
+            constraint.time_limit = new_constraint.time_limit
+            constraint.memory_limit = new_constraint.memory_limit
+
+        constraints_to_add = [x for x in problem_update.constraints if x.language_id not in found]
+        if len(constraints_to_add) > 0:
+            problem.constraints += constraints_to_add
 
         session.commit()
         return ProblemDTO.model_validate(obj=problem)

@@ -2,24 +2,6 @@ from numbers import Number
 from app.models.base_dto import BaseRequest
 from datetime import datetime
 
-class ProblemDTO(BaseRequest):
-    """
-    Problem DTO
-
-    Attributes:
-        id (int): The id of the problem
-        title (str): The title of the problem
-        description (str): The description of the problem
-        points (int): The amount of points of the problem
-        is_public (bool): The visibility of the problem
-    """
-    id : int | None = None
-    title : str = None
-    description : str | None = None
-    points : int
-    is_public : bool | None
-    constraints : list["ProblemConstraintDTO"] | None = None
-
 class ProblemTestCaseDTO(BaseRequest):
     """
     Problem Test Case DTO
@@ -65,9 +47,28 @@ class ConstraintDTO(BaseRequest):
         name (str): The name of the language
         version (str): The version of the language
     """
-    language_name : str
+    # language_name : str
+    language_id: int
     memory_limit : int
     time_limit : int
+
+class ProblemDTO(BaseRequest):
+    """
+    Problem DTO
+
+    Attributes:
+        id (int): The id of the problem
+        title (str): The title of the problem
+        description (str): The description of the problem
+        points (int): The amount of points of the problem
+        is_public (bool): The visibility of the problem
+    """
+    id : int | None = None
+    title : str = None
+    description : str | None = None
+    points : int
+    is_public : bool | None
+    constraints : list[ConstraintDTO] | None = None
 
 class TestCaseDTO(BaseRequest):
     """
