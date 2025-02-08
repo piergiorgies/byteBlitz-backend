@@ -17,6 +17,8 @@ class ContestDTO(BaseRequest):
     description: str
     start_datetime: datetime
     end_datetime: datetime
+    users: list["ContestUserDTO"] | None = None
+    problems: list["ContestProblemDTO"] | None = None
 
 class ContestScoreboardDTO(BaseRequest):
     """
@@ -42,8 +44,7 @@ class ContestUserDTO(BaseRequest):
     """
     id : int | None = 0
     username: str
-    score: int | None = 0
-
+    
 class ContestTeamDTO(BaseRequest):
     """
     Contest Team DTO

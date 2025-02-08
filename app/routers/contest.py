@@ -37,8 +37,8 @@ async def create_contest(contest: ContestDTO = Body(), session=Depends(get_sessi
     try:
         contest = create(contest, session)
         # return created code
-        return JSONResponse(status_code=201, content={"message": "Contest created successfully"})
-    
+        return JSONResponse(status_code=201, content={"message": "Contest created successfully", "id": contest.id})
+        
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -126,7 +126,7 @@ async def update_contest(id: int, contest: ContestDTO = Body(), session=Depends(
 
 #region Contest Scoreboard
 
-@router.post("/{id}/users", summary="Add a list of user to a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
+@router.post("/scoreboard", summary="Add a list of user to a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
 async def add_user_to_contest(id: int, user_ids: IdListDTO = Body(), session=Depends(get_session)):
     """
     Get the current scoreboard for a specific contest
@@ -148,7 +148,7 @@ async def add_user_to_contest(id: int, user_ids: IdListDTO = Body(), session=Dep
 
 #region Contest User
 
-@router.post("/{id}/users", summary="Add a list of users to a contest", dependencies=[Depends(RoleChecker(["admin"]))])
+@router.post("/{id}/users", summary="Add a list of users to a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
 async def add_user_to_contest(id: int, user_ids: IdListDTO = Body(), session=Depends(get_session)):
     """
     Add users to a contest
