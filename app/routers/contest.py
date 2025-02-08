@@ -11,7 +11,7 @@ from app.controllers.contest import add_users, remove_users, list_users
 from app.controllers.contest import list_problems, add_problems, remove_problems, update_problem
 from app.models.params import pagination_params
 
-from app.models import ContestDTO, ContestScoreboardDTO, ListResponse, ContestProblemDTO, IdListDTO
+from app.models import ContestDTO, ContestScoreboardDTO, ListResponse, ContestProblemsDTO, ContestProblemDTO, IdListDTO
 from app.database import get_session
 from app.auth_util.role_checker import RoleChecker
 
@@ -287,7 +287,7 @@ async def list_users_in_contest(id: int, session=Depends(get_session)):
 #region Contest Problem
 
 @router.post("/{id}/problems", summary="Add a list of problems to a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
-async def add_problem_to_contest(id: int, contest_problems: List[ContestProblemDTO] = Body(), session=Depends(get_session)):
+async def add_problem_to_contest(id: int, contest_problems: ContestProblemsDTO = Body(), session=Depends(get_session)):
     """
     Add a list of problems to a contest
 
@@ -298,7 +298,7 @@ async def add_problem_to_contest(id: int, contest_problems: List[ContestProblemD
 
     try:
         # add problems to contest
-        added = add_problems(id, contest_problems, session)
+        added = add_problems(id, contest_problems.problems, session)
         if not added:
             raise HTTPException(status_code=404, detail="Problems or contest not found")
 

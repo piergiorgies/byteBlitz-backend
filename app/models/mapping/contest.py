@@ -15,7 +15,8 @@ class Contest(Base):
     end_datetime : Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     # connected fields
-    problems : Mapped[List['Problem']] = relationship('Problem', secondary='contest_problems', back_populates='contests')
-    users : Mapped[List['User']] = relationship('User', secondary='contest_users', back_populates='contests')
+    problems : Mapped[List['Problem']] = relationship('Problem', secondary='contest_problems', back_populates='contests', cascade='all, delete', passive_deletes=True)
+    contest_problems : Mapped[List['ContestProblem']] = relationship('ContestProblem', back_populates='contest', cascade='all, delete', passive_deletes=True)
+    users : Mapped[List['User']] = relationship('User', secondary='contest_users', back_populates='contests', cascade='all, delete', passive_deletes=True)
     submissions: Mapped[List['Submission']] = relationship('Submission', secondary='contest_submissions', back_populates='contests', cascade='all, delete', passive_deletes=True)
     teams: Mapped[List['Team']] = relationship('Team', secondary='contest_teams', back_populates='contests')

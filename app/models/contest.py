@@ -18,7 +18,7 @@ class ContestDTO(BaseRequest):
     start_datetime: datetime
     end_datetime: datetime
     users: list["ContestUserDTO"] | None = None
-    problems: list["ContestProblemDTO"] | None = None
+    contest_problems: list["ContestProblemDTO"] | None = None
 
 class ContestScoreboardDTO(BaseRequest):
     """
@@ -65,9 +65,18 @@ class ContestProblemDTO(BaseRequest):
         contest_id (int): The id of the contest
         problem_id (int): The id of the problem
     """
-    id : int
-    title: str | None = None
+    problem_id : int
     publication_delay: int | None = 0
+
+class ContestProblemsDTO(BaseRequest):
+    """
+    Contest Problems DTO
+
+    Attributes:
+        contest_id (int): The id of the contest
+        problems (list[int]): The list of problem ids
+    """
+    problems: list[ContestProblemDTO]
 
 class ContestSubmissionDTO(BaseRequest):
     """

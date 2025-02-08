@@ -81,6 +81,7 @@ def list(limit : int, offset : int, searchFilter: str, user : User, session : Se
 
         if searchFilter:
             query = query.filter(Contest.name.ilike(f"%{searchFilter}%"))
+        query.join(Contest.contest_problems)
         count = query.count()
         query = query.limit(limit).offset(offset)
         contests : List[Contest] = query.all()
@@ -271,6 +272,9 @@ def add_users(id: int, user_ids: List[int], session: Session) -> bool:
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
+        # remove old users
+        contest.users = []
+
         for user_id in user_ids:
             user: User = get_object_by_id(User, session, user_id)
 
@@ -487,9 +491,12 @@ def add_problems(id: int, body: List[ContestProblemDTO], session: Session) -> bo
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
+        session.query(ContestProblem).filter(ContestProblem.contest_id == id).delete()
+        session.flush()
+
         for item in body:
 
-            problem_id = item.id
+            problem_id = item.problem_id
             publication_delay = item.publication_delay if item.publication_delay else 0
 
             problem : Problem = get_object_by_id(Problem, session, problem_id)
@@ -501,13 +508,10 @@ def add_problems(id: int, body: List[ContestProblemDTO], session: Session) -> bo
 
             if duration < (publication_delay * 60):
                 raise HTTPException(status_code=400, detail="Problem publication delay is greater than contest duration")
-
-            if problem in contest.problems:
-                raise HTTPException(status_code=400, detail="Problem already in contest")
             
             contest_problem = ContestProblem(contest_id=id, problem_id=problem_id, publication_delay=publication_delay)
 
-            session.add(contest_problem)
+            contest.contest_problems.append(contest_problem)
 
         session.commit()
         return True
