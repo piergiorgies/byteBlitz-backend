@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.auth_util.role import Role
+from app.models.role import Role
 from app.controllers.submission import create, accept, save_total
 
 from app.models import SubmissionDTO, SubmissionTestCaseDTO, ResultDTO
 from app.database import get_session
-from app.auth_util.role_checker import RoleChecker, JudgeChecker
-from app.auth_util.jwt import get_current_user
+from app.util.role_checker import RoleChecker, JudgeChecker
+from app.util.jwt import get_current_user
 
 router = APIRouter(
     prefix="/submissions",

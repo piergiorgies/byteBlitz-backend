@@ -7,8 +7,8 @@ from . import *
 class ProblemConstraint(Base):
     __tablename__ = 'problem_constraints'
 
-    problem_id: Mapped[int] = mapped_column(Integer, FK('problems.id'), primary_key=True)
-    language_id: Mapped[int] = mapped_column(Integer, FK('languages.id'), primary_key=True)
+    problem_id: Mapped[int] = mapped_column(Integer, FK('problems.id', ondelete='cascade'), primary_key=True)
+    language_id: Mapped[int] = mapped_column(Integer, FK('languages.id', ondelete='cascade'), primary_key=True)
     memory_limit: Mapped[int] = mapped_column(Integer, nullable=False)
     time_limit: Mapped[int] = mapped_column(Integer, nullable=False)
 

@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
 
     APP_NAME: str
+    APP_DOMAIN: str
 
     DATABASE_NAME: str
     DATABASE_USER: str
@@ -10,7 +11,7 @@ class Settings(BaseSettings):
     DATABASE_HOST: str
     DATABASE_PORT: str
 
-    SECRET_KEY: str
+    # SECRET_KEY: str
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_MINUTES: int
@@ -28,6 +29,9 @@ class Settings(BaseSettings):
     MQTT_PORT: int
     MQTT_USER: str
     MQTT_PASS: str
+
+    PUBLIC_KEY: str
+    PRIVATE_KEY: str
 
     model_config = SettingsConfigDict(env_file=".env")
     

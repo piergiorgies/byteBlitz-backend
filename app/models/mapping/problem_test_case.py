@@ -14,7 +14,7 @@ class ProblemTestCase(Base):
     output: Mapped[str] = mapped_column(String, nullable=False)
     points: Mapped[int] = mapped_column(Integer, nullable=False)
     is_pretest: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    problem_id: Mapped[int] = mapped_column(Integer, FK('problems.id'), nullable=False)
+    problem_id: Mapped[int] = mapped_column(Integer, FK('problems.id', ondelete='cascade'), nullable=False)
     
     # connected fields
     problem = relationship('Problem', back_populates='test_cases')

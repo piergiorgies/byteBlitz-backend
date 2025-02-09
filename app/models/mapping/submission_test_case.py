@@ -31,7 +31,7 @@ class SubmissionTestCase(Base):
     time: Mapped[float] = mapped_column(Float, nullable=False)
     # input_name: Mapped[str] = mapped_column(String, nullable=False)
     result_id: Mapped[int] = mapped_column(Integer, FK('submission_results.id'), nullable=False)
-    submission_id: Mapped[int] = mapped_column(Integer, FK('submissions.id'), nullable=False)
+    submission_id: Mapped[int] = mapped_column(Integer, FK('submissions.id', ondelete='cascade'), nullable=False)
 
     # connected fields
     result: Mapped['SubmissionResult'] = relationship('SubmissionResult', back_populates='test_cases')

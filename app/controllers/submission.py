@@ -5,8 +5,10 @@ from datetime import datetime, timedelta
 import json
 
 from app.database import get_object_by_id, get_object_by_id_joined_with
-from app.models import SubmissionDTO, Submission, User, Problem, Language, Contest, ContestSubmission, SubmissionTestCase, ContestProblem
-from app.models import ContestSubmission, SubmissionTestCase, SubmissionTestCaseDTO, SubmissionResult
+from app.models import SubmissionDTO
+from app.models.mapping import Submission, User, Problem, Language, Contest
+from app.models.mapping import ContestSubmission, SubmissionTestCase, ContestProblem, SubmissionResult, SubmissionTestCase
+from app.models import SubmissionTestCaseDTO
 from app.connections.rabbitmq import rabbitmq_connection
 
 def create(submission_dto: SubmissionDTO, session: Session, user: User):

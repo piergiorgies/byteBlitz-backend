@@ -2,18 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
 from typing import List
 
-from app.auth_util.jwt import get_current_user
-from app.auth_util.role import Role
+from app.util.jwt import get_current_user
+from app.models.role import Role
 from app.controllers.contest import create, list, read, delete, update
 from app.controllers.contest import get_scoreboard
-from app.controllers.contest import add_users, remove_users, list_users
-# from app.controllers.contest import add_teams, remove_teams, list_teams
-from app.controllers.contest import list_problems, add_problems, remove_problems, update_problem
+# from app.controllers.contest import list_problems
 from app.models.params import pagination_params
+from app.models import ContestScoreboardDTO, ListResponse, IdListDTO
+from app.models import ContestCreate, ContestUpdate, ContestRead
 
-from app.models import ContestDTO, ContestScoreboardDTO, ListResponse, ContestProblemDTO, IdListDTO
 from app.database import get_session
-from app.auth_util.role_checker import RoleChecker
+from app.util.role_checker import RoleChecker
 
 router = APIRouter(
     prefix="/contests",
@@ -23,7 +22,7 @@ router = APIRouter(
 #region Contest
 
 @router.post("/", summary="Create a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
-async def create_contest(contest: ContestDTO = Body(), session=Depends(get_session)):
+async def create_contest(contest: ContestCreate = Body(), session=Depends(get_session)):
     """
     Create a contest
     
@@ -37,8 +36,8 @@ async def create_contest(contest: ContestDTO = Body(), session=Depends(get_sessi
     try:
         contest = create(contest, session)
         # return created code
-        return JSONResponse(status_code=201, content={"message": "Contest created successfully"})
-    
+        return JSONResponse(status_code=201, content={"message": "Contest created successfully", "id": contest.id})
+        
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -62,7 +61,7 @@ async def list_contests(pagination : dict = Depends(pagination_params), user = D
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.get("/{id}", response_model=ContestDTO, summary="Get contest by id", dependencies=[Depends(RoleChecker([Role.GUEST]))])
+@router.get("/{id}", response_model=ContestRead, summary="Get contest by id", dependencies=[Depends(RoleChecker([Role.GUEST]))])
 async def read_contest(id: int, user=Depends(get_current_user), session=Depends(get_session)):
     """
     Get contest by id
@@ -72,7 +71,7 @@ async def read_contest(id: int, user=Depends(get_current_user), session=Depends(
     """
 
     try:
-        contest: ContestDTO = read(id, user, session)
+        contest: ContestRead = read(id, user, session)
         return contest
     
     except HTTPException as e:
@@ -103,7 +102,7 @@ async def delete_contest(id: int, session=Depends(get_session)):
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 @router.put("/{id}", summary="Update a contest by id", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
-async def update_contest(id: int, contest: ContestDTO = Body(), session=Depends(get_session)):
+async def update_contest(id: int, contest: ContestUpdate = Body(), session=Depends(get_session)):
     """
     Update contest by id
 
@@ -126,7 +125,7 @@ async def update_contest(id: int, contest: ContestDTO = Body(), session=Depends(
 
 #region Contest Scoreboard
 
-@router.post("/{id}/users", summary="Add a list of user to a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
+@router.post("/scoreboard", summary="Add a list of user to a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
 async def add_user_to_contest(id: int, user_ids: IdListDTO = Body(), session=Depends(get_session)):
     """
     Get the current scoreboard for a specific contest
@@ -144,75 +143,20 @@ async def add_user_to_contest(id: int, user_ids: IdListDTO = Body(), session=Dep
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-#endregion
 
-#region Contest User
+# @router.get("/{contest_id}/scoreboardV2", response_model=List[ContestScoreboardDTO])
+# async def get_scoreboard(contest_id: int, session = Depends(get_session)):
+#     try:
+#         # Query the contest_scoreboard view
+#         scoreboard: ContestScoreboardDTO = get_scoreboardV2(contest_id, session)
 
-@router.post("/{id}/users", summary="Add a list of users to a contest", dependencies=[Depends(RoleChecker(["admin"]))])
-async def add_user_to_contest(id: int, user_ids: IdListDTO = Body(), session=Depends(get_session)):
-    """
-    Add users to a contest
+#         if not scoreboard:
+#             raise HTTPException(status_code=404, detail="Scoreboard not found for this contest")
 
-    Args:
-        id: int
-        user_ids: List[int]
-    """
+#         return scoreboard
 
-    try:
-        # add users to contest
-        added = add_users(id, user_ids.ids, session)
-        if not added:
-            raise HTTPException(status_code=404, detail="Users or contest not found")
-
-        return JSONResponse(status_code=201, content={"message": "Users added to contest successfully"})
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-@router.delete("/{id}/users", summary="Remove a list of user from a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
-async def remove_user_from_contest(id: int, user_ids: IdListDTO = Body(), session=Depends(get_session)):
-    """
-    Remove a user from a contest
-
-    Args:
-        id: int
-        user_ids: int
-    """
-
-    try:
-        # remove users from contest
-        removed = remove_users(id, user_ids.ids, session)
-        if not removed:
-            raise HTTPException(status_code=404, detail="Users or contest not found")
-
-        return JSONResponse(status_code=200, content={"message": "Users removed from contest successfully"})
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-@router.get("/{id}/users", response_model=ListResponse, summary="List users in a contest", dependencies=[Depends(RoleChecker([Role.GUEST]))])
-async def list_users_in_contest(id: int, session=Depends(get_session)):
-    """
-    List users in a contest
-
-    Args:
-        id: int
-    """
-
-    try:
-        # list users in contest
-        users = list_users(id, session)
-        return users
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail="An error occurred while fetching the scoreboard: " + str(e))
 #endregion
 
 #region Contest Team
@@ -284,96 +228,24 @@ async def list_users_in_contest(id: int, session=Depends(get_session)):
 
 #endregion
 
-#region Contest Problem
 
-@router.post("/{id}/problems", summary="Add a list of problems to a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
-async def add_problem_to_contest(id: int, contest_problems: List[ContestProblemDTO] = Body(), session=Depends(get_session)):
-    """
-    Add a list of problems to a contest
+# @router.get("/{id}/problems", response_model=ListResponse, summary="List problems in a contest", dependencies=[Depends(RoleChecker([Role.GUEST]))])
+# async def list_problems_in_contest(id: int, user=Depends(get_current_user), session=Depends(get_session)):
+#     """
+#     List problems in a contest
 
-    Args:
-        id: int
-        contest_problems: List[ContestProblemDTO]
-    """
+#     Args:
+#         id: int
+#     """
 
-    try:
-        # add problems to contest
-        added = add_problems(id, contest_problems, session)
-        if not added:
-            raise HTTPException(status_code=404, detail="Problems or contest not found")
-
-        return JSONResponse(status_code=201, content={"message": "Problems added to contest successfully"})
+#     try:
+#         # list problems in contest
+#         problems = list_problems(id, user, session)
+#         return problems
     
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-@router.delete("/{id}/problems", summary="Remove a problem from a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
-async def remove_problem_from_contest(id: int, problem_ids: IdListDTO = Body(), session=Depends(get_session)):
-    """
-    Remove a list of problems from a contest
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-    Args:
-        id: int
-        problem_ids: List[int]
-    """
-
-    try:
-        # remove problems from contest
-        removed = remove_problems(id, problem_ids.ids, session)
-        if not removed:
-            raise HTTPException(status_code=404, detail="Problems or contest not found")
-
-        return JSONResponse(status_code=200, content={"message": "Problems removed from contest successfully"})
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-@router.get("/{id}/problems", response_model=ListResponse, summary="List problems in a contest", dependencies=[Depends(RoleChecker([Role.GUEST]))])
-async def list_problems_in_contest(id: int, user=Depends(get_current_user), session=Depends(get_session)):
-    """
-    List problems in a contest
-
-    Args:
-        id: int
-    """
-
-    try:
-        # list problems in contest
-        problems = list_problems(id, user, session)
-        return problems
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-@router.patch("/{id}/problems", summary="Update publication delay of a contest problem", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
-async def update_problem_publication_delay(id: int, body: ContestProblemDTO = Body(), session=Depends(get_session)):
-    """
-    Update publication delay of a problem in a contest
-
-    Args:
-        id: int
-        problem_id: int
-        publication_delay: int
-    """
-
-    try:
-        # update publication delay of problem in contest
-        updated = update_problem(id, body, session)
-        if not updated:
-            raise HTTPException(status_code=404, detail="Problem or contest not found")
-
-        return JSONResponse(status_code=200, content={"message": "Problem publication delay updated successfully"})
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-#endregion
 

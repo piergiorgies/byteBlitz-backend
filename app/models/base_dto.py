@@ -48,6 +48,7 @@ class UserSignupDTO(BaseRequest):
     username: str
     email: str
     password: str
+    user_type_id: int | None = None
 
 @dataclass
 class ListResponse(BaseRequest):
@@ -72,16 +73,3 @@ class IdListDTO(BaseRequest):
 
     """
     ids: list[int]
-
-@dataclass
-class JudgeDTO(BaseRequest):
-    """
-    Judge DTO
-
-    Attributes
-        name (str): The name of the judge
-        key (str): hashed password
-
-    """
-    name: str
-    key: str
