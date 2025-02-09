@@ -8,11 +8,11 @@ from typing import List
 from app.models.role import Role
 from app.auth_util.role_checker import RoleChecker
 from app.database import get_object_by_id
-from app.models import ContestScoreboardDTO, Contest, ListResponse
-from app.models import User, ContestUser
+from app.models import ContestScoreboardDTO, ListResponse
+from app.models.mapping import User, ContestUser, Contest
 # from app.models import Team, ContestTeamDTO
-from app.models import Problem, ContestProblem
-from app.models import Submission, ContestSubmission
+from app.models.mapping import Problem, ContestProblem
+from app.models.mapping import Submission, ContestSubmission
 from app.models import ContestCreate, ContestUpdate, ContestRead
 
 #region Contest

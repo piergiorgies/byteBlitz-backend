@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from app.models import UserSignupDTO, UserLoginDTO
-from app.models import User, UserType
+from app.models.mapping import User, UserType
 from app.models.role import Role
 from app.auth_util.jwt import get_tokens
 from app.auth_util.pwd_util import _hash_password

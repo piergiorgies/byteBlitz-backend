@@ -32,4 +32,4 @@ async def root(logger = Depends(get_logger)):
     return {"message": "Hello ByteBlitz users!"}
 
 if __name__ == '__main__':
-    uvicorn.run("main:app", host="localhost", port=9000, reload=True)
+    uvicorn.run("main:app", host="localhost", port=9010, reload=True)

@@ -1,5 +1,5 @@
 from app.config import settings
-from app.models import User, UserType
+from app.models.mapping import User, UserType
 from app.database import get_session
 from app.models.role import Role
 

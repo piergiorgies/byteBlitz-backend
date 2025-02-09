@@ -1,4 +1,3 @@
-from .mapping import *
 from .base_dto import UserSignupDTO, UserLoginDTO, Token, ListResponse, IdListDTO
 from .contest import ContestScoreboardDTO, ContestSubmissionDTO, ContestCreate, ContestUpdate, ContestRead
 from .submission import SubmissionDTO, SubmissionTestCaseDTO, ResultDTO
