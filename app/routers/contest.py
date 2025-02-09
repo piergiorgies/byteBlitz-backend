@@ -5,7 +5,7 @@ from typing import List
 from app.auth_util.jwt import get_current_user
 from app.models.role import Role
 from app.controllers.contest import create, list, read, delete, update
-from app.controllers.contest import get_scoreboard, get_scoreboardV2
+from app.controllers.contest import get_scoreboard
 # from app.controllers.contest import list_problems
 from app.models.params import pagination_params
 from app.models import ContestScoreboardDTO, ListResponse, IdListDTO
@@ -144,19 +144,19 @@ async def add_user_to_contest(id: int, user_ids: IdListDTO = Body(), session=Dep
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 
-@router.get("/{contest_id}/scoreboardV2", response_model=List[ContestScoreboardDTO])
-async def get_scoreboard(contest_id: int, session = Depends(get_session)):
-    try:
-        # Query the contest_scoreboard view
-        scoreboard: ContestScoreboardDTO = get_scoreboardV2(contest_id, session)
+# @router.get("/{contest_id}/scoreboardV2", response_model=List[ContestScoreboardDTO])
+# async def get_scoreboard(contest_id: int, session = Depends(get_session)):
+#     try:
+#         # Query the contest_scoreboard view
+#         scoreboard: ContestScoreboardDTO = get_scoreboardV2(contest_id, session)
 
-        if not scoreboard:
-            raise HTTPException(status_code=404, detail="Scoreboard not found for this contest")
+#         if not scoreboard:
+#             raise HTTPException(status_code=404, detail="Scoreboard not found for this contest")
 
-        return scoreboard
+#         return scoreboard
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An error occurred while fetching the scoreboard: " + str(e))
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail="An error occurred while fetching the scoreboard: " + str(e))
 #endregion
 
 #region Contest Team
