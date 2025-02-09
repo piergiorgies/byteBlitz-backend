@@ -13,7 +13,7 @@ from app.models import User, ContestUser
 # from app.models import Team, ContestTeamDTO
 from app.models import Problem, ContestProblem
 from app.models import Submission, ContestSubmission
-from app.models import ContestCreate, ContestUpdate, ContestRead, ContestScoreboard
+from app.models import ContestCreate, ContestUpdate, ContestRead
 
 #region Contest
 def create(contest: ContestCreate, session: Session):
@@ -305,24 +305,24 @@ def get_scoreboard(id: int, session: Session) -> ContestScoreboardDTO:
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def get_scoreboardV2(id: int, session: Session) -> ContestScoreboardDTO:
-    """
-    Get the current scoreboard for a specific contest
+# def get_scoreboardV2(id: int, session: Session) -> ContestScoreboardDTO:
+#     """
+#     Get the current scoreboard for a specific contest
 
-    Args:
-        id (int): the contest id
-        session (Session): sqlalchemy session
-    """
-    try:
-        query = select(ContestScoreboard).filter(ContestScoreboard.contest_id == id)
-        result = session.execute(query).scalars().all()
-        return result
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+#     Args:
+#         id (int): the contest id
+#         session (Session): sqlalchemy session
+#     """
+#     try:
+#         query = select(ContestScoreboard).filter(ContestScoreboard.contest_id == id)
+#         result = session.execute(query).scalars().all()
+#         return result
+#     except SQLAlchemyError as e:
+#         raise HTTPException(status_code=500, detail="Database error: " + str(e))
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 #endregion
 
