@@ -6,7 +6,7 @@ from typing import List
 from datetime import datetime
 
 from app.models.role import Role
-from app.auth_util.role_checker import RoleChecker
+from app.util.role_checker import RoleChecker
 from app.database import QueryBuilder, get_object_by_id
 from app.models import ListResponse, UserDTO, UserLoginDTO, UserPermissionsDTO
 from app.models.mapping import User, UserType

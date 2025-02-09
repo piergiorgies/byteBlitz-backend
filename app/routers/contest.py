@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
 from typing import List
 
-from app.auth_util.jwt import get_current_user
+from app.util.jwt import get_current_user
 from app.models.role import Role
 from app.controllers.contest import create, list, read, delete, update
 from app.controllers.contest import get_scoreboard
@@ -12,7 +12,7 @@ from app.models import ContestScoreboardDTO, ListResponse, IdListDTO
 from app.models import ContestCreate, ContestUpdate, ContestRead
 
 from app.database import get_session
-from app.auth_util.role_checker import RoleChecker
+from app.util.role_checker import RoleChecker
 
 router = APIRouter(
     prefix="/contests",

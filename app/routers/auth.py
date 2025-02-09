@@ -4,8 +4,8 @@ from app.models.role import Role
 from app.models import UserSignupDTO, UserLoginDTO, Token
 from app.controllers.auth import signup as signup_controller, login as login_controller
 from app.database import get_session
-from app.auth_util.role_checker import RoleChecker
-from app.auth_util.jwt import get_current_user
+from app.util.role_checker import RoleChecker
+from app.util.jwt import get_current_user
 
 router = APIRouter(
     tags=["Authentication"],

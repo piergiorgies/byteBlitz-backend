@@ -9,7 +9,7 @@ from app.models import SubmissionDTO
 from app.models.mapping import Submission, User, Problem, Language, Contest
 from app.models.mapping import ContestSubmission, SubmissionTestCase, ContestProblem, SubmissionResult, SubmissionTestCase
 from app.models import SubmissionTestCaseDTO
-from app.config import rabbitmq_connection
+from app.connections.rabbitmq import rabbitmq_connection
 
 def create(submission_dto: SubmissionDTO, session: Session, user: User):
     """

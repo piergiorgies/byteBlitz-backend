@@ -1,7 +1,7 @@
 from typing import Annotated
 from app.models.mapping import User
 from fastapi import Depends, HTTPException
-from app.auth_util.jwt import get_current_user, get_judge
+from app.util.jwt import get_current_user, get_judge
 from app.models.role import Role
 
 #TODO: merged stuff + TO_TEST every endpoint

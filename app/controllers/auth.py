@@ -5,8 +5,8 @@ from fastapi import HTTPException
 from app.models import UserSignupDTO, UserLoginDTO
 from app.models.mapping import User, UserType
 from app.models.role import Role
-from app.auth_util.jwt import get_tokens
-from app.auth_util.pwd_util import _hash_password
+from app.util.jwt import get_tokens
+from app.util.pwd import _hash_password
   
 def signup(userDTO: UserSignupDTO, session: Session, logged_user: User):
     try:

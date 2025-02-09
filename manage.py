@@ -7,7 +7,7 @@ from app.config import settings
 from app.database import engine
 from app.models import User, UserType, Language, SubmissionResult
 from app.database import get_session
-from app.auth_util.pwd_util import _hash_password
+from app.util.pwd import _hash_password
 
 @click.group()
 def cli():

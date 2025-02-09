@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, WebSocket
 
-from app.auth_util.jwt import get_websocket_user
+from app.util.jwt import get_websocket_user
 from app.models.mapping.user import User
 from app.util.websocket import websocket_manager
 
