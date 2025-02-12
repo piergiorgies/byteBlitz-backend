@@ -140,27 +140,32 @@ def loaddata():
             Language(
                 id=1,
                 name="C",
-                file_extension="c"
+                file_extension="c",
+                code="c",
             ),
             Language(
                 id=2,
                 name="C++",
-                file_extension="cpp"
+                file_extension="cpp",
+                code="cpp",
             ),
             Language(
                 id=3,
                 name="Python",
-                file_extension="py"
+                file_extension="py",
+                code="python",
             ),
             Language(
                 id=4,
                 name="Java",
-                file_extension="java"
+                file_extension="java",
+                code="java",
             ),
             Language(
                 id=5,
                 name="Rust",
-                file_extension="rs"
+                file_extension="rs",
+                code="rust"
             )
         ]
         session.add_all(languages)
