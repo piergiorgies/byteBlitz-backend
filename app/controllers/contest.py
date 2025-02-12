@@ -37,13 +37,13 @@ def create(contest: ContestCreate, session: Session):
             start_datetime=contest.start_datetime,
             end_datetime=contest.end_datetime,
         )
-        for i in range(contest.user_ids):
+        for i in range(len(contest.user_ids)):
             user: User = get_object_by_id(User, session, contest.user_ids[i])
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
             created_contest.users.append(user)
         
-        for i in range(contest.problems):
+        for i in range(len(contest.problems)):
             problem: Problem = get_object_by_id(Problem, session, contest.problems[i].problem_id)
             if not problem:
                 raise HTTPException(status_code=404, detail="Problem not found")
@@ -56,8 +56,9 @@ def create(contest: ContestCreate, session: Session):
 
         session.add(created_contest)
         session.commit()
+        session.refresh(created_contest)
 
-        return contest
+        return created_contest
     
     except SQLAlchemyError as e:
         session.rollback()

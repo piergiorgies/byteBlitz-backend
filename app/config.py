@@ -5,6 +5,9 @@ class Settings(BaseSettings):
     APP_NAME: str
     APP_DOMAIN: str
 
+    APP_HOST: str
+    APP_PORT: int
+
     DATABASE_NAME: str
     DATABASE_USER: str
     DATABASE_PASSWORD: str
