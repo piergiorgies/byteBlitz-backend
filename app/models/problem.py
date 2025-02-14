@@ -70,6 +70,13 @@ class ProblemDTO(BaseRequest):
     is_public : bool | None
     constraints : list[ConstraintDTO] | None = None
 
+
+class ProblemList(BaseRequest):
+    id : int | None = None
+    title : str = None
+    description : str | None = None
+    points : int
+
 class TestCaseDTO(BaseRequest):
     """
     Test Case DTO

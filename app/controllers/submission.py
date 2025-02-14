@@ -85,7 +85,18 @@ def _validate_submission(submission_dto: SubmissionDTO, session: Session, user: 
     if language.id not in [x.language_id for x in problem.constraints]:
         raise HTTPException(status_code=400, detail="Language not supported by problem")
     
-    if submission_dto.contest_id:
+    # check if the problem is in a contest and if the contest is active
+    contests = session.query(Contest).join(ContestProblem).filter(ContestProblem.problem_id == problem.id).all()
+    
+    # if at least one contest is active, the problem is in a contest
+    there_are_active_contests = False
+    if contests:
+        for contest in contests:
+            if contest.start_datetime < datetime.now() and contest.end_datetime > datetime.now():
+                there_are_active_contests = True
+                break
+
+    if submission_dto.contest_id and there_are_active_contests:
         # check if the contest exists
         contest: Contest = get_object_by_id_joined_with(Contest, session, submission_dto.contest_id, [Contest.problems, Contest.users])
         if not contest:

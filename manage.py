@@ -5,7 +5,7 @@ from typing import List
 
 from app.config import settings
 from app.database import engine
-from app.models import User, UserType, Language, SubmissionResult
+from app.models.mapping import User, UserType, Language, SubmissionResult
 from app.database import get_session
 from app.util.pwd import _hash_password
 

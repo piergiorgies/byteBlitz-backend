@@ -1,53 +1,71 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
+from datetime import datetime
 
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
-from app.database import get_object_by_id, get_object_by_id_joined_with
+from app.database import get_object_by_id
 from app.models import ListResponse
-from app.models.mapping import User, Problem, ProblemTestCase, ProblemConstraint, Language
-from app.models.problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO, TestCaseDTO, ConstraintDTO, ProblemJudgeDTO
+from app.models.mapping import User, Problem, ProblemTestCase, ProblemConstraint, Language, ContestProblem, Contest
+from app.models import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO, ProblemList
 
 #region Problem
 
-def list(limit : int, offset : int, searchFilter: str, user: User, session: Session) -> ListResponse:
+def list(limit: int, offset: int, searchFilter: str, user: User, session: Session) -> ListResponse:
     """
-    List problems according to visibility
+    List problems according to visibility with correct counting in SQLAlchemy.
     
     Args:
-        limit (int):
-        offset (int):
-        user (User):
-        session (Session):
-    
+        limit (int): Number of problems per page.
+        offset (int): Pagination offset.
+        searchFilter (str): Search keyword.
+        user (User): Logged-in user.
+        session (Session): Database session.
+
     Returns:
-        [ListResponse]: list of problems
+        ListResponse: Contains problem list and total count.
     """
 
     try:
         is_admin_maintainer = RoleChecker.hasRole(user, Role.PROBLEM_MAINTAINER)
+
+        # Base query for problem filtering
         query = session.query(Problem)
-        if not is_admin_maintainer: 
+
+        # Apply visibility filters
+        if not is_admin_maintainer:
             query = query.filter(Problem.is_public == True)
 
+        # Apply search filter
         if searchFilter:
             query = query.filter(Problem.title.ilike(f"%{searchFilter}%"))
-            
-        count = query.count()
-        query = query.limit(limit).offset(offset)
 
-        problems : List[Problem] = query.all()
+        # If user is NOT admin/maintainer, filter problems that are ONLY in ended contests
+        if not is_admin_maintainer:
+            query = query.join(ContestProblem).join(Contest).filter(Contest.end_datetime < datetime.now())
 
-        return {"data": [ProblemDTO.model_validate(obj=obj) for obj in problems], "count": count}
-    
+        # Get total count BEFORE applying limit & offset
+        total_count = session.query(func.count()).select_from(query.subquery()).scalar()
+
+        # Apply pagination
+        problems = query.distinct().limit(limit).offset(offset).all()
+
+        return {
+            "data": [ProblemList.model_validate(obj=problem) for problem in problems],
+            "count": total_count
+        }
+
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+
     
 def read(id: int, user: User, session: Session) -> ProblemDTO:
     """

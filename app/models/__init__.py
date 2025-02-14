@@ -2,6 +2,6 @@ from .base_dto import UserSignupDTO, UserLoginDTO, Token, ListResponse, IdListDT
 from .contest import ContestScoreboardDTO, ContestSubmissionDTO, ContestCreate, ContestUpdate
 from .contest import ContestRead, ContestInfo, ContestsInfo, PastContest, ProblemInfo, ContestUserDTO
 from .submission import SubmissionDTO, SubmissionTestCaseDTO, ResultDTO
-from .problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO
+from .problem import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO, ProblemList
 from .user import UserDTO, UserPermissionsDTO
 from .judge import JudgeCreateDTO, JudgeDTO
