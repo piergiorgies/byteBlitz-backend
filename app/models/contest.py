@@ -35,7 +35,6 @@ class ContestCreate(BaseRequest):
     user_ids: list[int]
     problems: list["ContestProblemDTO"]
 
-
 class ContestUpdate(BaseRequest):
     name: str | None = None
     description: str | None = None
@@ -76,3 +75,37 @@ class ContestSubmissionDTO(BaseRequest):
     """
     id : int
     submission_id : int
+
+class ContestsInfo(BaseRequest):
+    ongoing : list["ContestInfo"]
+    upcoming : list["ContestInfo"]
+    past : list["ContestInfo"]
+
+class ContestInfo(BaseRequest):
+    id: int
+    name: str
+    description: str
+    start_datetime: datetime
+    end_datetime: datetime
+    duration: int
+    n_participants: int
+    n_problems: int
+    n_submissions: int
+
+class ProblemInfo(BaseRequest):
+    title: str
+    points: int
+    languages: list[str]
+
+
+class PastContest(BaseRequest):
+    id: int
+    name: str
+    description: str
+    start_datetime: datetime
+    end_datetime: datetime
+    duration: int
+    n_submissions: int
+    scoreboard: ContestScoreboardDTO | None = None
+    problems: list["ProblemInfo"] | None = None
+    users: list["ContestUserDTO"] | None = None

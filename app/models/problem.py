@@ -84,8 +84,6 @@ class TestCaseDTO(BaseRequest):
     number : int
     points : int
     is_pretest : bool
-    input_name : str
-    output_name : str
     input: str
     output: str
 

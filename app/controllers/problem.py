@@ -204,8 +204,14 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
             constraint.memory_limit = new_constraint.memory_limit
 
         constraints_to_add = [x for x in problem_update.constraints if x.language_id not in found]
-        if len(constraints_to_add) > 0:
-            problem.constraints += constraints_to_add
+        if constraints_to_add:
+            problem.constraints.extend([
+                ProblemConstraint(
+                    language_id=constraint.language_id,
+                    memory_limit=constraint.memory_limit,
+                    time_limit=constraint.time_limit
+                ) for constraint in constraints_to_add
+            ])
 
         session.commit()
         return ProblemDTO.model_validate(obj=problem)
