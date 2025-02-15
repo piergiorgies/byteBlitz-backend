@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, Response
 from fastapi.responses import JSONResponse
 from app.models.role import Role
-from app.models import UserSignupDTO, UserLoginDTO, Token
+from app.schemas import UserSignupDTO, UserLoginDTO, Token
 from app.controllers.auth import signup as signup_controller, login as login_controller
 from app.database import get_session
 from app.util.role_checker import RoleChecker

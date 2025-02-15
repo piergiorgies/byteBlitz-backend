@@ -7,10 +7,9 @@ from datetime import datetime
 
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
-from app.database import QueryBuilder, get_object_by_id
-from app.models import ListResponse, UserDTO, UserLoginDTO, UserPermissionsDTO
+from app.database import get_object_by_id
+from app.schemas import ListResponse, UserDTO
 from app.models.mapping import User, UserType
-from app.controllers.auth import _hash_password
 
 def list(limit: int, offset: int, searchFilter: str, user: User, session: Session) -> ListResponse:
     """

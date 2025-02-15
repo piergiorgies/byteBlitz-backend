@@ -1,5 +1,5 @@
 from numbers import Number
-from app.models.base_dto import BaseRequest
+from app.schemas.base_dto import BaseRequest
 from datetime import datetime
 
 class ProblemTestCaseDTO(BaseRequest):

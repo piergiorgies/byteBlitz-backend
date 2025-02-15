@@ -8,9 +8,9 @@ from datetime import datetime
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
 from app.database import get_object_by_id
-from app.models import ListResponse
+from app.schemas import ListResponse
 from app.models.mapping import User, Problem, ProblemTestCase, ProblemConstraint, Language, ContestProblem, Contest
-from app.models import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO, ProblemList
+from app.schemas import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO, ProblemList
 
 #region Problem
 

@@ -3,9 +3,8 @@ from hashlib import sha256
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from app.models import JudgeCreateDTO, JudgeDTO
 from app.models.mapping import Problem, User, UserType
-from app.models.problem import ProblemJudgeDTO, ConstraintDTO, TestCaseDTO
+from app.schemas import JudgeCreateDTO, JudgeDTO, ProblemJudgeDTO, ConstraintDTO, TestCaseDTO
 from app.database import get_object_by_id_joined_with
 from app.models.role import Role
 

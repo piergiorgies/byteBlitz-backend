@@ -2,7 +2,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
-from app.models import UserSignupDTO, UserLoginDTO
+from app.schemas import UserSignupDTO, UserLoginDTO
 from app.models.mapping import User, UserType
 from app.models.role import Role
 from app.util.jwt import get_tokens

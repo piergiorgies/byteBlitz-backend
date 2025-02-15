@@ -5,10 +5,10 @@ from typing import List
 from app.util.jwt import get_current_user
 from app.models.role import Role
 from app.controllers.contest import create, list, read, delete, update
-from app.controllers.contest import get_scoreboard, list_with_info, read_past_contest
-from app.models.params import pagination_params
-from app.models import ContestScoreboardDTO, ListResponse, IdListDTO
-from app.models import ContestCreate, ContestUpdate, ContestRead, ContestsInfo
+from app.controllers.contest import get_scoreboard, list_with_info, read_past, read_upcoming
+from app.schemas.params import pagination_params
+from app.schemas import ContestScoreboardDTO, ListResponse, IdListDTO
+from app.schemas import ContestCreate, ContestUpdate, ContestRead, ContestsInfo
 
 from app.database import get_session
 from app.util.role_checker import RoleChecker
@@ -164,7 +164,25 @@ async def get_past_contest(id: int, session=Depends(get_session)):
     """
 
     try:
-        contest: ContestRead = read_past_contest(id, session)
+        contest: ContestRead = read_past(id, session)
+        return contest
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+
+@router.get("/{id}/upcoming", summary="Info about upcoming contest", dependencies=[Depends(RoleChecker([Role.USER]))])
+async def get_upcoming_contest(id: int, session=Depends(get_session)):
+    """
+    Get upcoming contest info
+    
+    Args:
+        id: int
+    """
+    try:
+        contest: ContestRead = read_upcoming(id, session)
         return contest
     
     except HTTPException as e:

@@ -1,4 +1,4 @@
-from app.models.base_dto import BaseRequest
+from app.schemas.base_dto import BaseRequest
 from datetime import datetime
 
 # class ContestDTO(BaseRequest):
@@ -109,3 +109,14 @@ class PastContest(BaseRequest):
     scoreboard: ContestScoreboardDTO | None = None
     problems: list["ProblemInfo"] | None = None
     users: list["ContestUserDTO"] | None = None
+
+class UpcomingContest(BaseRequest):
+    id: int
+    name: str
+    description: str
+    start_datetime: datetime
+    end_datetime: datetime
+    duration: int
+    n_participants: int
+    n_problems: int
+    problems: list["ProblemInfo"] | None = None

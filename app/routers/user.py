@@ -5,9 +5,8 @@ from app.models.role import Role
 from app.util.role_checker import RoleChecker
 from app.util.jwt import get_current_user
 from app.controllers.user import list, read, read_me, delete, update, available_user_types_list
-from app.models.params import pagination_params
-from app.models import ListResponse, UserDTO, UserLoginDTO, UserPermissionsDTO
-
+from app.schemas.params import pagination_params
+from app.schemas import ListResponse, UserDTO
 from app.database import get_session
 
 router = APIRouter(

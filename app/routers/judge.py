@@ -3,9 +3,9 @@ from fastapi.responses import JSONResponse
 from app.util.role_checker import JudgeChecker, RoleChecker
 from app.database import get_session
 from app.controllers.judge import get_versions, get_problem_info, get_judges, create_judge, delete_judge
-from app.models.params import pagination_params
+from app.schemas.params import pagination_params
 from app.models.role import Role
-from app.models.judge import JudgeCreateDTO
+from app.schemas.judge import JudgeCreateDTO
 from app.util.role_checker import get_judge
 
 

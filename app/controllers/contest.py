@@ -8,12 +8,13 @@ from typing import List
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
 from app.database import get_object_by_id
-from app.models import ContestScoreboardDTO, ListResponse
+from app.schemas import ContestScoreboardDTO, ListResponse
 from app.models.mapping import User, ContestUser, Contest
 # from app.models import Team, ContestTeamDTO
 from app.models.mapping import Problem, ContestProblem, ProblemConstraint, Language
 from app.models.mapping import Submission, ContestSubmission
-from app.models import ContestCreate, ContestUpdate, ContestRead, ContestsInfo, ContestInfo, ProblemInfo, PastContest, ContestUserDTO
+from app.schemas import ContestCreate, ContestUpdate, ContestRead, ContestsInfo, ContestInfo, ProblemInfo, PastContest, ContestUserDTO
+from app.schemas import UpcomingContest
 
 
 def create(contest: ContestCreate, session: Session):
@@ -391,7 +392,7 @@ def list_with_info(session: Session) -> ContestsInfo:
     
 
 
-def read_past_contest(id: int, session: Session):
+def read_past(id: int, session: Session):
     """
     Return a past contest by id
 
@@ -446,3 +447,53 @@ def read_past_contest(id: int, session: Session):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
+
+def read_upcoming(id: int, session: Session):
+    """
+    Return an upcoming contest by id
+
+    Args:
+        id: int
+        session: Session
+
+    Returns:
+        contest: ContestRead
+    """
+    try:
+        contest = session.query(Contest).filter(Contest.id == id).first()
+        if not contest:
+            raise HTTPException(status_code=404, detail="Contest not found")
+        # check if it is an upcoming contest
+        if contest.start_datetime < datetime.now():
+            raise HTTPException(status_code=400, detail="Contest has already started")
+        
+        problems = session.query(Problem).join(ContestProblem, Problem.id == ContestProblem.problem_id).filter(ContestProblem.contest_id == id).all()
+        problem_languages = session.query(ProblemConstraint).join(Language, ProblemConstraint.language_id == Language.id).filter(ProblemConstraint.problem_id.in_([problem.id for problem in problems])).all()
+
+        languages = {}
+        
+        for problem_language in problem_languages:
+            if problem_language.problem_id not in languages:
+                languages[problem_language.problem_id] = []
+            languages[problem_language.problem_id].append(problem_language.language_name)
+        
+        problems_info = [ProblemInfo(title=problem.title, points=problem.points, languages=languages[problem.id]) for problem in problems]
+
+        return UpcomingContest(
+            id=contest.id,
+            name=contest.name,
+            description=contest.description,
+            start_datetime=contest.start_datetime,
+            end_datetime=contest.end_datetime,
+            duration=int((contest.end_datetime - contest.start_datetime).total_seconds() / 3600),
+            n_participants=len(contest.users),
+            n_problems=len(problems),
+            problems=problems_info
+        )
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
