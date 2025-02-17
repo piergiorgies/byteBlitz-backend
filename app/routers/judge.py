@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.responses import JSONResponse
-from app.util.role_checker import JudgeChecker, RoleChecker
+from sqlalchemy.exc import SQLAlchemyError
+from app.util.role_checker import JudgeChecker
 from app.database import get_session
-from app.controllers.judge import get_versions, get_problem_info, get_judges, create_judge, delete_judge
-from app.schemas import get_pagination_params, PaginationParams, JudgeCreate
-from app.models.role import Role
+from app.controllers.judge import get_versions, get_problem_info, accept, save_total
+from app.schemas import SubmissionTestCaseResult, SubmissionCompleteResult
 from app.util.role_checker import get_judge
 
 
@@ -47,47 +47,48 @@ async def get_problem_config(id: int, session=Depends(get_session), judge=Depend
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-@router.get("/judges", summary="Get the judge list", dependencies=[Depends(RoleChecker(Role.ADMIN))])
-async def list_judges(pagination : PaginationParams = Depends(get_pagination_params), session=Depends(get_session)):
-    """
-    Get the judge list
-    """
 
-    try:
-        return get_judges(pagination.limit, pagination.offset, pagination.search_filter, session)
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-@router.post("/judges", summary="Create a new judge", dependencies=[Depends(RoleChecker(Role.ADMIN))])
-async def create(judge: JudgeCreate, session=Depends(get_session)):
+@router.post("/submissions/{id}", summary="Accept the result of a submission", dependencies=[Depends(JudgeChecker())])
+async def accept_submission(id: int, body: SubmissionTestCaseResult = Body(), session = Depends(get_session)):
     """
-    Create a new judge
-    """
-    try:
-        response, status_code = create_judge(judge, session)
-        return JSONResponse(status_code=status_code, content=response)
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-@router.delete("/judges/{id}", summary="Delete a judge", dependencies=[Depends(RoleChecker(Role.ADMIN))])
-async def delete(id: int, session=Depends(get_session)):
-    """
-    Delete a judge
-    
+    Accept the result of a submission
+
     Args:
-        id: int
+        id (int): The submission id
+        body (SubmissionTestCase): The submission test case data
+
+    Returns:
+        JSONResponse: The response
     """
     try:
-        delete_judge(id, session)
-        return JSONResponse(status_code=200, content={"message": "Judge deleted successfully"})
+        accepted = accept(id, body, session)
+        
+        return JSONResponse(content={"message": "submission accepted successfully"}, status_code=200)
     
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+@router.post("/submissions/{id}/total", summary="Get the total score of a submission", dependencies=[Depends(JudgeChecker())])
+async def save_total(id: int, result_id: SubmissionCompleteResult = Body(), session = Depends(get_session)):
+    """
+    Get the total test case of a submission
+
+    Args:
+        id (int): The submission id
+
+    Returns:
+        JSONResponse: The response
+    """
+    try:
+        save_total(id, result_id, session)
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Internal server error")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")

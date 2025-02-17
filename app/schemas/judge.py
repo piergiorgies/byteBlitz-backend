@@ -1,4 +1,4 @@
-from app.schemas import BaseRequest, BaseResponse
+from app.schemas.base import BaseRequest, BaseResponse, BaseListResponse
 from datetime import datetime
 
 class JudgeCreate(BaseRequest):
@@ -28,7 +28,7 @@ class JudgeResponse(BaseRequest):
     last_connection: datetime
     status: bool
 
-class JudgeListResponse(BaseResponse):
+class JudgeListResponse(BaseListResponse):
     """
     Judge List Response DTO
 
