@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from app.util.role_checker import RoleChecker
 from app.util.jwt import get_current_user
-from app.controllers.admin.user import available_user_types_list, read_user, delete_user, update_user, list_user
-from app.schemas import get_pagination_params, PaginationParams, UserListResponse, UserUpdate
+from app.controllers.admin.user import available_user_types_list, read_user, delete_user, update_user, list_user, create_user
+from app.schemas import get_pagination_params, PaginationParams, UserListResponse, UserUpdate, UserCreate
 from app.database import get_session
 from app.models import Role
 from app.schemas import UserResponse, UserUpdate
@@ -116,4 +116,21 @@ async def delete(id: int, session=Depends(get_session)):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
+
+@router.post("/", summary="Create a user", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
+async def create(user: UserCreate = Body(), session=Depends(get_session)):
+    """
+    Create a user
+
+    Args:
+        user: UserCreate
+    """
+
+    try:
+        created_user = create_user(user, session)
+        return JSONResponse(status_code=201, content={"message": "User created successfully", "id": created_user.id})
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))

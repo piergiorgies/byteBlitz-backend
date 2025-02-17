@@ -4,7 +4,7 @@ from app.models.mapping import User, UserType
 from app.models import Role
 from app.schemas import PaginationParams
 from app.schemas import UserListResponse, UserResponse, UserCreate, UserUpdate
-
+from app.util.pwd import _hash_password
 class UserRepository:
 
     def __init__(self, session: Session):
@@ -24,10 +24,13 @@ class UserRepository:
             UserResponse: the created user
         """
         try:
+            pass
+            hash, salt = _hash_password(user.password)
             user = User(
                 username=user.username,
+                password_hash=hash,
+                salt=salt,
                 email=user.email,
-                password=user.password,
                 user_type_id=user.user_type_id
             )
             self.session.add(user)
@@ -40,7 +43,7 @@ class UserRepository:
         
     def update(self, user: UserUpdate, current_user: User) -> UserResponse:
         try:
-            db_user = self.session.query(User).filter(User.id == user.id).first()
+            db_user: User = self.session.query(User).filter(User.id == user.id).first()
             if not db_user:
                 raise ValueError("User not found")
             
@@ -49,7 +52,9 @@ class UserRepository:
             if user.email:
                 db_user.email = user.email
             if user.password:
-                db_user.password = user.password
+                hash, salt = _hash_password(user.password)
+                db_user.salt = salt
+                db_user.password_hash = hash
             if user.user_type_id:
                 db_user.user_type_id = user.user_type_id
             

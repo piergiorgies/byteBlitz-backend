@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -22,11 +23,35 @@ def read(id: int, session: Session) -> ContestRead:
     """
 
     try:
-        contest: Contest = get_object_by_id(Contest, session, id)
+        query = session.query(Contest).filter(Contest.id == id)
+        query.join(Contest.contest_problems)
+        contest = query.first()
+
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
         
-        return ContestRead.model_validate(obj=contest)
+        users = [user.id for user in contest.users]
+        problems = [
+            {
+                "problem_id": problem.problem_id,
+                "publication_delay": problem.publication_delay
+            }
+            for problem in contest.contest_problems
+        ]
+
+        contest = ContestRead(
+            id=contest.id,
+            name=contest.name,
+            description=contest.description,
+            start_datetime=contest.start_datetime,
+            end_datetime=contest.end_datetime,
+            is_public=contest.is_public,
+            is_registration_open=contest.is_registration_open,
+            users=users,
+            contest_problems=problems
+        )
+
+        return ContestRead.model_validate(obj=contest)  
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
@@ -132,38 +157,30 @@ def update(id: int, contest_update: ContestUpdate, session: Session):
         ContestRead: Updated contest
     """
     try:
-        contest = get_object_by_id(Contest, session, id)
+        contest: Contest = get_object_by_id(Contest, session, id)
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
 
+        # Validate datetime
         if contest_update.start_datetime and contest_update.end_datetime:
             if contest_update.start_datetime > contest_update.end_datetime:
                 raise HTTPException(status_code=400, detail="Start time cannot be greater than end time")
 
-        if contest_update.name:
-            contest.name = contest_update.name
+        # Update fields
+        for field in ["name", "description", "start_datetime", "end_datetime", "is_public", "is_registration_open"]:
+            if hasattr(contest_update, field) and getattr(contest_update, field) is not None:
+                setattr(contest, field, getattr(contest_update, field))
 
-        if contest_update.description:
-            contest.description = contest_update.description
-
-        if contest_update.start_datetime:
-            contest.start_datetime = contest_update.start_datetime
-
-        if contest_update.end_datetime:
-            contest.end_datetime = contest_update.end_datetime
-
-        if contest_update.is_public is not None:
-            contest.is_public = contest_update.is_public
-        
-        if contest_update.is_registration_open is not None:
-            contest.is_registration_open = contest_update.is_registration_open
-
+        # Update users
         if contest_update.users is not None:
-            users = session.query(User).filter(User.id.in_(contest_update.users)).all()
-            if len(users) != len(contest_update.users):
-                raise HTTPException(status_code=404, detail="One or more users not found")
-            contest.users = users
+            contest.users.clear()
+            for user_id in contest_update.users:
+                user = get_object_by_id(User, session, user_id)
+                if not user:
+                    raise HTTPException(status_code=404, detail=f"User with id {user_id} not found")
+                contest.users.append(user)  # Append new users
 
+        # Update problems
         if contest_update.problems is not None:
             session.query(ContestProblem).filter(ContestProblem.contest_id == contest.id).delete()
 
@@ -172,23 +189,28 @@ def update(id: int, contest_update: ContestUpdate, session: Session):
 
             if len(problems) != len(problem_ids):
                 raise HTTPException(status_code=404, detail="One or more problems not found")
-            
+
             contest_duration = (contest.end_datetime - contest.start_datetime).total_seconds()
             for item in contest_update.problems:
                 if item.publication_delay > contest_duration / 60:
                     raise HTTPException(status_code=400, detail="Problem publication delay is greater than contest duration")
-                else:
-                    contest.contest_problems.append(
-                        ContestProblem(
-                            contest_id=contest.id,
-                            problem_id=item.problem_id,
-                            publication_delay=item.publication_delay
-                        )
+
+                contest.contest_problems.append(
+                    ContestProblem(
+                        contest_id=contest.id,
+                        problem_id=item.problem_id,
+                        publication_delay=item.publication_delay
                     )
+                )
 
         session.commit()
         session.refresh(contest)
-        return ContestRead.model_validate(obj=contest)
+        # return the update status code
+        return JSONResponse(status_code=200, content={"message": "Contest updated successfully"})
+
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     except SQLAlchemyError as e:
         session.rollback()
@@ -213,19 +235,8 @@ def list(limit : int, offset : int, searchFilter: str, user : User, session : Se
         [ContestDTO]: contests
     """
     try:
-        is_admin_maintainer = RoleChecker.hasRole(user, Role.CONTEST_MAINTAINER)
+
         query = session.query(Contest)
-        if not is_admin_maintainer:
-            is_user = RoleChecker.hasRole(user, Role.USER)
-            if is_user:
-                query = query.filter(
-                    or_(
-                        Contest.users.any(User.id == user.id),
-                        Contest.end_datetime <= datetime.now()
-                    )
-                )
-            else:
-                query = query.filter(Contest.end_datetime <= datetime.now())
 
         if searchFilter:
             query = query.filter(Contest.name.ilike(f"%{searchFilter}%"))
