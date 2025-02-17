@@ -10,7 +10,6 @@ from app.util.role_checker import RoleChecker
 from app.database import get_object_by_id
 from app.schemas import UserListResponse, UserResponse, UserCreate, UserUpdate, PaginationParams
 from app.models.mapping import User, UserType
-from app.repositories import UserRepository
 
 
 

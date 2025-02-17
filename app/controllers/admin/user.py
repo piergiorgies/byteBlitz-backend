@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.models.mapping import User, UserType
 from app.schemas import UserCreate, UserResponse, UserUpdate
+from app.util.pwd import _hash_password
 from app.database import get_object_by_id
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
-from app.repositories import UserRepository
 from app.schemas import PaginationParams, UserListResponse
 from app.models.mapping import User, UserType
 
@@ -25,12 +25,20 @@ def create_user(user: UserCreate, session: Session) -> UserResponse:
         UserResponse: the created user
     """
     try:
-        repo = UserRepository(session)
-        user_type = repo.get_user_type_by_id(user.user_type_id)
+        user_type = session.query(UserType).filter(UserType.id == user.user_type_id).first()
         if not user_type:
             raise HTTPException(status_code=404, detail="User type not found")
         
-        user = repo.create(user)
+        hash, salt = _hash_password(user.password)
+        user = User(
+            username=user.username,
+            password_hash=hash,
+            salt=salt,
+            email=user.email,
+            user_type_id=user.user_type_id
+        )
+        session.add(user)
+        session.commit()
         return user
     
     except SQLAlchemyError as e:
@@ -43,7 +51,7 @@ def create_user(user: UserCreate, session: Session) -> UserResponse:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 
-def read_user(id: int, current_user: User, session: Session) -> UserResponse:
+def read_user(id: int, session: Session) -> UserResponse:
     """
     Read a user by id
     
@@ -56,10 +64,7 @@ def read_user(id: int, current_user: User, session: Session) -> UserResponse:
     """
     
     try:
-        is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
         user: User = get_object_by_id(User, session, id)
-        if not user or (not is_admin_maintainer and user.id != current_user.id):
-            raise HTTPException(status_code=404, detail="User not found")
         
         return UserResponse.model_validate(obj=user)
     
@@ -121,7 +126,7 @@ def available_user_types_list(session: Session) -> List[UserType]:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 
-def list_user(pagination: PaginationParams, user: User, session: Session) -> UserListResponse:
+def list_user(pagination: PaginationParams, session: Session) -> UserListResponse:
     """
     List all users
     
@@ -174,10 +179,8 @@ def update_user(id: int, updated_user: UserUpdate, current_user: User, session: 
         UserDTO: the updated user
     """
     try:
-        is_admin_maintainer = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
         user: User = get_object_by_id(User, session, id)
-        if not user or (not is_admin_maintainer and user.id != current_user.id):
-            raise HTTPException(status_code=404, detail="User not found")
+
         username_check : User = session.query(User).filter(User.username == updated_user.username).one_or_none()
         if username_check and username_check.id != id:
             raise HTTPException(status_code=409, detail="Username already exists")

@@ -17,10 +17,7 @@ router = APIRouter(
 
 
 @router.get("/", response_model=UserListResponse, summary="List users", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
-async def list(
-    pagination : PaginationParams = Depends(get_pagination_params),
-    user=Depends(get_current_user),
-    session=Depends(get_session)
+async def list(pagination : PaginationParams = Depends(get_pagination_params), session=Depends(get_session)
     ):
     """
     List users
@@ -30,7 +27,7 @@ async def list(
     """
 
     try:
-        users = list_user(pagination, user, session)
+        users = list_user(pagination, session)
         return users
 
     except HTTPException as e:
@@ -78,7 +75,7 @@ async def get_user_types(session=Depends(get_session)):
     
 
 @router.get("/{id}", response_model=UserResponse, summary="Get user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
-async def read(id: int, current_user=Depends(get_current_user), session=Depends(get_session)):
+async def read(id: int, session=Depends(get_session)):
     """
     Get user by id
 
@@ -87,7 +84,7 @@ async def read(id: int, current_user=Depends(get_current_user), session=Depends(
     """
 
     try:
-        user: UserResponse = read_user(id, current_user, session)
+        user: UserResponse = read_user(id, session)
         return user
 
     except HTTPException as e:
