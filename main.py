@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.logger import LoggingMiddleware, get_logger
 from app.routers import auth, contest, problem, submission, user, general, judge
-from app.routers.admin import contest as contest_admin, problem as problem_admin, user as user_admin
+from app.routers.admin import contest as contest_admin, problem as problem_admin, user as user_admin, judge as judge_admin
 from app.config import settings
 
 app = FastAPI(title="ByteBlitz", description="API for ByteBlitz", version="0.1")
@@ -33,6 +33,7 @@ app.include_router(general.router)
 app.include_router(contest_admin.router)
 app.include_router(problem_admin.router)
 app.include_router(user_admin.router)
+app.include_router(judge_admin.router)
 
 # judge routers
 app.include_router(judge.router)

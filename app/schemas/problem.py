@@ -38,8 +38,6 @@ class ProblemRead(BaseResponse):
     points: int
     is_public: bool
     author: ProblemAuthor
-    created_at: str
-    updated_at: str
     test_cases: List[ProblemTestCase]
     constraints: List[ProblemConstraint]
 

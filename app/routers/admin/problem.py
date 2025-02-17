@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from app.schemas import ProblemCreate, ProblemUpdate, ProblemListResponse, PaginationParams, get_pagination_params
-from app.controllers.admin.problem import create, delete, update, list_available_languages, list
+from app.schemas import ProblemCreate, ProblemUpdate, ProblemListResponse, PaginationParams, get_pagination_params, ProblemRead
+from app.controllers.admin.problem import create, delete, update, list_available_languages, list, read
 from app.database import get_session
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
@@ -12,7 +12,24 @@ router = APIRouter(
     tags=["Admin Problem"],
 )
 
+@router.get("/{id}", response_model=ProblemRead, summary="Get problem by id", dependencies=[Depends(RoleChecker([Role.GUEST]))])
+async def read_problem(id: int, user=Depends(get_current_user), session=Depends(get_session)):
+    """
+    Get problem by id
 
+    Args:
+        id: int
+    """
+
+    try:
+        problem: ProblemRead = read(id, user, session)
+        return problem
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
 @router.post("/", summary="Create a problem", dependencies=[Depends(RoleChecker([Role.PROBLEM_MAINTAINER]))])
 async def create_problem(problem: ProblemCreate = Body(), user=Depends(get_current_user), session=Depends(get_session)):
     """

@@ -14,7 +14,7 @@ from app.models.mapping import Submission, ContestSubmission
 from app.schemas import (
     ContestListResponse, 
     ContestScoreboard, ContestInfo, ContestInfos, ContestUserInfo, 
-    ProblemInfo, PastContest, UpcomingContest, ContestBase
+    ProblemInfo, PastContest, UpcomingContest
 )
 
 def get_scoreboard(id: int, session: Session) -> ContestScoreboard:
