@@ -1,5 +1,5 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey as FK, Integer, String, DateTime
+from sqlalchemy import ForeignKey as FK, Integer, String, DateTime, Boolean
 from typing import Optional, List
 from datetime import datetime
 from app.database import Base
@@ -13,8 +13,8 @@ class Contest(Base):
     description : Mapped[Optional[str]] = mapped_column(String, nullable=True)
     start_datetime : Mapped[datetime] = mapped_column(DateTime, nullable=False)
     end_datetime : Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    is_public : Mapped[bool] = mapped_column(Integer, nullable=False, default=False)
-    is_registration_open : Mapped[bool] = mapped_column(Integer, nullable=False, default=False)
+    is_public : Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_registration_open : Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # connected fields
     problems : Mapped[List['Problem']] = relationship('Problem', secondary='contest_problems', back_populates='contests', cascade='all, delete', passive_deletes=True)

@@ -58,8 +58,8 @@ def create(contest: ContestCreate, session: Session):
             is_public=contest.is_public,
             is_registration_open=contest.is_registration_open,
         )
-        for i in range(len(contest.user_ids)):
-            user: User = get_object_by_id(User, session, contest.user_ids[i])
+        for i in range(len(contest.users)):
+            user: User = get_object_by_id(User, session, contest.users[i])
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
             created_contest.users.append(user)
@@ -158,9 +158,9 @@ def update(id: int, contest_update: ContestUpdate, session: Session):
         if contest_update.is_registration_open is not None:
             contest.is_registration_open = contest_update.is_registration_open
 
-        if contest_update.user_ids is not None:
-            users = session.query(User).filter(User.id.in_(contest_update.user_ids)).all()
-            if len(users) != len(contest_update.user_ids):
+        if contest_update.users is not None:
+            users = session.query(User).filter(User.id.in_(contest_update.users)).all()
+            if len(users) != len(contest_update.users):
                 raise HTTPException(status_code=404, detail="One or more users not found")
             contest.users = users
 

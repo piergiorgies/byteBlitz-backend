@@ -40,6 +40,7 @@ def list(limit: int, offset: int, searchFilter: str, user: User, session: Sessio
         for problem in problems:
             languages = [constraint.language.name for constraint in problem.constraints]
             problem_infos.append(ProblemInfo(
+                id=problem.id,
                 title=problem.title,
                 points=problem.points,
                 languages=languages,
