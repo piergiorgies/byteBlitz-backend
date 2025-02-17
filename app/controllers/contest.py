@@ -8,13 +8,14 @@ from typing import List
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
 from app.database import get_object_by_id
-from app.schemas import ContestScoreboardDTO, ListResponse
 from app.models.mapping import User, ContestUser, Contest
-# from app.models import Team, ContestTeamDTO
 from app.models.mapping import Problem, ContestProblem, ProblemConstraint, Language
 from app.models.mapping import Submission, ContestSubmission
-from app.schemas import ContestCreate, ContestUpdate, ContestRead, ContestsInfo, ContestInfo, ProblemInfo, PastContest, ContestUserDTO
-from app.schemas import UpcomingContest
+from app.schemas import (
+    ContestCreate, ContestUpdate, ContestRead, ContestListResponse, 
+    ContestScoreboard, ContestInfo, ContestInfos, ContestUser, 
+    ProblemInfo, PastContest, UpcomingContest
+)
 
 
 def create(contest: ContestCreate, session: Session):
@@ -70,7 +71,7 @@ def create(contest: ContestCreate, session: Session):
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def list(limit : int, offset : int, searchFilter: str, user : User, session : Session) -> ListResponse:
+def list(limit : int, offset : int, searchFilter: str, user : User, session : Session) -> ContestListResponse:
     """
     List contests
     
@@ -105,8 +106,11 @@ def list(limit : int, offset : int, searchFilter: str, user : User, session : Se
         query = query.limit(limit).offset(offset)
         contests : List[Contest] = query.all()
 
-        return {"data": [ContestRead.model_validate(obj=obj) for obj in contests], "count": count}
-    
+        return ContestListResponse(
+            contests=[ContestRead.model_validate(obj=contest) for contest in contests],
+            count=count
+        )
+        
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
     except HTTPException as e:
@@ -249,7 +253,7 @@ def update(id: int, contest_update: ContestUpdate, session: Session):
         session.rollback()
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
-def get_scoreboard(id: int, session: Session) -> ContestScoreboardDTO:
+def get_scoreboard(id: int, session: Session) -> ContestScoreboard:
     """
     Get the current scoreboard for a specific contest
     
@@ -288,13 +292,13 @@ def get_scoreboard(id: int, session: Session) -> ContestScoreboardDTO:
         # 5. sort users by score
         scores = {k: v for k, v in sorted(scores.items(), key=lambda item: sum(item[1]), reverse=True)}
         
-        scoreboard : ContestScoreboardDTO = ContestScoreboardDTO(
+        scoreboard : ContestScoreboard = ContestScoreboard(
             userteams = scores.keys(),
             problems = titles,
             scores = scores.values()
         )
 
-        return ContestScoreboardDTO.model_validate(obj=scoreboard)
+        return ContestScoreboard.model_validate(obj=scoreboard)
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
@@ -303,7 +307,7 @@ def get_scoreboard(id: int, session: Session) -> ContestScoreboardDTO:
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def list_problems(id: int, user: User, session: Session) -> ListResponse:
+def list_problems(id: int, user: User, session: Session) -> ContestListResponse:
     """
     List problems in a contest
 
@@ -369,7 +373,7 @@ def get_contest_info(session: Session, contests: List[Contest]) -> List[ContestI
         ))
     return result
 
-def list_with_info(session: Session) -> ContestsInfo:
+def list_with_info(session: Session) -> ContestInfos:
     """List contests with additional data"""
     try:
         now = datetime.now()
@@ -377,7 +381,7 @@ def list_with_info(session: Session) -> ContestsInfo:
         past_contests = session.query(Contest).filter(Contest.end_datetime <= now).limit(5).all()
         upcoming_contests = session.query(Contest).filter(Contest.start_datetime > now).limit(5).all()
 
-        return ContestsInfo(
+        return ContestInfos(
             ongoing=get_contest_info(session, ongoing_contests),
             past=get_contest_info(session, past_contests),
             upcoming=get_contest_info(session, upcoming_contests)
@@ -389,8 +393,6 @@ def list_with_info(session: Session) -> ContestsInfo:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
-    
-
 
 def read_past(id: int, session: Session):
     """
@@ -422,7 +424,7 @@ def read_past(id: int, session: Session):
         problems_info = [ProblemInfo(title=problem.title, points=problem.points, languages=languages[problem.id]) for problem in problems]
 
         # problems_info = [ProblemInfo(title=problem.title, points=problem.points, languages=problem_languages) for problem in problems]
-        user_infos = [ContestUserDTO.model_validate(obj=user) for user in contest.users]
+        user_infos = [ContestUser.model_validate(obj=user) for user in contest.users]
 
         number_of_submissions = session.query(ContestSubmission).filter(ContestSubmission.contest_id == id).count()
 

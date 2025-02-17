@@ -1,51 +1,46 @@
-from app.schemas.base_dto import BaseRequest
+from app.schemas.base import BaseRequest, BaseResponse
 
-class SubmissionDTO(BaseRequest):
+class SubmissionCreate(BaseRequest):
     """
-    Submission DTO
+    Submission Create DTO
 
     Attributes:
-        id (int | None): The submission ID
-        notes (str | None): The submission notes
         problem_id (int): The problem ID
         user_id (int): The user ID
         language_id (int): The language ID
+        submitted_code (str): The submitted code
     """
-
-    id: int | None = 0
-    notes: str | None = None
-    contest_id: int | None = None
     problem_id: int
-    user_id: int | None = 0
-    language_id: str
+    user_id: int
+    language_id: int
     submitted_code: str
 
-class SubmissionTestCaseDTO(BaseRequest):
+
+class SubmissionResponse(BaseResponse):
     """
-    Submission test case DTO
+    Submission Response DTO
 
     Attributes:
-        id (int): The test case ID
-        number (int): The test case number
-        notes (str): The test case notes
-        memory (float): The test case memory
-        time (float): The test case time
-        result_id (int): The test case result ID
-        submission_id (int): The test case submission ID
+        id (int): The submission ID
+        problem_id (int): The problem ID
+        user_id (int): The user ID
+        language_id (int): The language ID
+        submitted_code (str): The submitted code
+        created_at (datetime): The date and time the submission was created
+        updated_at (datetime): The date and time the submission was last updated
     """
+    id: int
+    problem_id: int
+    user_id: int
+    language_id: int
+    submitted_code: str
 
+class SubmissionTestCaseResult(BaseRequest):
+    result_id: int
     number: int
     notes: str
-    memory: float
+    memory: int
     time: float
-    result_id: int
 
-class ResultDTO(BaseRequest):
-    """
-    Result DTO
-
-    Attributes:
-        result_id (int): The result ID
-    """
-    
+class SubmissionCompleteResult(BaseResponse):
     result_id: int

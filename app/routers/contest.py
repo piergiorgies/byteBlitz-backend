@@ -6,9 +6,9 @@ from app.util.jwt import get_current_user
 from app.models.role import Role
 from app.controllers.contest import create, list, read, delete, update
 from app.controllers.contest import get_scoreboard, list_with_info, read_past, read_upcoming
-from app.schemas.params import pagination_params
-from app.schemas import ContestScoreboardDTO, ListResponse, IdListDTO
-from app.schemas import ContestCreate, ContestUpdate, ContestRead, ContestsInfo
+from app.schemas import get_pagination_params, PaginationParams
+from app.schemas import ContestScoreboard, ContestListResponse
+from app.schemas import ContestCreate, ContestUpdate, ContestRead, ContestInfos
 
 from app.database import get_session
 from app.util.role_checker import RoleChecker
@@ -18,7 +18,7 @@ router = APIRouter(
     tags=["Contests"]
 )
 
-@router.get("/info", response_model=ContestsInfo, summary="List contests info", dependencies=[Depends(RoleChecker([Role.GUEST]))])
+@router.get("/info", response_model=ContestInfos, summary="List contests info", dependencies=[Depends(RoleChecker([Role.GUEST]))])
 async def list_contests_info(session=Depends(get_session)):
     """
     List contests info
@@ -58,8 +58,8 @@ async def create_contest(contest: ContestCreate = Body(), session=Depends(get_se
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-@router.get("/", response_model=ListResponse, summary="List contests", dependencies=[Depends(RoleChecker([Role.GUEST]))])
-async def list_contests(pagination : dict = Depends(pagination_params), user = Depends(get_current_user), session=Depends(get_session)):
+@router.get("/", response_model=ContestListResponse, summary="List contests", dependencies=[Depends(RoleChecker([Role.GUEST]))])
+async def list_contests(pagination : PaginationParams = Depends(get_pagination_params), user = Depends(get_current_user), session=Depends(get_session)):
     """
     List contests
     
@@ -146,7 +146,7 @@ async def add_user_to_contest(id: int, session=Depends(get_session)):
     """
 
     try:
-        scoreboard : ContestScoreboardDTO = get_scoreboard(id, session)
+        scoreboard : ContestScoreboard = get_scoreboard(id, session)
         return scoreboard
     
     except HTTPException as e:
@@ -172,7 +172,6 @@ async def get_past_contest(id: int, session=Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-
 @router.get("/{id}/upcoming", summary="Info about upcoming contest", dependencies=[Depends(RoleChecker([Role.USER]))])
 async def get_upcoming_contest(id: int, session=Depends(get_session)):
     """

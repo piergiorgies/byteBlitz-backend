@@ -1,28 +1,62 @@
-from app.schemas.base_dto import BaseRequest
+from app.schemas import BaseRequest, BaseResponse
 from datetime import datetime
 
-class UserDTO(BaseRequest):
+class UserCreate(BaseRequest):
     """
-    User DTO
+    User Create DTO
 
-    Attributes:
+    Attributes
+        username (str): The username of the user
+        email (str): The email of the user
+        password (str): The password of the user
+        user_type_id (int): The user type id of the user
+
+    """
+    username: str
+    email: str
+    password: str
+    user_type_id: int | None = None
+
+class UserUpdate(BaseRequest):
+    """
+    User Update DTO
+
+    Attributes
+        username (str): The username of the user
+        email (str): The email of the user
+        password (str): The password of the user
+        user_type_id (int): The user type id of the user
+
+    """
+    username: str | None = None
+    email: str | None = None
+    password: str | None = None
+    user_type_id: int | None = None
+
+class UserResponse(BaseResponse):
+    """
+    User Response DTO
+
+    Attributes
         id (int): The id of the user
         username (str): The username of the user
         email (str): The email of the user
-        registered_at (datetime): The date and time of the registration
-        user_type_id (int) : The id of the the user type
-    """
-    id : int | None = None
-    username : str
-    email : str
-    registered_at : datetime | None = None
-    user_type_id : int
+        created_at (datetime): The date and time the user was created
+        updated_at (datetime): The date and time the user was last updated
 
-class UserPermissionsDTO(BaseRequest):
     """
-    User Permissions DTO
+    id: int
+    username: str
+    email: str
+    registered_at: datetime
 
-    Attributes:
-        user_type_id (int) : The id of the the user type
+class UserListResponse(BaseResponse):
     """
-    user_type_id : int
+    User List Response DTO
+
+    Attributes
+        users (List[UserResponse]): A list of users
+
+    """
+    data: list[UserResponse]
+    count: int

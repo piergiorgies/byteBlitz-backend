@@ -4,9 +4,8 @@ from fastapi.responses import JSONResponse
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
 from app.util.jwt import get_current_user
-from app.controllers.user import list, read, read_me, delete, update, available_user_types_list
-from app.schemas.params import pagination_params
-from app.schemas import ListResponse, UserDTO
+from app.controllers.user import list_user, read_user, read_me, delete_user, update_user, available_user_types_list
+from app.schemas import get_pagination_params, PaginationParams, UserListResponse, UserCreate, UserUpdate, UserResponse
 from app.database import get_session
 
 router = APIRouter(
@@ -14,8 +13,12 @@ router = APIRouter(
     prefix="/users"
 )
 
-@router.get("/", response_model=ListResponse, summary="List users", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
-async def list_users(pagination : dict = Depends(pagination_params),  user=Depends(get_current_user), session=Depends(get_session)):
+@router.get("/", response_model=UserListResponse, summary="List users", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
+async def list_users(
+    pagination : PaginationParams = Depends(get_pagination_params),
+    user=Depends(get_current_user),
+    session=Depends(get_session)
+    ):
     """
     List users
 
@@ -24,7 +27,7 @@ async def list_users(pagination : dict = Depends(pagination_params),  user=Depen
     """
 
     try:
-        users = list(pagination["limit"], pagination["offset"], pagination["search"], user, session)
+        users = list_user(pagination, user, session)
         return users
 
     except HTTPException as e:
@@ -32,14 +35,14 @@ async def list_users(pagination : dict = Depends(pagination_params),  user=Depen
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.get("/me", response_model=UserDTO, summary="Get the logged user", dependencies=[Depends(RoleChecker([Role.USER]))])
+@router.get("/me", response_model=UserResponse, summary="Get the logged user", dependencies=[Depends(RoleChecker([Role.USER]))])
 async def read_user_me(current_user=Depends(get_current_user), session=Depends(get_session)):
     """
     Get the logged user
     """
 
     try:
-        user: UserDTO = read_me(current_user, session)
+        user: UserResponse = read_me(current_user, session)
         return user
 
     except HTTPException as e:
@@ -47,7 +50,7 @@ async def read_user_me(current_user=Depends(get_current_user), session=Depends(g
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.get("/{id}", response_model=UserDTO, summary="Get user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
+@router.get("/{id}", response_model=UserResponse, summary="Get user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
 async def read_user(id: int, current_user=Depends(get_current_user), session=Depends(get_session)):
     """
     Get user by id
@@ -57,7 +60,7 @@ async def read_user(id: int, current_user=Depends(get_current_user), session=Dep
     """
 
     try:
-        user: UserDTO = read(id, current_user, session)
+        user: UserResponse = read_user(id, current_user, session)
         return user
 
     except HTTPException as e:
@@ -75,7 +78,7 @@ async def delete_user(id: int, user=Depends(get_current_user), session=Depends(g
     """
 
     try:
-        deleted = delete(id, user, session)
+        deleted = delete_user(id, user, session)
 
         if not deleted:
             raise HTTPException(status_code=404, detail="User not found")
@@ -88,7 +91,7 @@ async def delete_user(id: int, user=Depends(get_current_user), session=Depends(g
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 @router.put("/{id}", summary="Update a user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
-async def update_user(id: int, updated_user: UserDTO = Body(), current_user=Depends(get_current_user), session=Depends(get_session)):
+async def update_user(id: int, updated_user: UserUpdate = Body(), current_user=Depends(get_current_user), session=Depends(get_session)):
     """
     Update a user by id
 
@@ -101,58 +104,14 @@ async def update_user(id: int, updated_user: UserDTO = Body(), current_user=Depe
     """
 
     try:
-        user = update(id, updated_user, current_user, session)
-        return JSONResponse(status_code=200, content={"message": "User updated successfully"})
+        user = update_user(id, updated_user, current_user, session)
+        return user
 
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-# @router.patch("/{id}/data", summary= "Update username and/or password of a user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
-# async def update_user_data(id: int, updated_user: UserLoginDTO = Body(), current_user=Depends(get_current_user), session=Depends(get_session)):
-#     """
-#     Update username and/or password of a user by id
-
-#     Args:
-#         id: int
-#         updated_user: UserLoginDTO
-
-#     Returns:
-#         JSONResponse
-#     """
-
-#     try:
-#         user = update_data(id, updated_user, current_user, session)
-#         return JSONResponse(status_code=200, content={"message": "User data updated successfully"})
-
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-# @router.patch("/{id}/permissions", summary= "Update permissions of a user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
-# async def update_user_permissions(id: int, updated_user: UserPermissionsDTO = Body(), current_user=Depends(get_current_user), session=Depends(get_session)):
-#     """
-#     Update permissions of user by id
-
-#     Args:
-#         id: int
-#         updated_user: UserPermissionsDTO
-
-#     Returns:
-#         JSONResponse
-#     """
-
-#     try:
-#         user = update_permissions(id, updated_user, current_user, session)
-#         return JSONResponse(status_code=200, content={"message": "User permissions updated successfully"})
-
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
 @router.get("/types/available", summary="Get available UserType", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
 async def get_user_types(session=Depends(get_session)):
     """

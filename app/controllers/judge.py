@@ -4,10 +4,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from app.models.mapping import Problem, User, UserType
-from app.schemas import JudgeCreateDTO, JudgeDTO, ProblemJudgeDTO, ConstraintDTO, TestCaseDTO
 from app.database import get_object_by_id_joined_with
 from app.models.role import Role
-
+from app.schemas import JudgeResponse, JudgeCreate, JudgeListResponse, JudgeProblem, Constraint, TestCase
 
 #regiorn Judge
 
@@ -49,9 +48,9 @@ def get_problem_info(id: int, session: Session, judge: User):
             raise HTTPException(status_code=404, detail="Problem not found")
 
         # serialize the problem
-        problem_dto = ProblemJudgeDTO.model_validate(obj=problem)
-        problem_dto.constraints = [ConstraintDTO.model_validate(obj=constraint) for constraint in problem.constraints]
-        problem_dto.test_cases = [TestCaseDTO.model_validate(obj=test_case) for test_case in problem.test_cases]
+        problem_dto = JudgeProblem.model_validate(obj=problem)
+        problem_dto.constraints = [Constraint.model_validate(obj=constraint) for constraint in problem.constraints]
+        problem_dto.test_cases = [TestCase.model_validate(obj=test_case) for test_case in problem.test_cases]
 
         judge.registered_at = datetime.now()
         session.commit()
@@ -65,7 +64,7 @@ def get_problem_info(id: int, session: Session, judge: User):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def get_judges(limit : int, offset : int, searchFilter: str, session: Session) -> list[JudgeDTO]:
+def get_judges(limit : int, offset : int, searchFilter: str, session: Session) -> JudgeListResponse:
     """
     Get the judge list
     """
@@ -91,7 +90,7 @@ def get_judges(limit : int, offset : int, searchFilter: str, session: Session) -
             status = False
             if judge.registered_at > datetime.now() - timedelta(minutes=30):
                 status = True
-            dto.append(JudgeDTO(id=judge.id, name=judge.username, status=status, last_connection=judge.registered_at))
+            dto.append(JudgeResponse(id=judge.id, name=judge.username, status=status, last_connection=judge.registered_at))
         
         return {"data": dto, "count": count}
 
@@ -100,7 +99,7 @@ def get_judges(limit : int, offset : int, searchFilter: str, session: Session) -
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def create_judge(judge: JudgeCreateDTO, session: Session):
+def create_judge(judge: JudgeCreate, session: Session):
     """
     Create a new judge
     """

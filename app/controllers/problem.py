@@ -8,13 +8,10 @@ from datetime import datetime
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
 from app.database import get_object_by_id
-from app.schemas import ListResponse
+from app.schemas import ProblemListResponse, ProblemCreate, ProblemUpdate, ProblemInfo, ProblemRead, ProblemConstraint, ProblemTestCase
 from app.models.mapping import User, Problem, ProblemTestCase, ProblemConstraint, Language, ContestProblem, Contest
-from app.schemas import ProblemDTO, ProblemTestCaseDTO, ProblemConstraintDTO, ProblemList
 
-#region Problem
-
-def list(limit: int, offset: int, searchFilter: str, user: User, session: Session) -> ListResponse:
+def list(limit: int, offset: int, searchFilter: str, user: User, session: Session) -> ProblemListResponse:
     """
     List problems according to visibility with correct counting in SQLAlchemy.
     
@@ -54,7 +51,7 @@ def list(limit: int, offset: int, searchFilter: str, user: User, session: Sessio
         problems = query.distinct().limit(limit).offset(offset).all()
 
         return {
-            "data": [ProblemList.model_validate(obj=problem) for problem in problems],
+            "data": [ProblemInfo.model_validate(obj=problem) for problem in problems],
             "count": total_count
         }
 
@@ -64,10 +61,8 @@ def list(limit: int, offset: int, searchFilter: str, user: User, session: Sessio
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-
     
-def read(id: int, user: User, session: Session) -> ProblemDTO:
+def read(id: int, user: User, session: Session) -> ProblemRead:
     """
     Get problem by id according to visibility
 
@@ -94,7 +89,7 @@ def read(id: int, user: User, session: Session) -> ProblemDTO:
         problem.constraints = constraints
         print(constraints)
 
-        return ProblemDTO.model_validate(obj=problem)
+        return ProblemRead.model_validate(obj=problem)
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
@@ -103,33 +98,39 @@ def read(id: int, user: User, session: Session) -> ProblemDTO:
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def create(problemDTO: ProblemDTO, user: User, session: Session) -> ProblemDTO:
+def create(problemDTO: ProblemCreate, user: User, session: Session):
     """
-    Create a problem
+    Create a problem along with its test cases
     
     Args:
-        problemDTO: ProblemDTO
-        session: Session
+        problemDTO (ProblemCreate): the problem data including test cases and constraints
+        user (User): the user creating the problem
+        session (Session): SQLAlchemy session
     
     Returns: 
-        ProblemDTO: problem
+        Problem: the created problem
     """
-
     try:
-        problem = session.query(Problem).filter(Problem.title == problemDTO.title).first()
-        if problem:
+        # Check if a problem with the same title already exists
+        existing_problem = session.query(Problem).filter(Problem.title == problemDTO.title).first()
+        if existing_problem:
             raise HTTPException(status_code=409, detail="Problem title already exists")
+        
         if problemDTO.points < 0:
             raise HTTPException(status_code=400, detail="Points cannot be negative")
-
+        
+        # Build constraints from the provided DTO
         constraints = []
         for constraint in problemDTO.constraints:
-            constraints.append(ProblemConstraint(
-                language_id=constraint.language_id,
-                memory_limit=constraint.memory_limit,
-                time_limit=constraint.time_limit
-            ))
-
+            constraints.append(
+                ProblemConstraint(
+                    language_id=constraint.language_id,
+                    memory_limit=constraint.memory_limit,
+                    time_limit=constraint.time_limit
+                )
+            )
+        
+        # Create the problem instance
         problem = Problem(
             title=problemDTO.title,
             description=problemDTO.description,
@@ -138,21 +139,57 @@ def create(problemDTO: ProblemDTO, user: User, session: Session) -> ProblemDTO:
             author_id=user.id,
             constraints=constraints
         )
-
+        
         session.add(problem)
+        # Flush to get the problem.id assigned without committing yet
+        session.flush()
+        
+        # Create test cases if provided
+        for test_case_dto in problemDTO.test_cases:
+            if test_case_dto.points < 0:
+                raise HTTPException(status_code=400, detail="Points cannot be negative")
+            
+            # Retrieve the last test case number for the problem
+            last_test_case = (
+                session.query(ProblemTestCase)
+                .filter(ProblemTestCase.problem_id == problem.id)
+                .order_by(ProblemTestCase.number.desc())
+                .first()
+            )
+            test_case_number = last_test_case.number + 1 if last_test_case else 1
+            
+            # For pretests, override points to 0
+            test_case_points = test_case_dto.points if not test_case_dto.is_pretest else 0
+            
+            # Increment the problem's version number (if the method exists)
+            problem.increment_version_number()
+            
+            # Create the test case instance.
+            # Assuming `notes` is an attribute; if not, remove it.
+            test_case = ProblemTestCase(
+                number=test_case_number,
+                notes=getattr(test_case_dto, "notes", None),  # Use None if 'notes' is not provided
+                input=test_case_dto.input,
+                output=test_case_dto.output,
+                points=test_case_points,
+                is_pretest=test_case_dto.is_pretest,
+                problem_id=problem.id
+            )
+            session.add(test_case)
+        
         session.commit()
-
         return problem
     
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(status_code=500, detail="Database error " + str(e))
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
     except HTTPException as e:
+        session.rollback()
         raise e
     except Exception as e:
-        session.rollback
+        session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-              
+       
 def delete(id: int, session: Session) -> bool:
     """
     Delete problem by id
@@ -182,39 +219,54 @@ def delete(id: int, session: Session) -> bool:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
+def update(id: int, problem_update: ProblemUpdate, session: Session) -> ProblemUpdate:
     """
-    Update problem by id
+    Update problem by id along with its constraints and test cases
 
     Args:
-        id (int):
-        problem_update (ProblemDTO):
+        id (int): the problem id
+        problem_update (ProblemUpdate): the updated problem data including constraints and test cases
+        session (Session): SQLAlchemy session
 
     Returns:
-        problem (ProblemDTO):
+        ProblemUpdate: the updated problem data
     """
-
     try:
-        problem : Problem = get_object_by_id(Problem, session, id)
+        # Retrieve the problem by id
+        problem: Problem = get_object_by_id(Problem, session, id)
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
-        problem_title_check : Problem = session.query(Problem).filter(Problem.title == problem_update.title).first()
+        
+        # Check for duplicate title
+        problem_title_check: Problem = (
+            session.query(Problem)
+            .filter(Problem.title == problem_update.title)
+            .first()
+        )
         if problem_title_check and problem_title_check.id != id:
             raise HTTPException(status_code=409, detail="Problem title already exists")
+        
+        # Validate problem points
         if problem_update.points < 0:
             raise HTTPException(status_code=400, detail="Points cannot be negative")
         
-        problem.title=problem_update.title
-        problem.description=problem_update.description
-        problem.points=problem_update.points
-        problem.is_public=problem_update.is_public
+        # Update basic problem fields
+        problem.title = problem_update.title
+        problem.description = problem_update.description
+        problem.points = problem_update.points
+        problem.is_public = problem_update.is_public
 
+        # Increment version for any change
         problem.increment_version_number()
 
+        # --- Update Constraints ---
         found = set()
         for constraint in problem.constraints:
-            new_constraint = next((x for x in problem_update.constraints if x.language_id == constraint.language_id), None)
-            if new_constraint == None:
+            new_constraint = next(
+                (x for x in problem_update.constraints if x.language_id == constraint.language_id),
+                None
+            )
+            if new_constraint is None:
                 continue
 
             found.add(new_constraint.language_id)
@@ -231,19 +283,70 @@ def update(id: int, problem_update: ProblemDTO, session: Session) -> ProblemDTO:
                 ) for constraint in constraints_to_add
             ])
 
+        last_test_case = (
+            session.query(ProblemTestCase)
+            .filter(ProblemTestCase.problem_id == problem.id)
+            .order_by(ProblemTestCase.number.desc())
+            .first()
+        )
+        next_test_case_number = last_test_case.number + 1 if last_test_case else 1
+
+        for test_case_dto in problem_update.test_cases:
+            # Validate test case points
+            if test_case_dto.points < 0:
+                raise HTTPException(status_code=400, detail="Points cannot be negative")
+            
+            # If an ID is provided, update the existing test case.
+            if getattr(test_case_dto, "id", None):
+                test_case: ProblemTestCase = get_object_by_id(ProblemTestCase, session, test_case_dto.id)
+                if not test_case:
+                    raise HTTPException(status_code=404, detail=f"Test case with id {test_case_dto.id} not found")
+                if test_case.problem_id != problem.id:
+                    raise HTTPException(status_code=404, detail="Problem and test case do not match")
+                
+                # For pretests, force points to 0.
+                test_case_points = test_case_dto.points if not test_case_dto.is_pretest else 0
+
+                test_case.notes = test_case_dto.notes
+                test_case.input = test_case_dto.input
+                test_case.output = test_case_dto.output
+                test_case.points = test_case_points
+                test_case.is_pretest = test_case_dto.is_pretest
+
+            # Otherwise, create a new test case.
+            else:
+                # Assign a number and then increment for the next new test case.
+                test_case_number = next_test_case_number
+                next_test_case_number += 1
+
+                test_case_points = test_case_dto.points if not test_case_dto.is_pretest else 0
+
+                new_test_case = ProblemTestCase(
+                    number=test_case_number,
+                    notes=getattr(test_case_dto, "notes", None),
+                    input=test_case_dto.input,
+                    output=test_case_dto.output,
+                    points=test_case_points,
+                    is_pretest=test_case_dto.is_pretest,
+                    problem_id=problem.id
+                )
+                session.add(new_test_case)
+
         session.commit()
-        return ProblemDTO.model_validate(obj=problem)
-    
+        # Validate and return the updated problem using your DTO validation method.
+        return ProblemUpdate.model_validate(obj=problem)
+
     except SQLAlchemyError as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
     except HTTPException as e:
+        session.rollback()
         raise e
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def list_available_languages(session: Session) -> ListResponse:
+def list_available_languages(session: Session):
     """
     List problems according to visibility
     
@@ -269,400 +372,3 @@ def list_available_languages(session: Session) -> ListResponse:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-#endregion
-
-#region Problem Test Cases
-
-def list_test_cases(problem_id: int, session: Session) -> ListResponse:
-    """
-   List all test cases for a specific problem
-    
-    Args:
-        problem_id (int): the id of the related problem
-        session (Session):
-    
-    Returns:
-        [ListResponse]: list of test cases
-    """
-
-    try:
-        problem : Problem = get_object_by_id(Problem, session, problem_id)
-        if not problem:
-            raise HTTPException(status_code=404, detail="Problem not found")
-        query = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem_id)
-        test_cases: List[ProblemTestCase] = query.all()
-        count : int = query.count()
-        return {"data" : [ProblemTestCaseDTO.model_validate(obj=obj) for obj in test_cases], "count" : count}
-    
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def read_test_case(problem_id: int, test_case_id : int, session: Session) -> ProblemTestCaseDTO:
-    """
-    Get test case by id
-
-    Args:
-        problem_id (int):  the id of the related problem
-        test_case_id ():  the id of the test case
-        session (Session):
-
-    Returns:
-        ProblemTestCaseDTO: test case
-    """
-
-    try:
-        problem : Problem = get_object_by_id(Problem, session, problem_id)
-        if not problem:
-            raise HTTPException(status_code=404, detail="Problem not found")
-        test_case = get_object_by_id(ProblemTestCase, session, test_case_id)
-        if not test_case:
-            raise HTTPException(status_code=404, detail= "Test case not found")
-        if test_case.problem_id != problem.id:
-            raise HTTPException(status_code=404, detail= "Problem or Test case not found")
-        return ProblemTestCaseDTO.model_validate(obj=test_case)
-    
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-def create_test_case(problem_id: int, problemTestCaseDTO: ProblemTestCaseDTO, session: Session) -> ProblemTestCaseDTO:
-    """
-    Create test case
-    
-    Args:
-        problem_id (int): the id of the related problem
-        problemTestCaseDTO (ProblemTestCaseDTO): the test case to create
-        session (Session): 
-    
-    Returns: 
-        ProblemTestCaseDTO: test case
-    """
-    
-    try:
-        problem = get_object_by_id(Problem, session, problem_id)
-        if not problem:
-            raise HTTPException(status_code=404, detail="Problem not found")
-        if problemTestCaseDTO.points < 0:
-            raise HTTPException(status_code=400, detail="Points cannot be negative")
-        
-        problem.increment_version_number()
-
-        last_test_case = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem_id).order_by(ProblemTestCase.number.desc()).first()
-        test_case_number = last_test_case.number + 1 if last_test_case else 1        
-        test_case_points = problemTestCaseDTO.points if not problemTestCaseDTO.is_pretest else 0
-
-        problemTestCase = ProblemTestCase(
-            number=test_case_number,
-            notes=problemTestCaseDTO.notes,
-            input=problemTestCaseDTO.input,
-            output=problemTestCaseDTO.output,
-            points=test_case_points,
-            is_pretest=problemTestCaseDTO.is_pretest,
-            problem_id=problem_id
-        )
-        
-        session.add(problemTestCase)
-        session.commit()
-
-        return problemTestCase
-
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-def delete_test_cases(problem_id: int, test_case_ids: List[int], session: Session) -> bool:
-    """
-    Delete test case by id
-
-    Args:
-        problem_id (int): the id of the related problem
-        test_case_ids (int): the ids of the test cases
-        session (Session): 
-    
-    Returns:
-        deleted: bool
-    """
-
-    try:
-        problem : Problem = get_object_by_id(Problem, session, problem_id)
-        if not problem:
-            raise HTTPException(status_code=404, detail="Problem not found")
-        for test_case_id in test_case_ids:
-            test_case : ProblemTestCase = get_object_by_id(ProblemTestCase, session, test_case_id)
-            if not test_case:
-                raise HTTPException(status_code=404, detail="Test case not found")
-            if test_case.problem_id != problem.id:
-                raise HTTPException(status_code=404, detail= "Problem or Test case not found")
-            problem.increment_version_number()
-            session.delete(test_case)
-        
-        session.commit()
-        return True 
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def update_test_case(problem_id: int, test_case_update: ProblemTestCaseDTO, session: Session) -> ProblemTestCaseDTO:
-    """
-    Update test case by id
-
-    Args:
-        problem_id (int): the id of the related problem
-        test_case_update (ProblemTestCaseDTO): the updated test case
-        session (Session): 
-
-    Returns:
-        ProblemTestCaseDTO: test case
-    """
-
-    try: 
-        problem : Problem = get_object_by_id(Problem, session, problem_id)
-        if not problem:
-            raise HTTPException(status_code=404, detail="Problem not found")
-        test_case: ProblemTestCase = get_object_by_id(ProblemTestCase, session, test_case_update.id)
-        if not test_case:
-            raise HTTPException(status_code=404, detail="Test case not found")
-        if test_case.problem_id != problem.id:
-            raise HTTPException(status_code=404, detail= "Problem or Test case not found")
-        if test_case_update.points < 0:
-            raise HTTPException(status_code=400, detail="Points cannot be negative")
-        
-        problem.increment_version_number()
-
-        test_case_points = test_case_update.points if not test_case_update.is_pretest else 0
-
-        test_case.notes = test_case_update.notes
-        test_case.input = test_case_update.input
-        test_case.output = test_case_update.output
-        test_case.points = test_case_points
-        test_case.is_pretest = test_case_update.is_pretest
-
-        session.commit()
-        return ProblemTestCaseDTO.model_validate(obj=test_case)
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-#endregion
-
-#region Problem Constraints
-
-def list_constraints(problem_id: int, user: User, session: Session) -> ListResponse:
-    """
-   List all constraints for a specific problem
-    
-    Args:
-        problem_id (int): the id of the related problem
-        session (Session):
-    
-    Returns:
-        [ListResponse]: list of constraints
-    """
-
-    try:
-        problem : Problem = get_object_by_id(Problem, session, problem_id)
-        is_admin_maintainer = RoleChecker.hasRole(user, Role.PROBLEM_MAINTAINER)
-        if not problem or (not is_admin_maintainer and not problem.is_public):
-            raise HTTPException(status_code=404, detail="Problem not found")
-        
-        query = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id)
-        constraints : List[ProblemConstraint] = query.all()
-        count : int = query.count()
-        return {"data" : [ProblemConstraintDTO.model_validate(obj=obj) for obj in constraints], "count" : count}
-    
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def read_constraint(problem_id: int, language_id: int, user: User, session: Session) -> ProblemConstraintDTO:
-    """
-    Get constraint by id
-
-    Args:
-        problem_id (int): the id of the related problem
-        language_id (int): the id of the language
-        session (Session):
-
-    Returns:
-        ProblemConstraintDTO: constraint
-    """
-    
-    try:
-        problem : Problem = get_object_by_id(Problem, session, problem_id)
-        is_admin_maintainer = RoleChecker.hasRole(user, Role.PROBLEM_MAINTAINER)
-        if not problem or (not is_admin_maintainer and not problem.is_public):
-            raise HTTPException(status_code=404, detail="Problem not found")
-        
-        constraint : ProblemConstraint = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id,
-                                                             ProblemConstraint.language_id == language_id).first()
-        if not constraint:
-            raise HTTPException(status_code=404, detail= "Problem constraint not found")
-        return ProblemConstraintDTO.model_validate(obj=constraint)
-    
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-def create_constraint(problem_id: int, problemConstraintDTO: ProblemConstraintDTO, session: Session) -> ProblemConstraintDTO:
-    """
-    Create constraint
-    
-    Args:
-        problem_id (int): the id of the related problem
-        problemConstraintDTO (ProblemConstraintDTO): the constraint to create
-        session (Session): 
-    
-    Returns: 
-        ProblemConstraintDTO: constraint
-    """
-    
-    try:
-        problem : Problem = get_object_by_id(Problem, session, problem_id)
-        if not problem:
-            raise HTTPException(status_code=404, detail="Problem not found")
-        language : Language = get_object_by_id(Language, session, problemConstraintDTO.language_id)
-        if not language:
-            raise HTTPException(status_code=404, detail="Language not found")
-        if problemConstraintDTO.memory_limit <= 0:
-            raise HTTPException(status_code=400, detail="Memory limit must be positive")
-        if problemConstraintDTO.time_limit <= 0:
-            raise HTTPException(status_code=400, detail="Time limit must be positive")
-        
-        problem.increment_version_number()
-
-        problemConstraint = ProblemConstraint(
-            problem_id=problem_id,
-            language_id=problemConstraintDTO.language_id,
-            memory_limit=problemConstraintDTO.memory_limit,
-            time_limit=problemConstraintDTO.time_limit
-        )
-
-        session.add(problemConstraint)
-        session.commit()
-
-        return problemConstraint
-
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-def delete_constraints(problem_id: int, language_ids: List[int], session: Session) -> bool:
-    """
-    Delete constraint by id
-
-    Args:
-        problem_id (int): the id of the related problem
-        language_ids (int): the ids of the languages
-        session (Session): 
-    
-    Returns:
-        deleted: bool
-    """
-
-    try:
-        problem : Problem = get_object_by_id(Problem, session, problem_id)
-        if not problem:
-            raise HTTPException(status_code=404, detail="Problem not found")
-        for language_id in language_ids:
-            constraint : ProblemConstraint = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id,
-                                                            ProblemConstraint.language_id == language_id).first()
-            if not constraint:
-                raise HTTPException(status_code=404, detail= "Problem constraint not found")
-            problem.increment_version_number()
-            session.delete(constraint)
-        
-        session.commit()
-        return True 
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def update_constraint(problem_id: int, constraint_update: ProblemConstraintDTO, session: Session) -> ProblemConstraintDTO:
-    """
-    Update constraint by id
-
-    Args:
-        problem_id (int): the id of the related problem
-        constraint_update (ProblemConstraintDTO): the updated constraint
-        session (Session): 
-
-    Returns:
-        ProblemConstraintDTO: constraint
-    """
-    
-    try:
-        problem : Problem = get_object_by_id(Problem, session, problem_id)
-        if not problem:
-            raise HTTPException(status_code=404, detail="Problem not found")
-        language : Language = get_object_by_id(Language, session, constraint_update.language_id)
-        if not language:
-            raise HTTPException(status_code=404, detail="Language not found")
-        constraint : ProblemConstraint = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem_id,
-                                                            ProblemConstraint.language_id == constraint_update.language_id).first()
-        if not constraint:
-            raise HTTPException(status_code=404, detail= "Problem constraint not found")
-        if constraint_update.memory_limit <= 0:
-            raise HTTPException(status_code=400, detail="Memory limit must be positive")
-        if constraint_update.time_limit <= 0:
-            raise HTTPException(status_code=400, detail="Time limit must be positive")
-        
-        problem.increment_version_number()
-
-        constraint.memory_limit = constraint_update.memory_limit
-        constraint.time_limit = constraint_update.time_limit
-
-        session.commit()
-        return ProblemConstraintDTO.model_validate(obj=constraint)
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-#endregion

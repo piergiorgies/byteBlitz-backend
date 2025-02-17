@@ -5,18 +5,17 @@ from datetime import datetime, timedelta
 import json
 
 from app.database import get_object_by_id, get_object_by_id_joined_with
-from app.schemas import SubmissionDTO
 from app.models.mapping import Submission, User, Problem, Language, Contest
 from app.models.mapping import ContestSubmission, SubmissionTestCase, ContestProblem, SubmissionResult, SubmissionTestCase
-from app.schemas import SubmissionTestCaseDTO
 from app.connections.rabbitmq import rabbitmq_connection
+from app.schemas import SubmissionCreate, SubmissionTestCaseResult
 
-def create(submission_dto: SubmissionDTO, session: Session, user: User):
+def create(submission_in: SubmissionCreate, session: Session, user: User):
     """
     Create a submission
 
     Args:
-        submission (SubmissionDTO): The submission data
+        submission (SubmissionCreate): The submission data
         session (Session): The database session
     
     Returns:
@@ -24,14 +23,14 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
     """
     
     try:        
-        language: Language = session.query(Language).filter(Language.id == submission_dto.language_id).first()
-        _validate_submission(submission_dto, session, user)
+        language: Language = session.query(Language).filter(Language.id == submission_in.language_id).first()
+        _validate_submission(submission_in, session, user)
         
         # create the submission
         submission = Submission(
-            submitted_code=submission_dto.submitted_code,
-            notes=submission_dto.notes,
-            problem_id=submission_dto.problem_id,
+            submitted_code=submission_in.submitted_code,
+            notes=submission_in.notes,
+            problem_id=submission_in.problem_id,
             user_id=user.id,
             language_id=language.id
         )
@@ -40,9 +39,9 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
         session.refresh(submission)
 
         # create the contest submission
-        if submission_dto.contest_id:
+        if submission_in.contest_id:
             contest_submission = ContestSubmission(
-                contest_id=submission_dto.contest_id,
+                contest_id=submission_in.contest_id,
                 submission_id=submission.id
             )
             session.add(contest_submission)
@@ -56,7 +55,7 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
             'submission_id' : submission.id
         }
         # send the submission to the queue
-        submission_dto.id = submission.id
+        submission_in.id = submission.id
         rabbitmq_connection.try_send_to_queue('submissions', body)
 
         return True
@@ -70,7 +69,7 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
         session.rollback()
         raise e
 
-def _validate_submission(submission_dto: SubmissionDTO, session: Session, user: User):
+def _validate_submission(submission_dto: SubmissionCreate, session: Session, user: User):
     # check if the problem exists
     problem: Problem = get_object_by_id(Problem, session, submission_dto.problem_id)
     if not problem:
@@ -127,7 +126,7 @@ def _validate_submission(submission_dto: SubmissionDTO, session: Session, user: 
     if submissions_count >= 15:
         raise HTTPException(status_code=400, detail="Too many submissions")
 
-def accept(submission_id: int, submission_test_case: SubmissionTestCaseDTO, session: Session):
+def accept(submission_id: int, submission_test_case: SubmissionTestCaseResult, session: Session):
     try:
         # check if the submission exists
         submission: Submission = get_object_by_id(Submission, session, submission_id)

@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.models.role import Role
 from app.controllers.submission import create, accept, save_total
 
-from app.schemas import SubmissionDTO, SubmissionTestCaseDTO, ResultDTO
+from app.schemas import SubmissionCreate, SubmissionTestCaseResult, SubmissionCompleteResult
 from app.database import get_session
 from app.util.role_checker import RoleChecker, JudgeChecker
 from app.util.jwt import get_current_user
@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 @router.post("/", summary="Submit a solution to a problem",  dependencies=[Depends(RoleChecker([Role.USER]))])
-async def submit_solution(submission: SubmissionDTO = Body(), session = Depends(get_session), user = Depends(get_current_user)):
+async def submit_solution(submission: SubmissionCreate = Body(), session = Depends(get_session), user = Depends(get_current_user)):
     """
     Submit a solution to a problem
 
@@ -40,7 +40,7 @@ async def submit_solution(submission: SubmissionDTO = Body(), session = Depends(
 
 
 @router.post("/{id}", summary="Accept the result of a submission", dependencies=[Depends(JudgeChecker())])
-async def accept_submission(id: int, body: SubmissionTestCaseDTO = Body(), session = Depends(get_session)):
+async def accept_submission(id: int, body: SubmissionTestCaseResult = Body(), session = Depends(get_session)):
     """
     Accept the result of a submission
 
@@ -64,7 +64,7 @@ async def accept_submission(id: int, body: SubmissionTestCaseDTO = Body(), sessi
         raise HTTPException(status_code=500, detail="Internal server error")
     
 @router.post("/{id}/total", summary="Get the total score of a submission", dependencies=[Depends(JudgeChecker())])
-async def save_total(id: int, result_id: ResultDTO = Body(), session = Depends(get_session)):
+async def save_total(id: int, result_id: SubmissionCompleteResult = Body(), session = Depends(get_session)):
     """
     Get the total test case of a submission
 

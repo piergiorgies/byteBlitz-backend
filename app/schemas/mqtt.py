@@ -1,4 +1,4 @@
-from app.schemas.base_dto import BaseRequest
+from app.schemas.base import BaseRequest
 
 class Row(BaseRequest):
     """

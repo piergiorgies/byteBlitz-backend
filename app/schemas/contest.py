@@ -1,87 +1,138 @@
-from app.schemas.base_dto import BaseRequest
 from datetime import datetime
+from app.schemas.base import BaseRequest, BaseResponse, BaseListResponse
+from app.schemas.problem import ProblemInfo
+from typing import Optional, List
 
-# class ContestDTO(BaseRequest):
-#     """
-#     Contest DTO
+class ContestCreate(BaseRequest):
+    """
+    
+    Contest Create DTO
 
-#     Attributes:
-#         name (str): The name of the contest
-#         description (str): The description of the contest
-#         start_time (datetime): The start time of the contest
-#         end_time (datetime): The end time of the contest
+    Attributes
+        name (str): The name of the contest
+        description (str): The description of the contest
+        start_datetime (datetime): The start date of the contest
+        end_datetime (datetime): The end date of the contest
+        problems (List[ContestProblem]): The problems of the contest
+        users (List[int]): The users of the contest
 
-#     """
-#     id: int | None = 0
-#     name: str
-#     description: str
-#     start_datetime: datetime
-#     end_datetime: datetime
-#     users: list["ContestUserDTO"] | None = None
-#     contest_problems: list["ContestProblemDTO"] | None = None
-class ContestProblemDTO(BaseRequest):
+    """
+
+    name: str
+    description: str
+    start_datetime: datetime
+    end_datetime: datetime
+    problems: List["ContestProblem"]
+    users: List[int]
+
+class ContestUpdate(BaseRequest):
+    """
+    
+    Contest Update DTO
+
+    Attributes
+        name (str): The name of the contest
+        description (str): The description of the contest
+        start_datetime (datetime): The start date of the contest
+        end_datetime (datetime): The end date of the contest
+        problems (List[ContestProblem]): The problems of the contest
+        users (List[int]): The users of the contest
+
+    """
+
+    name: Optional[str]
+    description: Optional[str]
+    start_datetime: Optional[datetime]
+    end_datetime: Optional[datetime]
+    problems: Optional[List["ContestProblem"]]
+    users: Optional[List[int]]
+
+class ContestProblem(BaseRequest):
+    """
+    
+    Problem Contest DTO
+
+    Attributes
+        problem_id (int): The id of the problem
+        publication_delay (int): The publication delay of the problem
+
+    """
+
     problem_id: int
     publication_delay: int
 
-class ContestUserDTO(BaseRequest):
+class ContestRead(BaseResponse):
+    """
+    
+    Contest Read DTO
+
+    Attributes
+        id (int): The id of the contest
+        name (str): The name of the contest
+        description (str): The description of the contest
+        start_datetime (datetime): The start date of the contest
+        end_datetime (datetime): The end date of the contest
+        problems (List[ContestProblem]): The problems of the contest
+        users (List[int]): The users of the contest
+
+    """
+
     id: int
+    name: str
+    description: str
+    start_datetime: datetime
+    end_datetime: datetime
+    problems: List["ContestProblem"]
+    users: List[int]
+
+class ContestListResponse(BaseListResponse):
+    """
+    
+    Contest List Response DTO
+
+    Attributes
+        contests (List[ContestRead]): The contests
+
+    """
+    contests: List[ContestRead]
+
+
+class ContestScoreboard(BaseResponse):
+    userteams: List[str]
+    problems: List[str]
+    scores: List[List[int]]
+
+class ContestInfo(BaseResponse):
+    id: int
+    name: str
+    description: str
+    start_datetime: datetime
+    end_datetime: datetime
+    duration: int
+    n_problems: int
+    n_participants: int
+    n_submissions: int
+
+class ContestInfos(BaseResponse):
+    past: List[ContestInfo]
+    ongoing: List[ContestInfo]
+    upcoming: List[ContestInfo]
+
+class ContestUser(BaseResponse):
     username: str
 
-class ContestCreate(BaseRequest):
-    name: str
-    description: str
-    start_datetime: datetime
-    end_datetime: datetime
-    user_ids: list[int]
-    problems: list["ContestProblemDTO"]
-
-class ContestUpdate(BaseRequest):
-    name: str | None = None
-    description: str | None = None
-    start_datetime: datetime | None = None
-    end_datetime: datetime | None = None
-    user_ids: list[int] | None = None
-    problems: list["ContestProblemDTO"] | None = None
-
-class ContestRead(BaseRequest):
+class PastContest(BaseResponse):
     id: int
     name: str
     description: str
     start_datetime: datetime
     end_datetime: datetime
-    users: list["ContestUserDTO"] | None = None
-    contest_problems: list["ContestProblemDTO"] | None = None
+    duration: int
+    n_problems: int
+    scoreboard: ContestScoreboard
+    users: List[ContestUser]
 
-class ContestScoreboardDTO(BaseRequest):
-    """
-    Contest Scoreboard DTO
-
-    Attributes:
-        userteams (list[str]): oredered scoreboard rows
-        problems (list[str]): ordered scoreboard columns
-        scores (list[list[int]]): scores of each user/team for each problem (scoreboard cells)
-    """
-    userteams : list[str]
-    problems : list[str]
-    scores : list[list[int]]
-
-class ContestSubmissionDTO(BaseRequest):
-    """
-    Contest Submission DTO
-
-    Attributes:
-        contest_id (int): The id of the contest
-        submission_id (int): The id of the submission
-    """
-    id : int
-    submission_id : int
-
-class ContestsInfo(BaseRequest):
-    ongoing : list["ContestInfo"]
-    upcoming : list["ContestInfo"]
-    past : list["ContestInfo"]
-
-class ContestInfo(BaseRequest):
+class UpcomingContest(BaseResponse):
     id: int
     name: str
     description: str
@@ -90,33 +141,16 @@ class ContestInfo(BaseRequest):
     duration: int
     n_participants: int
     n_problems: int
-    n_submissions: int
+    problems: List["ProblemInfo"]
 
-class ProblemInfo(BaseRequest):
-    title: str
-    points: int
-    languages: list[str]
-
-
-class PastContest(BaseRequest):
-    id: int
-    name: str
-    description: str
-    start_datetime: datetime
-    end_datetime: datetime
-    duration: int
-    n_submissions: int
-    scoreboard: ContestScoreboardDTO | None = None
-    problems: list["ProblemInfo"] | None = None
-    users: list["ContestUserDTO"] | None = None
-
-class UpcomingContest(BaseRequest):
-    id: int
-    name: str
-    description: str
-    start_datetime: datetime
-    end_datetime: datetime
-    duration: int
-    n_participants: int
-    n_problems: int
-    problems: list["ProblemInfo"] | None = None
+    # return UpcomingContest(
+    #         id=contest.id,
+    #         name=contest.name,
+    #         description=contest.description,
+    #         start_datetime=contest.start_datetime,
+    #         end_datetime=contest.end_datetime,
+    #         duration=int((contest.end_datetime - contest.start_datetime).total_seconds() / 3600),
+    #         n_participants=len(contest.users),
+    #         n_problems=len(problems),
+    #         problems=problems_info
+    #     )

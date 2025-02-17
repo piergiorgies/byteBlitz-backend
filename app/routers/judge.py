@@ -3,9 +3,8 @@ from fastapi.responses import JSONResponse
 from app.util.role_checker import JudgeChecker, RoleChecker
 from app.database import get_session
 from app.controllers.judge import get_versions, get_problem_info, get_judges, create_judge, delete_judge
-from app.schemas.params import pagination_params
+from app.schemas import get_pagination_params, PaginationParams, JudgeCreate
 from app.models.role import Role
-from app.schemas.judge import JudgeCreateDTO
 from app.util.role_checker import get_judge
 
 
@@ -49,7 +48,7 @@ async def get_problem_config(id: int, session=Depends(get_session), judge=Depend
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 @router.get("/judges", summary="Get the judge list", dependencies=[Depends(RoleChecker(Role.ADMIN))])
-async def list_judges(pagination : dict = Depends(pagination_params), session=Depends(get_session)):
+async def list_judges(pagination : PaginationParams = Depends(get_pagination_params), session=Depends(get_session)):
     """
     Get the judge list
     """
@@ -64,7 +63,7 @@ async def list_judges(pagination : dict = Depends(pagination_params), session=De
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 @router.post("/judges", summary="Create a new judge", dependencies=[Depends(RoleChecker(Role.ADMIN))])
-async def create(judge: JudgeCreateDTO, session=Depends(get_session)):
+async def create(judge: JudgeCreate, session=Depends(get_session)):
     """
     Create a new judge
     """

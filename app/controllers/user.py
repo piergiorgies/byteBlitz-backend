@@ -8,10 +8,42 @@ from datetime import datetime
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
 from app.database import get_object_by_id
-from app.schemas import ListResponse, UserDTO
+from app.schemas import UserListResponse, UserResponse, UserCreate, UserUpdate
 from app.models.mapping import User, UserType
+from app.repositories import UserRepository
 
-def list(limit: int, offset: int, searchFilter: str, user: User, session: Session) -> ListResponse:
+def create_user(user: UserCreate, session: Session) -> UserResponse:
+    """
+    create a new user
+
+    Args:
+        user (UserCreate): the user DTO
+        session (Session): the session
+
+    Returns:
+        UserResponse: the created user
+    """
+    try:
+        repo = UserRepository(session)
+        user_type = repo.get_user_type_by_id(user.user_type_id)
+        if not user_type:
+            raise HTTPException(status_code=404, detail="User type not found")
+        
+        user = repo.create(user)
+        return user
+    
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+
+
+def list_user(limit: int, offset: int, searchFilter: str, user: User, session: Session) -> UserListResponse:
     """
     List all users
     
@@ -22,10 +54,11 @@ def list(limit: int, offset: int, searchFilter: str, user: User, session: Sessio
         session (Session):
     
     Returns:
-        [ListResponse]: list of users
+        [UserListResponse]: list of users
     """
     
     try:
+
         judge_type = session.query(UserType).filter(UserType.permissions == Role.JUDGE).one_or_none()
         if not judge_type:
             raise HTTPException(status_code=500, detail="Judge user type not found")
@@ -38,7 +71,7 @@ def list(limit: int, offset: int, searchFilter: str, user: User, session: Sessio
             builder = builder.filter(User.username.ilike(f"%{searchFilter}%"))
         users: List[User] = builder.limit(limit).offset(offset).all()
         count = builder.count()
-        return {"data": [UserDTO.model_validate(obj=obj) for obj in users], "count": count}
+        return {"data": [UserResponse.model_validate(obj=obj) for obj in users], "count": count}
 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
@@ -47,7 +80,7 @@ def list(limit: int, offset: int, searchFilter: str, user: User, session: Sessio
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def read(id: int, current_user: User, session: Session) -> UserDTO:
+def read_user(id: int, current_user: User, session: Session) -> UserResponse:
     """
     Read a user by id
     
@@ -56,7 +89,7 @@ def read(id: int, current_user: User, session: Session) -> UserDTO:
         session (Session):
     
     Returns:
-        UserDTO: user
+        UserResponse: user
     """
     
     try:
@@ -65,7 +98,7 @@ def read(id: int, current_user: User, session: Session) -> UserDTO:
         if not user or (not is_admin_maintainer and user.id != current_user.id):
             raise HTTPException(status_code=404, detail="User not found")
         
-        return UserDTO.model_validate(obj=user)
+        return UserResponse.model_validate(obj=user)
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
@@ -74,7 +107,7 @@ def read(id: int, current_user: User, session: Session) -> UserDTO:
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def read_me(current_user: User, session: Session) -> UserDTO:
+def read_me(current_user: User, session: Session) -> UserResponse:
     """
     Read the information of the logged user
     
@@ -90,7 +123,7 @@ def read_me(current_user: User, session: Session) -> UserDTO:
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        return UserDTO.model_validate(obj=user)
+        return UserResponse.model_validate(obj=user)
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
@@ -100,7 +133,7 @@ def read_me(current_user: User, session: Session) -> UserDTO:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 
-def delete(id: int, current_user: User, session: Session) -> bool:
+def delete_user(id: int, current_user: User, session: Session) -> bool:
     """
     Delete user by id
     
@@ -134,7 +167,7 @@ def delete(id: int, current_user: User, session: Session) -> bool:
     
 
 
-def update(id: int, updated_user: UserDTO, current_user: User, session: Session) -> UserDTO:
+def update_user(id: int, updated_user: UserUpdate, current_user: User, session: Session) -> UserResponse:
     """update user by id
 
     Args:
@@ -164,7 +197,7 @@ def update(id: int, updated_user: UserDTO, current_user: User, session: Session)
         user.user_type_id = updated_user.user_type_id
 
         session.commit()
-        return UserDTO.model_validate(obj=user)
+        return UserUpdate.model_validate(obj=user)
     
     except SQLAlchemyError as e:
         session.rollback()
@@ -188,6 +221,7 @@ def available_user_types_list(session: Session) -> List[UserType]:
     """
     try:
         # exclude judge and guest user types
+
         to_exclude = [Role.JUDGE, Role.GUEST]
         user_types: List[UserType] = session.query(UserType).filter(UserType.permissions.notin_(to_exclude)).all()
         return user_types
