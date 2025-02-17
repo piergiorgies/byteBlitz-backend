@@ -1,19 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
-from fastapi.responses import JSONResponse
-
+from fastapi import APIRouter, Depends, HTTPException
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
 from app.util.jwt import get_current_user
 from app.controllers.user import read_me
-from app.schemas import get_pagination_params, PaginationParams, UserListResponse, UserCreate, UserUpdate, UserResponse
+from app.schemas import UserResponse
 from app.database import get_session
 
 router = APIRouter(
     tags=["Users"],
     prefix="/users"
 )
-
-
 
 @router.get("/me", response_model=UserResponse, summary="Get the logged user", dependencies=[Depends(RoleChecker([Role.USER]))])
 async def read_user_me(current_user=Depends(get_current_user), session=Depends(get_session)):

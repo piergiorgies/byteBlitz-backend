@@ -28,7 +28,6 @@ async def create_contest(contest: ContestCreate = Body(), session=Depends(get_se
 
     try:
         contest = create(contest, session)
-        # return created code
         return JSONResponse(status_code=201, content={"message": "Contest created successfully", "id": contest.id})
         
     except HTTPException as e:
