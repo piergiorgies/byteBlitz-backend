@@ -1,10 +1,39 @@
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from datetime import datetime
+from typing import List
+from sqlalchemy import or_
 from app.models.mapping import Contest, User, Problem, ContestProblem
-from app.schemas import ContestCreate, ContestRead, ContestUpdate
+from app.models.role import Role
+from app.util.role_checker import RoleChecker
+from app.schemas import ContestCreate, ContestRead, ContestUpdate, ContestListResponse, ContestBase
 from app.database import get_object_by_id
 
+def read(id: int, session: Session) -> ContestRead:
+    """
+    Get contest by id
+    
+    Args:
+        id: int
+
+    Returns:
+        ContestDTO: contest
+    """
+
+    try:
+        contest: Contest = get_object_by_id(Contest, session, id)
+        if not contest:
+            raise HTTPException(status_code=404, detail="Contest not found")
+        
+        return ContestRead.model_validate(obj=contest)
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 def create(contest: ContestCreate, session: Session):
     """
@@ -170,3 +199,49 @@ def update(id: int, contest_update: ContestUpdate, session: Session):
         session.rollback()
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
+def list(limit : int, offset : int, searchFilter: str, user : User, session : Session) -> ContestListResponse:
+    """
+    List contests
+    
+    Args:
+        limit: limit in sql query
+        offset: offset in sql query
+        user: User
+        session: Session
+    
+    Returns:
+        [ContestDTO]: contests
+    """
+    try:
+        is_admin_maintainer = RoleChecker.hasRole(user, Role.CONTEST_MAINTAINER)
+        query = session.query(Contest)
+        if not is_admin_maintainer:
+            is_user = RoleChecker.hasRole(user, Role.USER)
+            if is_user:
+                query = query.filter(
+                    or_(
+                        Contest.users.any(User.id == user.id),
+                        Contest.end_datetime <= datetime.now()
+                    )
+                )
+            else:
+                query = query.filter(Contest.end_datetime <= datetime.now())
+
+        if searchFilter:
+            query = query.filter(Contest.name.ilike(f"%{searchFilter}%"))
+        query.join(Contest.contest_problems)
+        count = query.count()
+        query = query.limit(limit).offset(offset)
+        contests : List[Contest] = query.all()
+
+        return ContestListResponse(
+            contests=[ContestBase.model_validate(obj=contest) for contest in contests],
+            count=count
+        )
+        
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))

@@ -12,24 +12,6 @@ router = APIRouter(
     prefix="/problems"
 )
 
-@router.get("/", response_model=ProblemListResponse, summary="List problems", dependencies=[Depends(RoleChecker([Role.GUEST]))])
-async def list_problems(pagination : PaginationParams = Depends(get_pagination_params),  user=Depends(get_current_user), session=Depends(get_session)):
-    """
-    List problems
-    
-    Returns:
-        JSONResponse: response
-    """
-
-    try:
-        problems = list(pagination.limit, pagination.offset, pagination.search_filter, user, session)
-        return problems
-    
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
 @router.get("/{id}", response_model=ProblemRead, summary="Get problem by id", dependencies=[Depends(RoleChecker([Role.GUEST]))])
 async def read_problem(id: int, user=Depends(get_current_user), session=Depends(get_session)):
     """

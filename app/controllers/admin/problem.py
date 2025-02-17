@@ -332,3 +332,4 @@ def list_available_languages(session: Session):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+

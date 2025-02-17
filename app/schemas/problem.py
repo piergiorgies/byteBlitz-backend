@@ -45,6 +45,7 @@ class ProblemRead(BaseResponse):
 
 
 class ProblemInfo(BaseResponse):
+    id: int
     title: str
     points: int
     languages: List[str]

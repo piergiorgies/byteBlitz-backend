@@ -77,7 +77,7 @@ async def get_user_types(session=Depends(get_session)):
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
 
-@router.get("/{id}", response_model=UserResponse, summary="Get user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
+@router.get("/{id}", response_model=UserResponse, summary="Get user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
 async def read(id: int, current_user=Depends(get_current_user), session=Depends(get_session)):
     """
     Get user by id
@@ -95,8 +95,8 @@ async def read(id: int, current_user=Depends(get_current_user), session=Depends(
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-@router.delete("/{id}", summary="Delete a user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER, Role.USER]))])
-async def delete(id: int, user=Depends(get_current_user), session=Depends(get_session)):
+@router.delete("/{id}", summary="Delete a user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
+async def delete(id: int, session=Depends(get_session)):
     """
     Delete user by id
 
@@ -105,7 +105,7 @@ async def delete(id: int, user=Depends(get_current_user), session=Depends(get_se
     """
 
     try:
-        deleted = delete_user(id, user, session)
+        deleted = delete_user(id, session)
 
         if not deleted:
             raise HTTPException(status_code=404, detail="User not found")

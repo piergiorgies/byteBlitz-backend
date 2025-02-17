@@ -54,7 +54,6 @@ async def list_judges(pagination : PaginationParams = Depends(get_pagination_par
     """
 
     try:
-        # get the judge list
         return get_judges(pagination.limit, pagination.offset, pagination.search_filter, session)
     
     except HTTPException as e:
@@ -68,7 +67,6 @@ async def create(judge: JudgeCreate, session=Depends(get_session)):
     Create a new judge
     """
     try:
-        # create the judge
         response, status_code = create_judge(judge, session)
         return JSONResponse(status_code=status_code, content=response)
     
@@ -86,7 +84,6 @@ async def delete(id: int, session=Depends(get_session)):
         id: int
     """
     try:
-        # delete the judge
         delete_judge(id, session)
         return JSONResponse(status_code=200, content={"message": "Judge deleted successfully"})
     

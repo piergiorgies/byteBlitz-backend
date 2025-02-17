@@ -71,7 +71,7 @@ def read_user(id: int, current_user: User, session: Session) -> UserResponse:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 
-def delete_user(id: int, current_user: User, session: Session) -> bool:
+def delete_user(id: int, session: Session) -> bool:
     """
     Delete user by id
     
@@ -84,12 +84,7 @@ def delete_user(id: int, current_user: User, session: Session) -> bool:
     
     """
     try:
-        is_admin = RoleChecker.hasRole(current_user, Role.USER_MAINTAINER)
         user: User = get_object_by_id(User, session, id)
-
-        if not user or (not is_admin and user.id != current_user.id):
-            raise HTTPException(status_code=404, detail="User not found")
-        
         user.deletion_date = datetime.now()
         session.commit()
         return True
@@ -114,8 +109,6 @@ def available_user_types_list(session: Session) -> List[UserType]:
         List[UserType]: list of user types
     """
     try:
-        # exclude judge and guest user types
-
         to_exclude = [Role.JUDGE, Role.GUEST]
         user_types: List[UserType] = session.query(UserType).filter(UserType.permissions.notin_(to_exclude)).all()
         return user_types
