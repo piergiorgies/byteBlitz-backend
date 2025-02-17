@@ -37,7 +37,7 @@ async def list(pagination : PaginationParams = Depends(get_pagination_params), s
     
 
 @router.put("/{id}", summary="Update a user by id", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
-async def update_user(id: int, updated_user: UserUpdate = Body(), current_user=Depends(get_current_user), session=Depends(get_session)):
+async def update_user(id: int, updated_user: UserUpdate = Body(), session=Depends(get_session)):
     """
     Update a user by id
 
@@ -50,7 +50,7 @@ async def update_user(id: int, updated_user: UserUpdate = Body(), current_user=D
     """
 
     try:
-        user = update_user(id, updated_user, current_user, session)
+        user = update_user(id, updated_user, session)
         return user
 
     except HTTPException as e:

@@ -166,7 +166,7 @@ def list_user(pagination: PaginationParams, session: Session) -> UserListRespons
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 
-def update_user(id: int, updated_user: UserUpdate, current_user: User, session: Session) -> UserResponse:
+def update_user(id: int, updated_user: UserUpdate, session: Session) -> UserResponse:
     """update user by id
 
     Args:
