@@ -49,6 +49,7 @@ class UserResponse(BaseResponse):
     username: str
     email: str
     registered_at: datetime
+    user_type_id: int
 
 class UserListResponse(BaseResponse):
     """

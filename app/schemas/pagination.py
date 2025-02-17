@@ -1,10 +1,8 @@
 from pydantic import Field
-from dataclasses import dataclass
 from typing import Optional
 from app.schemas.base import BaseRequest
 from fastapi import Query
 
-@dataclass
 class PaginationParams(BaseRequest):
     """
     Pagination Params DTO

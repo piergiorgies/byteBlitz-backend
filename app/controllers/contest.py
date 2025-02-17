@@ -13,7 +13,7 @@ from app.models.mapping import Problem, ContestProblem, ProblemConstraint, Langu
 from app.models.mapping import Submission, ContestSubmission
 from app.schemas import (
     ContestCreate, ContestUpdate, ContestRead, ContestListResponse, 
-    ContestScoreboard, ContestInfo, ContestInfos, ContestUser, 
+    ContestScoreboard, ContestInfo, ContestInfos, ContestUserInfo, 
     ProblemInfo, PastContest, UpcomingContest
 )
 
@@ -424,7 +424,7 @@ def read_past(id: int, session: Session):
         problems_info = [ProblemInfo(title=problem.title, points=problem.points, languages=languages[problem.id]) for problem in problems]
 
         # problems_info = [ProblemInfo(title=problem.title, points=problem.points, languages=problem_languages) for problem in problems]
-        user_infos = [ContestUser.model_validate(obj=user) for user in contest.users]
+        user_infos = [ContestUserInfo.model_validate(obj=user) for user in contest.users]
 
         number_of_submissions = session.query(ContestSubmission).filter(ContestSubmission.contest_id == id).count()
 

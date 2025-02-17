@@ -8,7 +8,7 @@ from datetime import datetime
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
 from app.database import get_object_by_id
-from app.schemas import UserListResponse, UserResponse, UserCreate, UserUpdate
+from app.schemas import UserListResponse, UserResponse, UserCreate, UserUpdate, PaginationParams
 from app.models.mapping import User, UserType
 from app.repositories import UserRepository
 
@@ -43,7 +43,7 @@ def create_user(user: UserCreate, session: Session) -> UserResponse:
 
 
 
-def list_user(limit: int, offset: int, searchFilter: str, user: User, session: Session) -> UserListResponse:
+def list_user(pagination: PaginationParams, user: User, session: Session) -> UserListResponse:
     """
     List all users
     
@@ -67,9 +67,9 @@ def list_user(limit: int, offset: int, searchFilter: str, user: User, session: S
             raise HTTPException(status_code=500, detail="Guest user type not found")
         
         builder = session.query(User).filter(User.deletion_date == None, User.user_type_id != judge_type.id, User.user_type_id != guest_type.id)
-        if searchFilter:
-            builder = builder.filter(User.username.ilike(f"%{searchFilter}%"))
-        users: List[User] = builder.limit(limit).offset(offset).all()
+        if pagination.search_filter:
+            builder = builder.filter(User.username.ilike(f"%{pagination.search_filter}%"))
+        users: List[User] = builder.limit(pagination.limit).offset(pagination.offset).all()
         count = builder.count()
         return {"data": [UserResponse.model_validate(obj=obj) for obj in users], "count": count}
 

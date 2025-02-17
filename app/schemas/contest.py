@@ -118,7 +118,7 @@ class ContestInfos(BaseResponse):
     ongoing: List[ContestInfo]
     upcoming: List[ContestInfo]
 
-class ContestUser(BaseResponse):
+class ContestUserInfo(BaseResponse):
     username: str
 
 class PastContest(BaseResponse):
@@ -130,7 +130,7 @@ class PastContest(BaseResponse):
     duration: int
     n_problems: int
     scoreboard: ContestScoreboard
-    users: List[ContestUser]
+    users: List[ContestUserInfo]
 
 class UpcomingContest(BaseResponse):
     id: int
@@ -142,15 +142,3 @@ class UpcomingContest(BaseResponse):
     n_participants: int
     n_problems: int
     problems: List["ProblemInfo"]
-
-    # return UpcomingContest(
-    #         id=contest.id,
-    #         name=contest.name,
-    #         description=contest.description,
-    #         start_datetime=contest.start_datetime,
-    #         end_datetime=contest.end_datetime,
-    #         duration=int((contest.end_datetime - contest.start_datetime).total_seconds() / 3600),
-    #         n_participants=len(contest.users),
-    #         n_problems=len(problems),
-    #         problems=problems_info
-    #     )

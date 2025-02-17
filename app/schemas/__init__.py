@@ -6,7 +6,7 @@ from .user import UserCreate, UserUpdate, UserResponse, UserListResponse
 from .submission import SubmissionCreate, SubmissionResponse, SubmissionTestCaseResult, SubmissionCompleteResult
 from .contest import (
     ContestCreate, ContestUpdate, ContestRead, ContestListResponse,
-    ContestScoreboard, ContestInfo, ContestInfos, ContestUser,
+    ContestScoreboard, ContestInfo, ContestInfos, ContestUserInfo,
     PastContest, UpcomingContest
     )
 from .problem import (
