@@ -22,8 +22,8 @@ def login(user_login: LoginRequest, session: Session):
         if password_hash != user_db.password_hash:
             raise HTTPException(status_code=401, detail="Invalid password")
 
-        return LoginResponse.model_validate_json(
-            json_data=get_tokens(user_db.id, user_db.username, user_db.user_type.permissions)
+        return LoginResponse.model_validate(
+            get_tokens(user_db.id, user_db.username, user_db.user_type.permissions)
         )
     
     except SQLAlchemyError as e:
