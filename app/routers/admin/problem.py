@@ -9,7 +9,7 @@ from app.util.jwt import get_current_user
 
 router = APIRouter(
     prefix="/admin/problems",
-    tags=["Problems"],
+    tags=["Admin Problem"],
 )
 
 

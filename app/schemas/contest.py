@@ -61,7 +61,27 @@ class ContestProblem(BaseRequest):
     problem_id: int
     publication_delay: int
 
-class ContestRead(BaseResponse):
+
+class ContestBase(BaseResponse):
+    """
+    
+    Contest Base DTO
+
+    Attributes
+        id (int): The id of the contest
+        name (str): The name of the contest
+        description (str): The description of the contest
+        start_datetime (datetime): The start date of the contest
+        end_datetime (datetime): The end date of the contest
+
+    """
+
+    id: int
+    name: str
+    description: str
+    start_datetime: datetime
+    end_datetime: datetime
+class ContestRead(ContestBase):
     """
     
     Contest Read DTO
@@ -76,13 +96,7 @@ class ContestRead(BaseResponse):
         users (List[int]): The users of the contest
 
     """
-
-    id: int
-    name: str
-    description: str
-    start_datetime: datetime
-    end_datetime: datetime
-    problems: List["ContestProblem"]
+    contest_problems: List["ContestProblem"]
     users: List[int]
 
 class ContestListResponse(BaseListResponse):
@@ -94,7 +108,7 @@ class ContestListResponse(BaseListResponse):
         contests (List[ContestRead]): The contests
 
     """
-    contests: List[ContestRead]
+    contests: List[ContestBase]
 
 
 class ContestScoreboard(BaseResponse):

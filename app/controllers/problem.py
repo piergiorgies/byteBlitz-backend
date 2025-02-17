@@ -49,7 +49,7 @@ def list(limit: int, offset: int, searchFilter: str, user: User, session: Sessio
 
         # Apply pagination
         problems = query.distinct().limit(limit).offset(offset).all()
-
+        
         return {
             "data": [ProblemInfo.model_validate(obj=problem) for problem in problems],
             "count": total_count
@@ -61,7 +61,7 @@ def list(limit: int, offset: int, searchFilter: str, user: User, session: Sessio
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
+
 def read(id: int, user: User, session: Session) -> ProblemRead:
     """
     Get problem by id according to visibility

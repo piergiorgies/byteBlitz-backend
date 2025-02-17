@@ -8,7 +8,7 @@ from app.util.role_checker import RoleChecker
 
 router = APIRouter(
     prefix="/admin/contests",
-    tags=["Contests"]
+    tags=["Admin Contest"]
 )
 
 @router.post("/", summary="Create a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])

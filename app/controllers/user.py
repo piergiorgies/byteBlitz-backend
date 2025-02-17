@@ -71,7 +71,9 @@ def list_user(pagination: PaginationParams, user: User, session: Session) -> Use
             builder = builder.filter(User.username.ilike(f"%{pagination.search_filter}%"))
         users: List[User] = builder.limit(pagination.limit).offset(pagination.offset).all()
         count = builder.count()
-        return {"data": [UserResponse.model_validate(obj=obj) for obj in users], "count": count}
+
+        return UserListResponse(users=[UserResponse.model_validate(obj=obj) for obj in users], count=count)
+    
 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))

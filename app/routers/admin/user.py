@@ -9,7 +9,7 @@ from app.models import Role
 
 router = APIRouter(
     prefix="/admin/users",
-    tags=["Users"],
+    tags=["Admin User"],
 )
 
 

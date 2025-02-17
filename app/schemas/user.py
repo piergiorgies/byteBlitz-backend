@@ -1,4 +1,4 @@
-from app.schemas import BaseRequest, BaseResponse
+from app.schemas.base import BaseRequest, BaseResponse, BaseListResponse
 from datetime import datetime
 
 class UserCreate(BaseRequest):
@@ -51,7 +51,7 @@ class UserResponse(BaseResponse):
     registered_at: datetime
     user_type_id: int
 
-class UserListResponse(BaseResponse):
+class UserListResponse(BaseListResponse):
     """
     User List Response DTO
 
@@ -59,5 +59,4 @@ class UserListResponse(BaseResponse):
         users (List[UserResponse]): A list of users
 
     """
-    data: list[UserResponse]
-    count: int
+    users: list[UserResponse]

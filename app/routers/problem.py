@@ -22,7 +22,7 @@ async def list_problems(pagination : PaginationParams = Depends(get_pagination_p
     """
 
     try:
-        problems = list(pagination["limit"], pagination["offset"], pagination["search"], user, session)
+        problems = list(pagination.limit, pagination.offset, pagination.search_filter, user, session)
         return problems
     
     except HTTPException as e:

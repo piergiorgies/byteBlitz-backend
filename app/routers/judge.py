@@ -55,7 +55,7 @@ async def list_judges(pagination : PaginationParams = Depends(get_pagination_par
 
     try:
         # get the judge list
-        return get_judges(pagination["limit"], pagination["offset"], pagination["search"], session)
+        return get_judges(pagination.limit, pagination.offset, pagination.search_filter, session)
     
     except HTTPException as e:
         raise e

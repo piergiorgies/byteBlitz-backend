@@ -46,7 +46,7 @@ async def list_contests(pagination : PaginationParams = Depends(get_pagination_p
     """
 
     try:
-        contests = list(pagination["limit"], pagination["offset"], pagination["search"], user, session)
+        contests = list(pagination.limit, pagination.offset, pagination.search_filter, user, session)
         return contests
     
     except HTTPException as e:
