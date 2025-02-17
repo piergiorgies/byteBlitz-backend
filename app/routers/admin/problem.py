@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from app.schemas import ProblemCreate, ProblemUpdate
-from app.controllers.problem import create, delete, update, list_available_languages
+from app.controllers.admin.problem import create, delete, update, list_available_languages
 from app.database import get_session
 from app.models.role import Role
 from app.util.role_checker import RoleChecker

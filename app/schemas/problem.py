@@ -48,6 +48,7 @@ class ProblemInfo(BaseResponse):
     title: str
     points: int
     languages: List[str]
+    is_public: bool
 
 class ProblemListResponse(BaseListResponse):
-    data: List[ProblemInfo]
+    problems: List[ProblemInfo]

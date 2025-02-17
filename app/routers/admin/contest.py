@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from app.schemas import ContestCreate, ContestUpdate
-from app.controllers.contest import create, delete, update
+from app.controllers.admin.contest import create, delete, update
 from app.database import get_session
 from app.models.role import Role
 from app.util.role_checker import RoleChecker

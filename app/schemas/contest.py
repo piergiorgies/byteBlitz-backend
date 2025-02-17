@@ -22,6 +22,8 @@ class ContestCreate(BaseRequest):
     description: str
     start_datetime: datetime
     end_datetime: datetime
+    is_public: bool
+    is_registration_open: bool
     problems: List["ContestProblem"]
     users: List[int]
 
@@ -44,6 +46,8 @@ class ContestUpdate(BaseRequest):
     description: Optional[str]
     start_datetime: Optional[datetime]
     end_datetime: Optional[datetime]
+    is_public: Optional[bool] = False
+    is_registration_open: Optional[bool] = False
     problems: Optional[List["ContestProblem"]]
     users: Optional[List[int]]
 
@@ -81,6 +85,9 @@ class ContestBase(BaseResponse):
     description: str
     start_datetime: datetime
     end_datetime: datetime
+    is_public: bool
+    is_registration_open: bool
+
 class ContestRead(ContestBase):
     """
     

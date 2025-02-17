@@ -4,7 +4,7 @@ from typing import List
 
 from app.util.jwt import get_current_user
 from app.models.role import Role
-from app.controllers.contest import create, list, read, delete, update
+from app.controllers.contest import list, read
 from app.controllers.contest import get_scoreboard, list_with_info, read_past, read_upcoming
 from app.schemas import get_pagination_params, PaginationParams
 from app.schemas import ContestScoreboard, ContestListResponse
