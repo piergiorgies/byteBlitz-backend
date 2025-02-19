@@ -5,11 +5,10 @@ from datetime import datetime, timedelta
 from typing import List
 
 from app.database import get_object_by_id, get_object_by_id_joined_with
-from app.models import SubmissionDTO
 from app.models.mapping import Submission, User, Problem, Language, Contest
-from app.models.mapping import ContestSubmission, SubmissionTestCase, ContestProblem, SubmissionResult, SubmissionTestCase
+from app.models.mapping import ContestSubmission, ContestProblem, SubmissionResult
 from app.connections.rabbitmq import rabbitmq_connection
-from app.schemas import SubmissionCreate, SubmissionTestCaseResult
+from app.schemas import SubmissionCreate
 
 def create(submission_in: SubmissionCreate, session: Session, user: User):
     """
@@ -127,7 +126,7 @@ def _validate_submission(submission_dto: SubmissionCreate, session: Session, use
     if submissions_count >= 15:
         raise HTTPException(status_code=400, detail="Too many submissions")
 
-def get_submission_results(session: Session) -> ListResponse:
+def get_submission_results(session: Session):
     try:
         query = session.query(SubmissionResult)
         submission_results : List[SubmissionResult] = query.all()
