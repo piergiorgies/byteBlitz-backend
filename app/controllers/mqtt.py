@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.connections.mqtt import MQTTClient
 from app.database import get_session
 from app.controllers.contest import get_scoreboard
-from app.models.mqtt import Row, ScoreboardDTO, NotificationDTO
+from app.schemas.mqtt import Row, ScoreboardDTO, NotificationDTO
 
 
 def notification(mqtt_client: MQTTClient, contest_id: int, message: str):

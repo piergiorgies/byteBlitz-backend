@@ -42,10 +42,10 @@ def get_tokens(user_id, username, user_permissions):
     }
 
     access_token = _create_access_token(data=data, expires_delta=access_token_expire)
-    refresh_token = _create_access_token(data=data, expires_delta=refresh_token_expire)
+    # refresh_token = _create_access_token(data=data, expires_delta=refresh_token_expire)
     return {
         "access_token": access_token,
-        "refresh_token": refresh_token
+        # "refresh_token": refresh_token
     }
 
 def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
