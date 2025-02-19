@@ -97,7 +97,8 @@ def create(problemDTO: ProblemCreate, user: User, session: Session):
             points=problemDTO.points,
             is_public=problemDTO.is_public,
             author_id=user.id,
-            constraints=constraints  # This assumes a relationship is defined on Problem
+            difficulty=problemDTO.difficulty,
+            constraints=constraints,  # This assumes a relationship is defined on Problem
         )
         
         session.add(problem)
