@@ -5,6 +5,16 @@ from app.database import Base
 from . import *
 
 class ProblemConstraint(Base):
+    """
+    Problem constraints model
+    
+    Attributes:
+        problem_id: int
+        language_id: int
+        memory_limit: int
+        time_limit: int
+    """
+
     __tablename__ = 'problem_constraints'
 
     problem_id: Mapped[int] = mapped_column(Integer, FK('problems.id', ondelete='cascade'), primary_key=True)

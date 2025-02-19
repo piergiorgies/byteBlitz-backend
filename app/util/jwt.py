@@ -4,7 +4,7 @@ from app.database import get_session
 from app.models.role import Role
 
 from datetime import datetime, timedelta, timezone
-from jose import JWTError, jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import HTTPException, Query, WebSocket, status, Depends
 from typing import Annotated
@@ -42,10 +42,10 @@ def get_tokens(user_id, username, user_permissions):
     }
 
     access_token = _create_access_token(data=data, expires_delta=access_token_expire)
-    refresh_token = _create_access_token(data=data, expires_delta=refresh_token_expire)
+    # refresh_token = _create_access_token(data=data, expires_delta=refresh_token_expire)
     return {
         "access_token": access_token,
-        "refresh_token": refresh_token
+        # "refresh_token": refresh_token
     }
 
 def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
@@ -62,6 +62,8 @@ def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
 
         return user_id, username
     
+    except ExpiredSignatureError as e:
+        return '', ''
     except JWTError as e:
         raise credentials_exception
 
@@ -80,6 +82,18 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Ses
 
         else:
             id, username = decode_token(token)
+
+            if (id == '' or username == ''):
+                user_type = session.query(UserType).filter(UserType.permissions == Role.GUEST).one_or_none()
+                if not user_type:
+                    raise HTTPException(status_code=500, detail="Guest user type not found")
+            
+                user: User = session.query(User).filter(User.user_type_id == user_type.id).first()
+
+                if user is None:
+                    raise credentials_exception
+                return user
+
             user: User = session.query(User).filter(User.id == id, User.username == username).first()
 
             if user is None:

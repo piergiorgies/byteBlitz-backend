@@ -6,18 +6,17 @@ from typing import List
 
 from app.database import get_object_by_id, get_object_by_id_joined_with
 from app.models import SubmissionDTO
-from app.models.base_dto import ListResponse
 from app.models.mapping import Submission, User, Problem, Language, Contest
 from app.models.mapping import ContestSubmission, SubmissionTestCase, ContestProblem, SubmissionResult, SubmissionTestCase
-from app.models import SubmissionTestCaseDTO
 from app.connections.rabbitmq import rabbitmq_connection
+from app.schemas import SubmissionCreate, SubmissionTestCaseResult
 
-def create(submission_dto: SubmissionDTO, session: Session, user: User):
+def create(submission_in: SubmissionCreate, session: Session, user: User):
     """
     Create a submission
 
     Args:
-        submission (SubmissionDTO): The submission data
+        submission (SubmissionCreate): The submission data
         session (Session): The database session
     
     Returns:
@@ -25,14 +24,14 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
     """
     
     try:        
-        language: Language = session.query(Language).filter(Language.id == submission_dto.language_id).first()
-        _validate_submission(submission_dto, session, user)
+        language: Language = session.query(Language).filter(Language.id == submission_in.language_id).first()
+        _validate_submission(submission_in, session, user)
         
         # create the submission
         submission = Submission(
-            submitted_code=submission_dto.submitted_code,
-            notes=submission_dto.notes,
-            problem_id=submission_dto.problem_id,
+            submitted_code=submission_in.submitted_code,
+            notes=submission_in.notes,
+            problem_id=submission_in.problem_id,
             user_id=user.id,
             language_id=language.id
         )
@@ -41,9 +40,9 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
         session.refresh(submission)
 
         # create the contest submission
-        if submission_dto.contest_id:
+        if submission_in.contest_id:
             contest_submission = ContestSubmission(
-                contest_id=submission_dto.contest_id,
+                contest_id=submission_in.contest_id,
                 submission_id=submission.id
             )
             session.add(contest_submission)
@@ -57,7 +56,7 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
             'submission_id' : submission.id
         }
         # send the submission to the queue
-        submission_dto.id = submission.id
+        submission_in.id = submission.id
         rabbitmq_connection.try_send_to_queue('submissions', body)
 
         return True
@@ -71,7 +70,7 @@ def create(submission_dto: SubmissionDTO, session: Session, user: User):
         session.rollback()
         raise e
 
-def _validate_submission(submission_dto: SubmissionDTO, session: Session, user: User):
+def _validate_submission(submission_dto: SubmissionCreate, session: Session, user: User):
     # check if the problem exists
     problem: Problem = get_object_by_id(Problem, session, submission_dto.problem_id)
     if not problem:
@@ -86,7 +85,18 @@ def _validate_submission(submission_dto: SubmissionDTO, session: Session, user: 
     if language.id not in [x.language_id for x in problem.constraints]:
         raise HTTPException(status_code=400, detail="Language not supported by problem")
     
-    if submission_dto.contest_id:
+    # check if the problem is in a contest and if the contest is active
+    contests = session.query(Contest).join(ContestProblem).filter(ContestProblem.problem_id == problem.id).all()
+    
+    # if at least one contest is active, the problem is in a contest
+    there_are_active_contests = False
+    if contests:
+        for contest in contests:
+            if contest.start_datetime < datetime.now() and contest.end_datetime > datetime.now():
+                there_are_active_contests = True
+                break
+
+    if submission_dto.contest_id and there_are_active_contests:
         # check if the contest exists
         contest: Contest = get_object_by_id_joined_with(Contest, session, submission_dto.contest_id, [Contest.problems, Contest.users])
         if not contest:
@@ -116,68 +126,6 @@ def _validate_submission(submission_dto: SubmissionDTO, session: Session, user: 
 
     if submissions_count >= 15:
         raise HTTPException(status_code=400, detail="Too many submissions")
-
-def accept(submission_id: int, submission_test_case: SubmissionTestCaseDTO, session: Session):
-    try:
-        # check if the submission exists
-        submission: Submission = get_object_by_id(Submission, session, submission_id)
-        if not submission:
-            raise HTTPException(status_code=400, detail="Submission not found")
-        
-        result: SubmissionResult = get_object_by_id(SubmissionResult, session, submission_test_case.result_id)
-
-        if not result:
-            raise HTTPException(status_code=400, detail="Result not found")
-
-        submission_test_case = SubmissionTestCase(
-            submission=submission,
-            result=result,
-            result_id=submission_test_case.result_id,
-            number=submission_test_case.number,
-            notes=submission_test_case.notes,
-            memory=submission_test_case.memory,
-            time=submission_test_case.time
-        )
-
-        session.add(submission_test_case)
-        session.commit()
-        
-
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise e
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise e
-
-def save_total(submission_id: int, result: SubmissionResult, session: Session):
-    try:
-        # check if the submission exists
-        submission: Submission = get_object_by_id(Submission, session, submission_id)
-        if not submission:
-            raise HTTPException(status_code=400, detail="Submission not found")
-        
-        submission_result: SubmissionResult = get_object_by_id(SubmissionResult, session, result.result_id)
-        if not submission_result:
-            raise HTTPException(status_code=400, detail="Result not found")
-        
-        test_submissions = submission.test_cases
-        
-        submission.result = submission_result
-
-        session.commit()
-        
-
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise e
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise e
 
 def get_submission_results(session: Session) -> ListResponse:
     try:
