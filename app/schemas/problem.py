@@ -52,6 +52,7 @@ class ProblemInfo(BaseResponse):
     points: int
     languages: List[str]
     is_public: bool
+    difficulty: Difficulty
 
 class ProblemListResponse(BaseListResponse):
     problems: List[ProblemInfo]
