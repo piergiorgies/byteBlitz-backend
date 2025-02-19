@@ -149,7 +149,8 @@ class PastContest(BaseResponse):
     start_datetime: datetime
     end_datetime: datetime
     duration: int
-    n_problems: int
+    problems: List[ProblemInfo]
+    n_submissions: int
     scoreboard: ContestScoreboard
     users: List[ContestUserInfo]
 

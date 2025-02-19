@@ -185,9 +185,17 @@ def read_past(id: int, session: Session):
             if problem_language.problem_id not in languages:
                 languages[problem_language.problem_id] = []
             languages[problem_language.problem_id].append(problem_language.language_name)
-        problems_info = [ProblemInfo(title=problem.title, points=problem.points, languages=languages[problem.id]) for problem in problems]
-
-        # problems_info = [ProblemInfo(title=problem.title, points=problem.points, languages=problem_languages) for problem in problems]
+        
+        problems_info = []
+        for problem in problems:
+            problems_info.append(ProblemInfo(
+                id=problem.id,
+                title=problem.title,
+                points=problem.points,
+                is_public=problem.is_public,
+                languages=languages[problem.id]
+            ))
+            
         user_infos = [ContestUserInfo.model_validate(obj=user) for user in contest.users]
 
         number_of_submissions = session.query(ContestSubmission).filter(ContestSubmission.contest_id == id).count()
