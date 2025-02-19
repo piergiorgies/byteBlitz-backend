@@ -2,10 +2,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from datetime import datetime, timedelta
-import json
+from typing import List
 
 from app.database import get_object_by_id, get_object_by_id_joined_with
 from app.models import SubmissionDTO
+from app.models.base_dto import ListResponse
 from app.models.mapping import Submission, User, Problem, Language, Contest
 from app.models.mapping import ContestSubmission, SubmissionTestCase, ContestProblem, SubmissionResult, SubmissionTestCase
 from app.models import SubmissionTestCaseDTO
@@ -176,4 +177,18 @@ def save_total(submission_id: int, result: SubmissionResult, session: Session):
         raise e
     except Exception as e:
         session.rollback()
+        raise e
+
+def get_submission_results(session: Session) -> ListResponse:
+    try:
+        query = session.query(SubmissionResult)
+        submission_results : List[SubmissionResult] = query.all()
+
+        return submission_results
+
+    except SQLAlchemyError as e:
+        raise e
+    except HTTPException as e:
+        raise e
+    except Exception as e:
         raise e
