@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     PUBLIC_KEY: str
     PRIVATE_KEY: str
 
+    SMTP_SERVER: str
+    SMTP_PORT: int
+    SMTP_USER: str
+    SMTP_PASSWORD: str
     model_config = SettingsConfigDict(env_file=".env")
     
     @property
