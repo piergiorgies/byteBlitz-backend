@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, Response
 from fastapi.responses import JSONResponse
-from app.schemas import LoginResponse, LoginRequest
-from app.controllers.auth import login as login_controller
+from app.schemas import LoginResponse, LoginRequest, ResetPasswordRequest, ChangeResetPasswordRequest
+from app.controllers.auth import login as login_controller, reset_password as reset_pwd, change_reset_password
 from app.database import get_session
 
 router = APIRouter(
@@ -50,6 +50,56 @@ def logout(response: Response) -> JSONResponse:
             headers=response.headers
         )
         
+    except HTTPException as e:
+        return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "An unexpected error occurred", "error": str(e)}
+        )
+    
+@router.post("/reset-password", summary="Reset Password", response_description="Password reset email sent")
+def reset_password(body: ResetPasswordRequest = Body(), session = Depends(get_session)):
+    """
+    Reset the password of a user
+
+    Args: 
+        body: ResetPasswordRequest
+    
+    Returns:
+        JSONResponse: response
+    """
+    try:
+        reset_pwd(body, session)
+        return JSONResponse(
+            status_code=200,
+            content={"detail": "Password reset email sent"}
+        )
+    except HTTPException as e:
+        return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "An unexpected error occurred", "error": str(e)}
+        )
+    
+
+@router.post("/change-reset-password", summary="Change Password", response_description="Password changed")
+def change_reset_password(body: ChangeResetPasswordRequest = Body(), session = Depends(get_session)):
+    """
+    Change the password of a user
+    
+    Returns:
+        JSONResponse: response
+    """
+    try:
+        change_reset_password(body, session)
+
+        return JSONResponse(
+            status_code=200,
+            content={"detail": "Password changed"}
+        )
+    
     except HTTPException as e:
         return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
     except Exception as e:
