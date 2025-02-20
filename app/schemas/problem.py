@@ -43,11 +43,11 @@ class ProblemRead(BaseResponse):
 
 
 class ProblemInfo(BaseResponse):
-    id: int
+    id: Optional[int] = None
     title: str
     points: int
     languages: List[str]
-    is_public: bool
+    is_public: Optional[bool] = None
 
 class ProblemListResponse(BaseListResponse):
     problems: List[ProblemInfo]

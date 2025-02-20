@@ -189,10 +189,8 @@ def read_past(id: int, session: Session):
         problems_info = []
         for problem in problems:
             problems_info.append(ProblemInfo(
-                id=problem.id,
                 title=problem.title,
                 points=problem.points,
-                is_public=problem.is_public,
                 languages=languages[problem.id]
             ))
             
@@ -200,7 +198,13 @@ def read_past(id: int, session: Session):
 
         number_of_submissions = session.query(ContestSubmission).filter(ContestSubmission.contest_id == id).count()
 
-        scoreboard = get_scoreboard(id, session)
+
+        try:
+            scoreboard = get_scoreboard(id, session)
+
+        except HTTPException as e:
+            scoreboard = ContestScoreboard(userteams=[], problems=[], scores=[])
+
         return PastContest(
             id=contest.id,
             name=contest.name,
@@ -271,4 +275,69 @@ def read_upcoming(id: int, session: Session):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
     
-# endregion
+def read_ongoing(id: int, user: User, session: Session):
+    """
+    Return an ongoing contest by id
+
+    Args:
+        id: int
+        user: User
+        session: Session
+
+    Returns:
+        contest: ContestRead
+    """
+    try:
+        contest = session.query(Contest).filter(Contest.id == id).first()
+        if not contest:
+            raise HTTPException(status_code=404, detail="Contest not found")
+        
+        # check if user is registered to the contest
+        if user not in contest.users:
+            raise HTTPException(status_code=400, detail="User is not registered to the contest")
+        
+        # check if it is an ongoing contest
+        if contest.start_datetime > datetime.now() or contest.end_datetime < datetime.now():
+            raise HTTPException(status_code=400, detail="Contest is not ongoing")
+        
+        problems = session.query(Problem).join(ContestProblem, Problem.id == ContestProblem.problem_id).filter(ContestProblem.contest_id == id).all()
+        problem_languages = session.query(ProblemConstraint).join(Language, ProblemConstraint.language_id == Language.id).filter(ProblemConstraint.problem_id.in_([problem.id for problem in problems])).all()
+
+        languages = {}
+        
+        for problem_language in problem_languages:
+            if problem_language.problem_id not in languages:
+                languages[problem_language.problem_id] = []
+            languages[problem_language.problem_id].append(problem_language.language_name)
+        
+        problems_info = [ProblemInfo(id=problem.id, title=problem.title, points=problem.points, languages=languages[problem.id]) for problem in problems]
+
+        user_infos = [ContestUserInfo.model_validate(obj=user) for user in contest.users]
+
+        number_of_submissions = session.query(ContestSubmission).filter(ContestSubmission.contest_id == id).count()
+
+        try:
+            scoreboard = get_scoreboard(id, session)
+
+        except HTTPException as e:
+            scoreboard = ContestScoreboard(userteams=[], problems=[], scores=[])
+
+        return PastContest(
+            id=contest.id,
+            name=contest.name,
+            description=contest.description,
+            start_datetime=contest.start_datetime,
+            end_datetime=contest.end_datetime,
+            duration=int((contest.end_datetime - contest.start_datetime).total_seconds() / 3600),
+            n_submissions=number_of_submissions,
+            problems=problems_info,
+            scoreboard=scoreboard,
+            users=user_infos
+        )
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")

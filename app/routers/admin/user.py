@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from app.util.role_checker import RoleChecker
 from app.util.jwt import get_current_user
-from app.controllers.admin.user import available_user_types_list, read_user, delete_user, update_user, list_user, create_user
+from app.controllers.admin.user import available_user_types_list, read_user, delete_user, update_user as update, list_user, create_user
 from app.schemas import get_pagination_params, PaginationParams, UserListResponse, UserUpdate, UserCreate
 from app.database import get_session
 from app.models import Role
@@ -50,7 +50,7 @@ async def update_user(id: int, updated_user: UserUpdate = Body(), session=Depend
     """
 
     try:
-        user = update_user(id, updated_user, session)
+        user = update(id, updated_user, session)
         return user
 
     except HTTPException as e:
