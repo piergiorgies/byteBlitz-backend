@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, Response
 from fastapi.responses import JSONResponse
 from app.schemas import LoginResponse, LoginRequest, ResetPasswordRequest, ChangeResetPasswordRequest
-from app.controllers.auth import login as login_controller, reset_password as reset_pwd, change_reset_password
+from app.controllers.auth import login as login_controller, reset_password as reset_pwd, change_reset_password as change_reset_pwd
 from app.database import get_session
 
 router = APIRouter(
@@ -93,13 +93,8 @@ def change_reset_password(body: ChangeResetPasswordRequest = Body(), session = D
         JSONResponse: response
     """
     try:
-        change_reset_password(body, session)
+        return change_reset_pwd(body, session)
 
-        return JSONResponse(
-            status_code=200,
-            content={"detail": "Password changed"}
-        )
-    
     except HTTPException as e:
         return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
     except Exception as e:

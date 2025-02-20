@@ -2,6 +2,7 @@ import random
 from hashlib import sha256
 from datetime import datetime, timedelta
 
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
@@ -9,6 +10,8 @@ from app.schemas import LoginRequest, LoginResponse, ResetPasswordRequest, Chang
 from app.models.mapping import User
 from app.util.jwt import get_tokens
 from app.util.pwd import _hash_password
+from app.util.mail import MailSender
+from app.config import settings
 
 def login(user_login: LoginRequest, session: Session):
     try:
@@ -49,7 +52,19 @@ def reset_password(data: ResetPasswordRequest, session: Session):
         user_db.reset_password_token_expiration = datetime.now() + timedelta(hours=1)        
         session.commit()
 
-        # send email
+
+        body = f"""<h1>Reset your password</h1>
+                    <p>Click on the link to reset your password:
+                    <a href='{settings.APP_DOMAIN}/password-reset?token={user_db.reset_password_token}'>Reset password</a></p>
+                """
+
+        sender = MailSender()    
+        sender.send_mail(
+            subject="Password reset",
+            body=body,
+            to=user_db.email
+        )
+
         return
     
     except SQLAlchemyError as e:
@@ -79,7 +94,10 @@ def change_reset_password(data: ChangeResetPasswordRequest, session: Session):
         user_db.reset_password_token_expiration = None
         session.commit()
 
-        return
+        return JSONResponse(
+            status_code=200,
+            content={"detail": "Password changed"}
+        )
     
     except SQLAlchemyError as e:
         session.rollback()
