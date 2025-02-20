@@ -48,14 +48,18 @@ def reset_password(data: ResetPasswordRequest, session: Session):
         if not user_db:
             raise HTTPException(status_code=404, detail="User not found")
         
+        # check if another token is already active
+        if user_db.reset_password_token_expiration and user_db.reset_password_token_expiration > datetime.now():
+            raise HTTPException(status_code=400, detail="Token already sent, please check your email")
+        
         user_db.reset_password_token = sha256(str(random.getrandbits(256)).encode()).hexdigest()
-        user_db.reset_password_token_expiration = datetime.now() + timedelta(hours=1)        
+        user_db.reset_password_token_expiration = datetime.now() + timedelta(minutes=30)        
         session.commit()
 
 
         body = f"""<h1>Reset your password</h1>
-                    <p>Click on the link to reset your password:
-                    <a href='{settings.APP_DOMAIN}/password-reset?token={user_db.reset_password_token}'>Reset password</a></p>
+<p>Click on the link to reset your password:
+<a href='{settings.APP_DOMAIN}/password-reset?token={user_db.reset_password_token}'>Reset password</a></p>
                 """
 
         sender = MailSender()    
@@ -64,6 +68,7 @@ def reset_password(data: ResetPasswordRequest, session: Session):
             body=body,
             to=user_db.email
         )
+        del sender
 
         return
     

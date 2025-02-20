@@ -45,7 +45,7 @@ class MailSender:
         msg['From'] = settings.SMTP_USER
         msg['To'] = ', '.join(recipients)
         msg['Subject'] = Header(subject, 'utf-8')
-        msg.attach(MIMEText(body, 'plain', 'utf-8'))
+        msg.attach(MIMEText(body, 'html', 'utf-8'))
 
         if attachments:
             for attachment in attachments:
