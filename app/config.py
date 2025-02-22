@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     SMTP_USER: str
     SMTP_PASSWORD: str
     model_config = SettingsConfigDict(env_file=".env")
+
+    GITHUB_CLIENT_ID: str
+    GITHUB_CLIENT_SECRET: str
+    GITHUB_REDIRECT_URI: str
+
     
     @property
     def get_connection_string(self):

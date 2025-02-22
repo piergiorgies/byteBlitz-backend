@@ -10,6 +10,8 @@ fastapi==0.112.0
 gevent==24.10.3
 greenlet==3.1.1
 h11==0.14.0
+httpcore==1.0.7
+httpx==0.28.1
 idna==3.7
 iniconfig==2.0.0
 lorem-text==2.1

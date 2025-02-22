@@ -6,6 +6,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
+from app.models.mapping import UserType
+from app.models import Role
 from app.schemas import LoginRequest, LoginResponse, ResetPasswordRequest, ChangeResetPasswordRequest
 from app.models.mapping import User
 from app.util.jwt import get_tokens
@@ -112,3 +114,55 @@ def change_reset_password(data: ChangeResetPasswordRequest, session: Session):
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred" + str(e))
+    
+
+
+def create_github_user(user_json: dict, session: Session):
+    """
+    Create a user from the github login, if the user does not exist
+
+    Args:
+        user_json (dict): user data from github
+        session (Session): sqlalchemy session
+
+    Returns:
+        LoginResponse: response
+    """
+
+    try:
+        # get the User type
+        user_type = session.query(UserType).filter(UserType.permissions == Role.USER).one_or_none()
+
+        if not user_type:
+            raise HTTPException(status_code=500, detail="User type not found")
+
+
+        user_email = user_json["email"] if user_json["email"] else user_json["login"] + "@github.com"
+
+        user_db = session.query(User).filter(User.email == user_email).one_or_none()
+
+        if not user_db:
+            user_db = User(
+                username=user_json["login"],
+                email=user_email,
+                password_hash="",
+                salt="",
+                user_type_id=user_type.id
+            )
+            session.add(user_db)
+            session.commit()
+
+        return LoginResponse.model_validate(
+            get_tokens(user_db.id, user_db.username, user_db.user_type.permissions)
+        )
+    
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred" + str(e))
+
+
