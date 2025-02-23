@@ -1,4 +1,5 @@
 from datetime import datetime
+from fastapi.responses import JSONResponse
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -225,7 +226,7 @@ def read_past(id: int, session: Session):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
-def read_upcoming(id: int, session: Session):
+def read_upcoming(id: int, session: Session) -> UpcomingContest:
     """
     Return an upcoming contest by id
 
@@ -265,7 +266,8 @@ def read_upcoming(id: int, session: Session):
             duration=int((contest.end_datetime - contest.start_datetime).total_seconds() / 3600),
             n_participants=len(contest.users),
             n_problems=len(problems),
-            problems=problems_info
+            problems=problems_info,
+            is_registration_open=contest.is_registration_open
         )
 
     except SQLAlchemyError as e:
@@ -336,6 +338,48 @@ def read_ongoing(id: int, user: User, session: Session):
         )
 
     except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+    
+
+def register_to_contest(contest_id: int, user: User, session: Session):
+    """
+    Register a user to a contest
+
+    Args:
+        contest_id: int
+        user: User
+        session: Session
+    """
+    try:
+        contest = session.query(Contest).filter(Contest.id == contest_id).first()
+
+        if not contest:
+            raise HTTPException(status_code=404, detail="Contest not found")
+        
+        if contest.is_registration_open == False:
+            raise HTTPException(status_code=400, detail="Registration is closed")
+
+        if contest.start_datetime < datetime.now():
+            raise HTTPException(status_code=400, detail="Contest has already started")
+        
+        if contest.end_datetime < datetime.now():
+            raise HTTPException(status_code=400, detail="Contest has already ended")
+        
+        if user in contest.users:
+            return JSONResponse(status_code=200, content={"message": "User already registered to contest"})
+        
+        contest_user = ContestUser(contest_id=contest_id, user_id=user.id)
+        session.add(contest_user)
+        session.commit()
+
+        return JSONResponse(status_code=200, content={"message": "User registered to contest successfully"})
+    
+    except SQLAlchemyError as e:
+        session.rollback()
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     except HTTPException as e:
         raise e
