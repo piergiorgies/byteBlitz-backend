@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     SMTP_USER: str
     SMTP_PASSWORD: str
 
+    GITHUB_CLIENT_ID: str
+    GITHUB_CLIENT_SECRET: str
+    GITHUB_REDIRECT_URI: str
+
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     
     @property

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.models.role import Role
 from app.controllers.contest import get_scoreboard, list_with_info, read_past, read_upcoming, read_ongoing, register_to_contest
 from app.schemas import ContestScoreboard
-from app.schemas import ContestRead, ContestInfos, UpcomingContest, PastContest, ContestUserInfo
+from app.schemas import ContestRead, ContestInfos, UpcomingContest
 from app.models.mapping import User
 from app.database import get_session
 from app.util.jwt import get_current_user
