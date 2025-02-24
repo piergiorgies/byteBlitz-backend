@@ -47,7 +47,7 @@ class ProblemRead(BaseResponse):
 
 
 class ProblemInfo(BaseResponse):
-    id: int
+    id: Optional[int] = None
     title: str
     points: int
     languages: List[str]

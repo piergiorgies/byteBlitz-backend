@@ -164,3 +164,4 @@ class UpcomingContest(BaseResponse):
     n_participants: int
     n_problems: int
     problems: List["ProblemInfo"]
+    is_registration_open: bool

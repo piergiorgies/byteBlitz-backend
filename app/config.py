@@ -40,7 +40,8 @@ class Settings(BaseSettings):
     SMTP_PORT: int
     SMTP_USER: str
     SMTP_PASSWORD: str
-    model_config = SettingsConfigDict(env_file=".env")
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     
     @property
     def get_connection_string(self):

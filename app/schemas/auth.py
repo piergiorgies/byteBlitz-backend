@@ -28,3 +28,33 @@ class LoginResponse(BaseResponse):
 
     """
     access_token: str
+
+
+@dataclass
+class ResetPasswordRequest(BaseRequest):
+    """
+    
+    Reset Password DTO
+
+    Attributes
+        email (str): The email of the user
+
+    """
+
+    email: str
+
+
+@dataclass
+class ChangeResetPasswordRequest(BaseRequest):
+    """
+    
+    Change Reset Password DTO
+
+    Attributes
+        token (str): The token of the user
+        password (str): The new password of the user
+
+    """
+
+    token: str
+    password: str
