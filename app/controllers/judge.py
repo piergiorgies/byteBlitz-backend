@@ -3,11 +3,12 @@ from hashlib import sha256
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from app.models import Problem, User, UserType, JudgeCreateDTO, JudgeDTO
-from app.models.problem import ProblemJudgeDTO, ConstraintDTO, TestCaseDTO
+from app.models.mapping import Problem, User, UserType
 from app.database import get_object_by_id_joined_with
 from app.models.role import Role
-
+from app.models.mapping import Submission, SubmissionResult, SubmissionTestCase, SubmissionTestCase
+from app.schemas import JudgeResponse, JudgeCreate, JudgeListResponse, JudgeProblem, Constraint, TestCase, SubmissionTestCaseResult
+from app.database import get_object_by_id
 
 #regiorn Judge
 
@@ -49,9 +50,9 @@ def get_problem_info(id: int, session: Session, judge: User):
             raise HTTPException(status_code=404, detail="Problem not found")
 
         # serialize the problem
-        problem_dto = ProblemJudgeDTO.model_validate(obj=problem)
-        problem_dto.constraints = [ConstraintDTO.model_validate(obj=constraint) for constraint in problem.constraints]
-        problem_dto.test_cases = [TestCaseDTO.model_validate(obj=test_case) for test_case in problem.test_cases]
+        problem_dto = JudgeProblem.model_validate(obj=problem)
+        problem_dto.constraints = [Constraint.model_validate(obj=constraint) for constraint in problem.constraints]
+        problem_dto.test_cases = [TestCase.model_validate(obj=test_case) for test_case in problem.test_cases]
 
         judge.registered_at = datetime.now()
         session.commit()
@@ -65,104 +66,64 @@ def get_problem_info(id: int, session: Session, judge: User):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def get_judges(limit : int, offset : int, searchFilter: str, session: Session) -> list[JudgeDTO]:
-    """
-    Get the judge list
-    """
-
+def accept(submission_id: int, submission_test_case: SubmissionTestCaseResult, session: Session):
     try:
-        # get the judge list
-        judge_role: UserType = session.query(UserType).filter(UserType.permissions == Role.JUDGE).one_or_none()
-
-        if not judge_role:
-            raise HTTPException(status_code=404, detail="Judge role not found")
+        # check if the submission exists
+        submission: Submission = get_object_by_id(Submission, session, submission_id)
+        if not submission:
+            raise HTTPException(status_code=400, detail="Submission not found")
         
-        query = session.query(User).where(User.user_type_id == judge_role.id)
-        if searchFilter:
-            query = query.filter(User.username.ilike(f"%{searchFilter}%"))
-        
-        
-        count = query.count()
-        judges = query.limit(limit).offset(offset).all()
+        result: SubmissionResult = get_object_by_id(SubmissionResult, session, submission_test_case.result_id)
 
-        dto = []
-        for judge in judges:
-            # check if the registration date is less than 30 minutes
-            status = False
-            if judge.registered_at > datetime.now() - timedelta(minutes=30):
-                status = True
-            dto.append(JudgeDTO(id=judge.id, name=judge.username, status=status, last_connection=judge.registered_at))
-        
-        return {"data": dto, "count": count}
+        if not result:
+            raise HTTPException(status_code=400, detail="Result not found")
 
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-def create_judge(judge: JudgeCreateDTO, session: Session):
-    """
-    Create a new judge
-    """
-
-    try:
-        # get the judge type
-        judge_type = session.query(UserType).filter(UserType.permissions == Role.JUDGE).one_or_none()
-
-        existing = session.query(User).where(User.username == judge.name).one_or_none()
-
-        if existing:
-            raise HTTPException(status_code=400, detail="Judge already exists")
-
-        if not judge_type:
-            raise HTTPException(status_code=500, detail="Judge type not found in the database")
-
-        hash = sha256(f'{judge.name}:{judge.key}'.encode()).hexdigest()
-        # create the judge
-        new_judge = User(
-            username=judge.name,
-            email=judge.name,
-            user_type_id=judge_type.id,
-            password_hash=hash,
-            salt='',
-            deletion_date=None
+        submission_test_case = SubmissionTestCase(
+            submission=submission,
+            result=result,
+            result_id=submission_test_case.result_id,
+            number=submission_test_case.number,
+            notes=submission_test_case.notes,
+            memory=submission_test_case.memory,
+            time=submission_test_case.time
         )
 
-        session.add(new_judge)
-        session.commit()
-        return {"message": "Judge added successfully"}, 201
-
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-def delete_judge(id: int, session: Session):
-    """
-    Delete a judge
-    
-    Args:
-        id: int
-    """
-    try:
-        # get the judge
-        judge = session.query(User).where(User.id == id).one_or_none()
-
-        if not judge:
-            raise HTTPException(status_code=404, detail="Judge not found")
-
-        # delete the judge
-        session.delete(judge)
+        session.add(submission_test_case)
         session.commit()
         
+
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+        raise e
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-#endregion
+        session.rollback()
+        raise e
+
+def save_total(submission_id: int, result: SubmissionResult, session: Session):
+    try:
+        # check if the submission exists
+        submission: Submission = get_object_by_id(Submission, session, submission_id)
+        if not submission:
+            raise HTTPException(status_code=400, detail="Submission not found")
+        
+        submission_result: SubmissionResult = get_object_by_id(SubmissionResult, session, result.result_id)
+        if not submission_result:
+            raise HTTPException(status_code=400, detail="Result not found")
+        
+        test_submissions = submission.test_cases
+        
+        submission.result = submission_result
+
+        session.commit()
+        
+
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise e
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise e

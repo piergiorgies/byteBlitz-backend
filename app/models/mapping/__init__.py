@@ -14,3 +14,4 @@ from .problem_constraint import ProblemConstraint
 from .contest_submission import ContestSubmission
 from .team_user import TeamUser
 from .contest_team import ContestTeam
+from .contest_submission import ContestSubmission
