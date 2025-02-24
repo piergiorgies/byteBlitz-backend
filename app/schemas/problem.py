@@ -1,5 +1,6 @@
 from app.schemas.base import BaseRequest, BaseResponse, BaseListResponse
 from typing import List, Optional
+from app.models import Difficulty
 
 class ProblemTestCase(BaseRequest):
     input: str
@@ -20,6 +21,7 @@ class ProblemCreate(BaseRequest):
     is_public: bool
     test_cases: List[ProblemTestCase]
     constraints: List[ProblemConstraint]
+    difficulty: Difficulty
 
 class ProblemUpdate(BaseRequest):
     title: Optional[str]
@@ -28,6 +30,7 @@ class ProblemUpdate(BaseRequest):
     is_public: Optional[bool]
     test_cases: Optional[List[ProblemTestCase]]
     constraints: Optional[List[ProblemConstraint]]
+    difficulty: Optional[Difficulty]
 
 class ProblemAuthor(BaseResponse):
     id: int
@@ -38,6 +41,7 @@ class ProblemRead(BaseResponse):
     points: int
     is_public: bool
     author: ProblemAuthor
+    difficulty: Difficulty
     test_cases: List[ProblemTestCase]
     constraints: List[ProblemConstraint]
 
@@ -48,6 +52,7 @@ class ProblemInfo(BaseResponse):
     points: int
     languages: List[str]
     is_public: bool
+    difficulty: Difficulty
 
 class ProblemListResponse(BaseListResponse):
     problems: List[ProblemInfo]
