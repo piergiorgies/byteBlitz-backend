@@ -1,8 +1,9 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey as FK, Integer, String, Boolean, DateTime
+from sqlalchemy import ForeignKey as FK, Integer, String, Boolean, DateTime, Enum
 from datetime import datetime
 from typing import Optional, List
 from app.database import Base
+from app.models import Difficulty
 from . import *
 
 
@@ -17,6 +18,7 @@ class Problem(Base):
     config_version_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
+    difficulty: Mapped[Difficulty] = mapped_column(Enum(Difficulty), nullable=False)
     author_id: Mapped[int] = mapped_column(Integer, FK('users.id'), nullable=False)
 
     # connected fields
