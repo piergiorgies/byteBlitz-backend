@@ -151,6 +151,11 @@ def create_github_user(user_json: dict, session: Session):
             )
             session.add(user_db)
             session.commit()
+        
+        else:
+            user_db.username = user_json["login"]
+            user_db.email = user_email
+            session.commit()
 
         return LoginResponse.model_validate(
             get_tokens(user_db.id, user_db.username, user_db.user_type.permissions)

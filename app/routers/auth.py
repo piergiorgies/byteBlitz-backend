@@ -1,3 +1,4 @@
+import requests
 from fastapi import APIRouter, Depends, HTTPException, Body, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from app.schemas import LoginResponse, LoginRequest, ResetPasswordRequest, ChangeResetPasswordRequest
@@ -10,7 +11,7 @@ from app.controllers.auth import (
 
 from app.database import get_session
 from app.config import settings
-import httpx
+
 
 router = APIRouter(
     tags=["Authentication"],
@@ -117,7 +118,7 @@ async def github_login():
     """Redirects the user to GitHub OAuth authorization page."""
     GITHUB_CLIENT_ID = settings.GITHUB_CLIENT_ID
     GITHUB_REDIRECT_URI = settings.GITHUB_REDIRECT_URI
-    github_auth_url = f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&redirect_uri={GITHUB_REDIRECT_URI}&scope=read:user"
+    github_auth_url = f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&redirect_uri={GITHUB_REDIRECT_URI}&scope=user:email"
     return {"auth_url": github_auth_url}
 
 
@@ -131,33 +132,10 @@ async def github_callback(code: str, session = Depends(get_session)):
     """
 
     try:
-        async with httpx.AsyncClient() as client:
-            token_response = await client.post(
-                "https://github.com/login/oauth/access_token",
-                headers={"Accept": "application/json"},
-                data={
-                    "client_id": settings.GITHUB_CLIENT_ID,
-                    "client_secret": settings.GITHUB_CLIENT_SECRET,
-                    "code": code,
-                    "redirect_uri": settings.GITHUB_REDIRECT_URI,
-                },
-            )
-            token_json = token_response.json()
-            access_token = token_json.get("access_token")
 
-            if not access_token:
-                raise HTTPException(status_code=400, detail="Failed to obtain access token")
-
-            # Fetch user details
-            user_response = await client.get(
-                "https://api.github.com/user",
-                headers={"Authorization": f"Bearer {access_token}"},
-            )
-            user_json = user_response.json()
-
-            response: LoginResponse = create_github_user(user_json=user_json, session=session)
-
-            return RedirectResponse(url=settings.APP_DOMAIN + f"/auth/callback?token={response.access_token}")
+        user_json = _get_github_user_infos(code)
+        response: LoginResponse = create_github_user(user_json=user_json, session=session)
+        return RedirectResponse(url=settings.APP_DOMAIN + f"/auth/callback?token={response.access_token}")
         
     except HTTPException as e:
         return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
@@ -167,3 +145,52 @@ async def github_callback(code: str, session = Depends(get_session)):
             content={"detail": "An unexpected error occurred", "error": str(e)}
         )
     
+
+def _get_github_user_infos(code: str):
+    """
+    Get the user infos from Github
+    """
+
+    token_response = requests.post(
+        "https://github.com/login/oauth/access_token",
+        headers={"Accept": "application/json"},
+        data={
+            "client_id": settings.GITHUB_CLIENT_ID,
+            "client_secret": settings.GITHUB_CLIENT_SECRET,
+            "code": code,
+            "redirect_uri": settings.GITHUB_REDIRECT_URI,
+        },
+    )
+
+    token_json = token_response.json()
+    access_token = token_json["access_token"]
+
+    if not access_token:
+        raise HTTPException(status_code=400, detail="Failed to get access token")
+    
+    user_response = requests.get(
+        "https://api.github.com/user",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    user_json = user_response.json()
+
+    if user_json["email"] is None:
+        # Fetch user emails
+        user_emails_response = requests.get(
+            "https://api.github.com/user/emails",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        user_emails_json = user_emails_response.json()
+
+        # get the primary email
+        for email in user_emails_json:
+            if email["primary"]:
+                user_json["email"] = email["email"]
+                break
+
+
+
+    return user_json
+    
+
+

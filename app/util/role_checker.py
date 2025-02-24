@@ -25,4 +25,4 @@ class JudgeChecker:
     def __call__(self, judge: Annotated[User, Depends(get_judge)]):
         if judge:
             return True
-        raise HTTPException(status_code=403, detail="You do not have permission to perform this action")    
+        raise HTTPException(status_code=403, detail="You do not have permission to perform this action")
