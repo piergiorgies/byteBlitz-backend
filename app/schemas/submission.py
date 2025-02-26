@@ -11,9 +11,10 @@ class SubmissionCreate(BaseRequest):
         submitted_code (str): The submitted code
     """
     problem_id: int
-    user_id: int
     language_id: int
     submitted_code: str
+    contest_id: int | None = None
+    notes: str
 
 
 class SubmissionResponse(BaseResponse):

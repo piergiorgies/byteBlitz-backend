@@ -246,6 +246,9 @@ def update(id: int, problem_update: ProblemUpdate, session: Session):
                     for c in constraints_to_add
                 ])
 
+        # Delete the saved test cases
+        session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem.id).delete()
+
         # --- Update Test Cases ---
         if problem_update.test_cases is not None:
             # Determine the next test case number from existing test cases.
@@ -298,6 +301,7 @@ def update(id: int, problem_update: ProblemUpdate, session: Session):
                     session.add(new_test_case)
                     next_test_case_number += 1
 
+        
         session.commit()
         # Validate and return the updated problem using your DTO validation method.
         return ProblemUpdate.model_validate(obj=problem)

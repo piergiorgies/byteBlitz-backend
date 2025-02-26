@@ -6,11 +6,19 @@ from app.models.role import Role
 from datetime import datetime, timedelta, timezone
 from jose import ExpiredSignatureError, JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import HTTPException, Query, WebSocket, status, Depends
+from fastapi import Cookie, HTTPException, Query, Request, WebSocket, status, Depends
 from typing import Annotated
 from sqlalchemy.orm import Session
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+class BearerScheme:
+    async def __call__(self, request: Request):
+        token = request.headers.get('Authorization')
+        if token == None or not token.startswith('Bearer '):
+            return None
+        
+        return token.split(' ')[1]
 
 credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -67,7 +75,9 @@ def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
     except JWTError as e:
         raise credentials_exception
 
-def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
+def get_current_user(token: Annotated[str | None, Cookie()], api_token: Annotated[str | None, Depends(BearerScheme())], session: Session = Depends(get_session)):
+    token = token or api_token
+
     try:
         if token == '':
             user_type = session.query(UserType).filter(UserType.permissions == Role.GUEST).one_or_none()
