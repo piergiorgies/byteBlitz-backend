@@ -44,7 +44,8 @@ def list(limit: int, offset: int, searchFilter: str, user: User, session: Sessio
                 title=problem.title,
                 points=problem.points,
                 languages=languages,
-                is_public=problem.is_public
+                is_public=problem.is_public,
+                difficulty=problem.difficulty
             ))
 
         return ProblemListResponse(
@@ -97,7 +98,8 @@ def create(problemDTO: ProblemCreate, user: User, session: Session):
             points=problemDTO.points,
             is_public=problemDTO.is_public,
             author_id=user.id,
-            constraints=constraints  # This assumes a relationship is defined on Problem
+            difficulty=problemDTO.difficulty,
+            constraints=constraints,  # This assumes a relationship is defined on Problem
         )
         
         session.add(problem)
@@ -208,6 +210,9 @@ def update(id: int, problem_update: ProblemUpdate, session: Session):
             problem.points = problem_update.points
         if problem_update.is_public is not None:
             problem.is_public = problem_update.is_public
+
+        if problem_update.difficulty is not None:
+            problem.difficulty = problem_update.difficulty
 
         # Increment version for any change
         problem.increment_version_number()

@@ -1,4 +1,4 @@
-from .auth import LoginRequest, LoginResponse
+from .auth import LoginRequest, LoginResponse, ResetPasswordRequest, ChangeResetPasswordRequest
 from .base import BaseRequest, BaseResponse, BaseListResponse
 from .pagination import PaginationParams, get_pagination_params
 from .judge import JudgeCreate, JudgeResponse, JudgeListResponse, JudgeProblem, Constraint, TestCase

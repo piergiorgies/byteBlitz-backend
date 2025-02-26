@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.models.role import Role
-from app.controllers.contest import get_scoreboard, list_with_info, read_past, read_upcoming
+from app.controllers.contest import get_scoreboard, list_with_info, read_past, read_upcoming, read_ongoing, register_to_contest
 from app.schemas import ContestScoreboard
-from app.schemas import ContestRead, ContestInfos
-
+from app.schemas import ContestRead, ContestInfos, UpcomingContest
+from app.models.mapping import User
 from app.database import get_session
+from app.util.jwt import get_current_user
 from app.util.role_checker import RoleChecker
 
 router = APIRouter(
@@ -29,7 +30,6 @@ async def list_contests_info(session=Depends(get_session)):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
 
 @router.post("/{id}/scoreboard", summary="Return the contest scoreboard", dependencies=[Depends(RoleChecker([Role.USER]))])
 async def add_user_to_contest(id: int, session=Depends(get_session)):
@@ -76,10 +76,45 @@ async def get_upcoming_contest(id: int, session=Depends(get_session)):
         id: int
     """
     try:
-        contest: ContestRead = read_upcoming(id, session)
+        contest: UpcomingContest = read_upcoming(id, session)
         return contest
     
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+@router.get("/{id}/ongoing", summary="Info about ongoing contest", dependencies=[Depends(RoleChecker([Role.USER]))])
+async def get_ongoing_contest(id: int, user: User = Depends(get_current_user), session=Depends(get_session)):
+    """
+    Get ongoing contest info
+
+    Args:
+        id: int
+    """
+    try:
+        contest: ContestRead = read_ongoing(id, user, session)
+        return contest
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+@router.post("/{id}/register", summary="Register to a contest", dependencies=[Depends(RoleChecker([Role.USER]))])
+async def register(id: int, user: User = Depends(get_current_user), session=Depends(get_session)):
+    """
+    Register to a contest
+
+    Args:
+        id: int
+    """
+    try:
+        return register_to_contest(id, user, session)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+
+    
