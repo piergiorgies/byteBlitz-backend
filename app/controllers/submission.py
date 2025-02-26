@@ -25,7 +25,7 @@ def create(submission_in: SubmissionCreate, session: Session, user: User):
     try:        
         language: Language = session.query(Language).filter(Language.id == submission_in.language_id).first()
         _validate_submission(submission_in, session, user)
-        
+
         # create the submission
         submission = Submission(
             submitted_code=submission_in.submitted_code,
@@ -55,7 +55,7 @@ def create(submission_in: SubmissionCreate, session: Session, user: User):
             'submission_id' : submission.id
         }
         # send the submission to the queue
-        submission_in.id = submission.id
+        # submission_in.id = submission.id
         rabbitmq_connection.try_send_to_queue('submissions', body)
 
         return True
@@ -117,7 +117,6 @@ def _validate_submission(submission_dto: SubmissionCreate, session: Session, use
         # check if the contest is active
         if contest.end_datetime < datetime.now():
             raise HTTPException(status_code=400, detail="Contest is over")
-        
         
     # check if the user has submitted too many times in the last hour
     last_hour = datetime.now() - timedelta(hours=1)

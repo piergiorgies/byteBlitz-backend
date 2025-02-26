@@ -18,7 +18,7 @@ def get_versions(session: Session, judge: User):
     """
 
     try:
-        problems = session.query(Problem).where(Problem.is_public == True).all()
+        problems = session.query(Problem).all()
         response = {}
         for problem in problems:
             response[problem.id] = problem.config_version_number
@@ -44,9 +44,10 @@ def get_problem_info(id: int, session: Session, judge: User):
     """
 
     try:
-        problem: Problem = get_object_by_id_joined_with(Problem, session, id, [Problem.constraints])
+        # problem: Problem = get_object_by_id_joined_with(Problem, session, id, [Problem.constraints])
+        problem: Problem = get_object_by_id(Problem, session, id)
 
-        if not problem or not problem.is_public:
+        if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
 
         # serialize the problem

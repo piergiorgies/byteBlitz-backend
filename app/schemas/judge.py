@@ -48,6 +48,7 @@ class TestCase(BaseResponse):
     output: str
     points: int
     is_pretest: bool
+    number: int
 class JudgeProblem(BaseResponse):
     id : int
     config_version_number: int
