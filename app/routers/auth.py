@@ -134,8 +134,10 @@ async def github_callback(code: str, session = Depends(get_session)):
     try:
 
         user_json = _get_github_user_infos(code)
-        response: LoginResponse = create_github_user(user_json=user_json, session=session)
-        return RedirectResponse(url=settings.APP_DOMAIN + f"/auth/callback?token={response.access_token}")
+        result: LoginResponse = create_github_user(user_json=user_json, session=session)
+        response = RedirectResponse(url=settings.APP_DOMAIN + f"/")
+        response.set_cookie('token', result.access_token, httponly=True)
+        return response
         
     except HTTPException as e:
         return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
