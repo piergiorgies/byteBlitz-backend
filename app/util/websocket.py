@@ -23,8 +23,7 @@ class WebsocketManager:
         for connection in self.connections[client_id]:
             try:
                 print(connection.client_state)
-                # await connection.send_json(message)
-                await connection.send_text('ciaooooo')
+                await connection.send_json(message)
             except Exception as e:
                 print(e)
                 failed_connections.append(connection)

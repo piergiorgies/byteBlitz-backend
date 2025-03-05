@@ -13,3 +13,6 @@ router = APIRouter(
 @router.websocket("/ws")
 async def websocket(socket: WebSocket, user: Annotated[User, Depends(get_websocket_user)]):
     await websocket_manager.connect(socket, user.id)
+    # to keep the connection alive
+    while True:
+        data = await socket.receive()
