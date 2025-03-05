@@ -45,3 +45,10 @@ class SubmissionTestCaseResult(BaseRequest):
 
 class SubmissionCompleteResult(BaseResponse):
     result_id: int
+
+class WSResult(BaseRequest):
+    result_id: int
+    number: int
+    notes: str
+    memory: float
+    time: float

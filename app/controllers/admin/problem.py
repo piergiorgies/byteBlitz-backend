@@ -364,7 +364,6 @@ def read(id: int, user: User, session: Session) -> ProblemRead:
         query = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem.id)
         constraints : List[ProblemConstraint] = query.all()
         problem.constraints = constraints
-        print(constraints)
 
         return ProblemRead.model_validate(obj=problem)
     

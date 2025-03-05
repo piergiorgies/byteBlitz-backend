@@ -126,7 +126,7 @@ def get_judge(data: Annotated[str, Depends(oauth2_scheme)], session: Session = D
     except HTTPException as e:
         raise e
 
-def get_websocket_user(_: WebSocket, token: Annotated[str | None, Query()], session: Session = Depends(get_session)):
+def get_websocket_user(_: WebSocket, token: Annotated[str | None, Cookie()], session: Session = Depends(get_session)):
     id, username = decode_token(token)
     user: User = session.query(User).filter(User.id == id, User.username == username).first()
 

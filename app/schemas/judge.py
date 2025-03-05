@@ -39,6 +39,7 @@ class JudgeListResponse(BaseListResponse):
     judges: list[JudgeResponse]
 
 class Constraint(BaseResponse):
+    language_name: str
     language_id: int
     memory_limit: int
     time_limit: int
@@ -49,6 +50,7 @@ class TestCase(BaseResponse):
     points: int
     is_pretest: bool
     number: int
+    
 class JudgeProblem(BaseResponse):
     id : int
     config_version_number: int

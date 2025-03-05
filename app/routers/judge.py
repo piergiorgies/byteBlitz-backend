@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from app.util.role_checker import JudgeChecker
 from app.database import get_session
-from app.controllers.judge import get_versions, get_problem_info, accept, save_total
+from app.controllers.judge import get_versions, get_problem_info, accept, save_total as save_total_judge
 from app.schemas import SubmissionTestCaseResult, SubmissionCompleteResult
 from app.util.role_checker import get_judge
 
@@ -61,7 +61,7 @@ async def accept_submission(id: int, body: SubmissionTestCaseResult = Body(), se
         JSONResponse: The response
     """
     try:
-        accepted = accept(id, body, session)
+        accepted = await accept(id, body, session)
         
         return JSONResponse(content={"message": "submission accepted successfully"}, status_code=200)
     
@@ -84,7 +84,7 @@ async def save_total(id: int, result_id: SubmissionCompleteResult = Body(), sess
         JSONResponse: The response
     """
     try:
-        save_total(id, result_id, session)
+        save_total_judge(id, result_id, session)
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Internal server error")
