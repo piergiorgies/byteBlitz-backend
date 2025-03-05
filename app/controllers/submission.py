@@ -122,7 +122,7 @@ def _validate_submission(submission_dto: SubmissionCreate, session: Session, use
     last_hour = datetime.now() - timedelta(hours=1)
     submissions_count = session.query(Submission).filter(Submission.user_id == user.id, Submission.created_at >= last_hour).count()
 
-    if submissions_count >= 15:
+    if submissions_count >= 1000:
         raise HTTPException(status_code=400, detail="Too many submissions")
 
 def get_submission_results(session: Session):

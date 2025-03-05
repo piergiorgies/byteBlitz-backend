@@ -34,7 +34,7 @@ async def get_submission_result_types(session = Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@router.post("/", summary="Submit a solution to a problem",  dependencies=[Depends(RoleChecker([Role.USER]))])
+@router.post("", summary="Submit a solution to a problem",  dependencies=[Depends(RoleChecker([Role.USER]))])
 async def submit_solution(submission: SubmissionCreate = Body(), session = Depends(get_session), user = Depends(get_current_user)):
     """
     Submit a solution to a problem
