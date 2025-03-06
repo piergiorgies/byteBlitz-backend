@@ -3,13 +3,17 @@ FROM python:3.10-slim
 WORKDIR /app
 
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
 
-RUN adduser -u 1000 --disabled-password --gecos "" appuser && chown -R appuser /app
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+RUN adduser --disabled-password --gecos "" appuser && \
+    chown -R appuser:appuser /app
+
 USER appuser
+
+COPY --chown=appuser:appuser . .
 
 EXPOSE 9000
 
-COPY . .
-
-CMD [ "python", "main.py" ]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9000"]

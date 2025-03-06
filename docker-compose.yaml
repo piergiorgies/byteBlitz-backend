@@ -15,6 +15,11 @@ services:
     networks:
       - byteblitz
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DATABASE_USER}"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
   
   pgadmin:
     container_name: pgadmin
@@ -38,13 +43,16 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - .:/app
+      - .:/app:cached
     environment:
       - PYTHONUNBUFFERED=1
     networks:
       - byteblitz
-    command: python main.py
     restart: unless-stopped
+    entrypoint: ["/app/entrypoint.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   loki:
     container_name: loki
