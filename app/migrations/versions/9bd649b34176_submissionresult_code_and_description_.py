@@ -28,7 +28,7 @@ def upgrade() -> None:
                existing_type=sa.INTEGER(),
                type_=sa.Float(),
                existing_nullable=False)
-    op.drop_column('submission_test_cases', 'input_name')
+    # op.drop_column('submission_test_cases', 'input_name')
     op.alter_column('submissions', 'submitted_code',
                existing_type=sa.TEXT(),
                type_=sa.String(),
@@ -42,7 +42,7 @@ def downgrade() -> None:
                existing_type=sa.String(),
                type_=sa.TEXT(),
                existing_nullable=False)
-    op.add_column('submission_test_cases', sa.Column('input_name', sa.VARCHAR(), autoincrement=False, nullable=False))
+    # op.add_column('submission_test_cases', sa.Column('input_name', sa.VARCHAR(), autoincrement=False, nullable=False))
     op.alter_column('submission_test_cases', 'time',
                existing_type=sa.Float(),
                type_=sa.INTEGER(),

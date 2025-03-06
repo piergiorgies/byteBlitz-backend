@@ -9,3 +9,4 @@ class ContestProblem(Base):
     contest_id : Mapped[int] = mapped_column(Integer, FK('contests.id', ondelete='cascade'), nullable=False, primary_key=True)
     problem_id : Mapped[int] = mapped_column(Integer, FK('problems.id', ondelete='cascade'), nullable=False, primary_key=True)
     publication_delay : Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    contest : Mapped['Contest'] = relationship('Contest', back_populates='contest_problems', overlaps='problems, contests')

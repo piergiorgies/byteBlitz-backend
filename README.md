@@ -23,6 +23,22 @@ and modify the following fields (in .env file):
  - DATABASE_USER
  - DATABASE_PASSWORD
 
+## Generate private key (P-384 curve)
+
+`openssl ecparam -name secp384r1 -genkey -noout -out private.pem`
+
+## Generate public key from private key
+
+`openssl ec -in private.pem -pubout -out public.pem`
+
+Copy the keys generated in the following field of the .env **escaping the newline with \n**
+
+ - PRIVATE_KEY
+ - PUBLIC_KEY
+
+Follow the existing .env.example
+
+
 ## before start install postgres and pgadmin(optional) using docker
 
 `docker compose up -d`

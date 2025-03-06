@@ -1,202 +1,24 @@
 from datetime import datetime
-from sqlalchemy import and_, or_
+from fastapi.responses import JSONResponse
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
 
 from app.models.role import Role
-from app.auth_util.role_checker import RoleChecker
-from app.database import QueryBuilder, get_object_by_id
-from app.models import ContestDTO, ContestScoreboardDTO, Contest, ListResponse
-from app.models import User, ContestUser, ContestUserDTO
-# from app.models import Team, ContestTeamDTO
-from app.models import Problem, ContestProblemDTO, ContestProblem
-from app.models import Submission, ContestSubmission, ContestSubmissionDTO
+from app.util.role_checker import RoleChecker
+from app.database import get_object_by_id
+from app.models.mapping import User, ContestUser, Contest
+from app.models.mapping import Problem, ContestProblem, ProblemConstraint, Language
+from app.models.mapping import Submission, ContestSubmission
+from app.schemas import (
+    ContestListResponse, 
+    ContestScoreboard, ContestInfo, ContestInfos, ContestUserInfo, 
+    ProblemInfo, PastContest, UpcomingContest
+)
 
-#region Contest
-def create(contest: ContestDTO, session: Session) -> ContestDTO:
-    """
-    Create a contest
-    
-    Args:
-        session: Session
-        contest: ContestDTO
-    
-    Returns:
-        ContestDTO: contest
-    """
-    try:
-        if contest.start_datetime > contest.end_datetime:
-            raise HTTPException(status_code=400, detail="Start time cannot be greater than end time")
-        
-        contest = Contest(
-            name=contest.name,
-            description=contest.description,
-            start_datetime=contest.start_datetime,
-            end_datetime=contest.end_datetime
-        )
-
-        session.add(contest)
-        session.commit()
-
-        return contest
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def list(limit : int, offset : int, searchFilter: str, user : User, session : Session) -> ListResponse:
-    """
-    List contests
-    
-    Args:
-        limit: limit in sql query
-        offset: offset in sql query
-        user: User
-        session: Session
-    
-    Returns:
-        [ContestDTO]: contests
-    """
-    try:
-        is_admin_maintainer = RoleChecker.hasRole(user, Role.CONTEST_MAINTAINER)
-        query = session.query(Contest)
-        if not is_admin_maintainer:
-            is_user = RoleChecker.hasRole(user, Role.USER)
-            if is_user:
-                query = query.filter(
-                    or_(
-                        Contest.users.any(User.id == user.id),
-                        Contest.end_datetime <= datetime.now()
-                    )
-                )
-            else:
-                query = query.filter(Contest.end_datetime <= datetime.now())
-
-        if searchFilter:
-            query = query.filter(Contest.name.ilike(f"%{searchFilter}%"))
-        count = query.count()
-        query = query.limit(limit).offset(offset)
-        contests : List[Contest] = query.all()
-
-        return {"data": [ContestDTO.model_validate(obj=obj) for obj in contests], "count": count}
-    
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def read(id: int, user: User, session: Session) -> ContestDTO:
-    """
-    Get contest by id
-    
-    Args:
-        id: int
-
-    Returns:
-        ContestDTO: contest
-    """
-
-    try:
-        is_admin_maintainer = RoleChecker.hasRole(user, Role.CONTEST_MAINTAINER)
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
-        if not is_admin_maintainer:
-            is_user = RoleChecker.hasRole(user, Role.USER)
-            if not is_user and contest.end_datetime > datetime.now():
-                raise HTTPException(status_code=403, detail="You do not have permission to view this contest")
-            elif is_user and user not in contest.users:
-                raise HTTPException(status_code=403, detail="You do not have permission to view this contest")
-        
-        return ContestDTO.model_validate(obj=contest)
-    
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def delete(id: int, session: Session) -> bool:
-    """
-    Delete contest by id
-
-    Args:
-        id: int
-    
-    Returns:
-        bool: deleted
-    """
-
-    try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
-        
-        session.delete(contest)
-        session.commit()
-        return True
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def update(id: int, contest_update: ContestDTO, session: Session) -> ContestDTO:
-    """
-    Update contest by id
-
-    Args:
-        id: int
-        contest: ContestDTO
-
-    Returns:
-        ContestDTO: contest
-    """
-
-    try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
-        
-        if contest.start_datetime > contest.end_datetime:
-            raise HTTPException(status_code=400, detail="Start time cannot be greater than end time")
-        
-        contest.name = contest_update.name
-        contest.description = contest_update.description
-        contest.start_datetime = contest_update.start_datetime
-        contest.end_datetime = contest_update.end_datetime
-
-        session.commit()
-        return ContestDTO.model_validate(obj=contest)
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-#endregion
-
-#region Contest Scoreboard
-
-def get_scoreboard(id: int, session: Session) -> ContestScoreboardDTO:
+def get_scoreboard(id: int, session: Session) -> ContestScoreboard:
     """
     Get the current scoreboard for a specific contest
     
@@ -235,13 +57,13 @@ def get_scoreboard(id: int, session: Session) -> ContestScoreboardDTO:
         # 5. sort users by score
         scores = {k: v for k, v in sorted(scores.items(), key=lambda item: sum(item[1]), reverse=True)}
         
-        scoreboard : ContestScoreboardDTO = ContestScoreboardDTO(
+        scoreboard : ContestScoreboard = ContestScoreboard(
             userteams = scores.keys(),
             problems = titles,
             scores = scores.values()
         )
 
-        return ContestScoreboardDTO.model_validate(obj=scoreboard)
+        return ContestScoreboard.model_validate(obj=scoreboard)
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
@@ -250,318 +72,7 @@ def get_scoreboard(id: int, session: Session) -> ContestScoreboardDTO:
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-#endregion
-
-#region Contest User
-
-def add_users(id: int, user_ids: List[int], session: Session) -> bool:
-    """
-    Add users to contest
-
-    Args:
-        id: int
-        user_ids: List[int]
-
-    Returns:
-        bool: added
-    """
-
-    try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
-        
-        for user_id in user_ids:
-            user: User = get_object_by_id(User, session, user_id)
-
-            if not user:
-                raise HTTPException(status_code=404, detail="User not found")
-
-            if user in contest.users:
-                raise HTTPException(status_code=400, detail="User already in contest")
-
-            contest.users.append(user)
-        
-        session.commit()
-        return True
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def remove_users(id: int, user_ids: List[int], session: Session) -> bool:
-    """
-    Remove user from contest
-
-    Args:
-        id: int
-        user_id: int
-    
-    Returns:
-        bool: removed
-    """
-
-    try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
-        
-        for user_id in user_ids:
-            user: User = get_object_by_id(User, session, user_id)
-
-            if not user:
-                raise HTTPException(status_code=404, detail="User not found")
-
-            if user not in contest.users:
-                raise HTTPException(status_code=404, detail="User not found in contest")
-
-            contest.users.remove(user)
-        
-        session.commit()
-        return True
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def list_users(id: int, session: Session) -> ListResponse:
-    """
-    List users in a contest
-
-    Args:
-        id: int
-    
-    Returns:
-        ListResponse: users
-    """
-
-    try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
-        
-        return {"data": [ContestUserDTO.model_validate(obj=user) for user in contest.users], "count": len(contest.users)}
-    
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-#endregion
-
-#region Contest Team
-
-# def add_teams(id: int, team_ids: List[int], session: Session) -> bool:
-#     """
-#     Add team to contest
-
-#     Args:
-#         id: int
-#         team_id: int
-    
-#     Returns:
-#         bool: added
-#     """
-
-#     try:
-#         contest: Contest = get_object_by_id(Contest, session, id)
-#         if not contest:
-#             raise HTTPException(status_code=404, detail="Contest not found")
-        
-#         for team_id in team_ids:
-#             team: Team = get_object_by_id(Team, session, team_id)
-
-#             if not team:
-#                 raise HTTPException(status_code=404, detail="Team not found")
-
-#             if team in contest.teams:
-#                 raise HTTPException(status_code=400, detail="Team already in contest")
-
-#             contest.teams.append(team)
-#         session.commit()
-#         return True
-    
-#     except SQLAlchemyError as e:
-#         session.rollback()
-#         raise HTTPException(status_code=500, detail="Database error: " + str(e))
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         session.rollback()
-#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-# def remove_teams(id: int, team_ids: List[int], session: Session) -> bool:
-#     """
-#     Remove team from contest
-
-#     Args:
-#         id: int
-#         team_id: int
-
-#     Returns:
-#         bool: removed
-#     """
-
-#     try:
-#         contest: Contest = get_object_by_id(Contest, session, id)
-#         if not contest:
-#             raise HTTPException(status_code=404, detail="Contest not found")
-        
-#         for team_id in team_ids:
-#             team: Team = get_object_by_id(Team, session, team_id)
-
-#             if not team:
-#                 raise HTTPException(status_code=404, detail="Team not found")
-
-#             if team not in contest.teams:
-#                 raise HTTPException(status_code=404, detail="Team not found in contest")
-
-#             contest.teams.remove(team)
-#         session.commit()
-#         return True
-    
-#     except SQLAlchemyError as e:
-#         session.rollback()
-#         raise HTTPException(status_code=500, detail="Database error: " + str(e))
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         session.rollback()
-#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-# def list_teams(id: int, session: Session) -> ListResponse:
-#     """
-#     List teams in a contest
-
-#     Args:
-#         id: int
-
-#     Returns:
-#         ListResponse: teams
-#     """
-
-#     try:
-#         contest: Contest = get_object_by_id(Contest, session, id)
-#         if not contest:
-#             raise HTTPException(status_code=404, detail="Contest not found")
-        
-#         return {"data": [ContestTeamDTO.model_validate(obj=team) for team in contest.teams], "count": len(contest.teams)}
-    
-#     except SQLAlchemyError as e:
-#         raise HTTPException(status_code=500, detail="Database error: " + str(e))
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-#endregion
-
-#region Contest Problem
-
-def add_problems(id: int, body: List[ContestProblemDTO], session: Session) -> bool:
-    """
-    Add problems to contest
-
-    Args:
-        id: int
-        problems: List[ContestProblemDTO]
-
-    Returns:
-        bool: added
-    """
-
-    try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
-        
-        for item in body:
-
-            problem_id = item.id
-            publication_delay = item.publication_delay if item.publication_delay else 0
-
-            problem : Problem = get_object_by_id(Problem, session, problem_id)
-
-            if not problem:
-                raise HTTPException(status_code=404, detail="Problem not found")
-
-            duration = (contest.end_datetime - contest.start_datetime).total_seconds()
-
-            if duration < (publication_delay * 60):
-                raise HTTPException(status_code=400, detail="Problem publication delay is greater than contest duration")
-
-            if problem in contest.problems:
-                raise HTTPException(status_code=400, detail="Problem already in contest")
-            
-            contest_problem = ContestProblem(contest_id=id, problem_id=problem_id, publication_delay=publication_delay)
-
-            session.add(contest_problem)
-
-        session.commit()
-        return True
-
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-def remove_problems(id: int, problem_ids: List[int], session: Session) -> bool:
-    """
-    Remove problem from contest
-
-    Args:
-        id: int
-        problem_id: int
-
-    Returns:
-        bool: removed
-    """
-
-    try:
-        contest: Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
-        
-        for problem_id in problem_ids:
-            problem: Problem = get_object_by_id(Problem, session, problem_id)
-
-            if not problem:
-                raise HTTPException(status_code=404, detail="Problem not found")
-
-            if problem not in contest.problems:
-                raise HTTPException(status_code=404, detail="Problem not found in contest")
-
-            contest.problems.remove(problem)
-        
-        session.commit()
-        return True
-    
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-
-def list_problems(id: int, user: User, session: Session) -> ListResponse:
+def list_problems(id: int, user: User, session: Session) -> ContestListResponse:
     """
     List problems in a contest
 
@@ -597,7 +108,7 @@ def list_problems(id: int, user: User, session: Session) -> ListResponse:
 
         contest_problems : List[ContestProblem] = query.all()
 
-        return {"data": [ContestProblemDTO.model_validate(obj=problem) for problem in contest_problems], "count": len(contest_problems)}
+        return {"data": [ContestProblem.model_validate(obj=problem) for problem in contest_problems], "count": len(contest_problems)}
 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
@@ -606,51 +117,271 @@ def list_problems(id: int, user: User, session: Session) -> ListResponse:
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-def update_problem(id: int, body: ContestProblemDTO, session: Session) -> bool:
+def get_contest_info(session: Session, contests: List[Contest]) -> List[ContestInfo]:
+    """Helper function to fetch contest details"""
+    result = []
+    for contest in contests:
+        problems_count = session.query(ContestProblem).filter(ContestProblem.contest_id == contest.id).count()
+        users_count = session.query(ContestUser).filter(ContestUser.contest_id == contest.id).count()
+        submissions_count = session.query(ContestSubmission).filter(ContestSubmission.contest_id == contest.id).count()
+
+        result.append(ContestInfo(
+            id=contest.id,
+            name=contest.name,
+            description=contest.description,
+            start_datetime=contest.start_datetime,
+            end_datetime=contest.end_datetime,
+            duration=int((contest.end_datetime - contest.start_datetime).total_seconds() / 3600),
+            n_problems=problems_count,
+            n_participants=users_count,
+            n_submissions=submissions_count
+        ))
+    return result
+
+def list_with_info(session: Session) -> ContestInfos:
+    """List contests with additional data"""
+    try:
+        now = datetime.now()
+        ongoing_contests = session.query(Contest).filter(Contest.start_datetime <= now, Contest.end_datetime > now, Contest.is_public == True).limit(5).all()
+        past_contests = session.query(Contest).filter(Contest.end_datetime <= now, Contest.is_public == True).limit(5).all()
+        upcoming_contests = session.query(Contest).filter(Contest.start_datetime > now, Contest.is_public == True).limit(5).all()
+
+        return ContestInfos(
+            ongoing=get_contest_info(session, ongoing_contests),
+            past=get_contest_info(session, past_contests),
+            upcoming=get_contest_info(session, upcoming_contests)
+        )
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+def read_past(id: int, session: Session):
     """
-    Update problems in a contest
+    Return a past contest by id
 
     Args:
         id: int
-        body: ContestProblemDTO
+        session: Session
 
     Returns:
-        bool: updated
+        contest: PastContest
     """
-
     try:
-        contest: Contest = get_object_by_id(Contest, session, id)
+        contest = session.query(Contest).filter(Contest.id == id).first()
         if not contest:
             raise HTTPException(status_code=404, detail="Contest not found")
+        # check if it is a past contest
+        if contest.end_datetime > datetime.now():
+            raise HTTPException(status_code=400, detail="Contest is not yet finished")
         
-        problem: Problem = get_object_by_id(Problem, session, body.id)
+        problems = session.query(Problem).join(ContestProblem, Problem.id == ContestProblem.problem_id).filter(ContestProblem.contest_id == id).all()
+        problem_languages = session.query(ProblemConstraint).join(Language, ProblemConstraint.language_id == Language.id).filter(ProblemConstraint.problem_id.in_([problem.id for problem in problems])).all()
 
-        if not problem:
-            raise HTTPException(status_code=404, detail="Problem not found")
+        languages = {}
+        for problem_language in problem_languages:
+            if problem_language.problem_id not in languages:
+                languages[problem_language.problem_id] = []
+            languages[problem_language.problem_id].append(problem_language.language_name)
         
-        if problem not in contest.problems:
-            raise HTTPException(status_code=404, detail="Problem not found in contest")
+        problems_info = []
+        for problem in problems:
+            problems_info.append(ProblemInfo(
+                title=problem.title,
+                points=problem.points,
+                languages=languages[problem.id]
+            ))
+            
+        user_infos = [ContestUserInfo.model_validate(obj=user) for user in contest.users]
 
-        duration = (contest.end_datetime - contest.start_datetime).total_seconds()
+        number_of_submissions = session.query(ContestSubmission).filter(ContestSubmission.contest_id == id).count()
 
-        if duration < (body.publication_delay * 60):
-            raise HTTPException(status_code=400, detail="Problem publication delay is greater than contest duration")
 
-        contest_problem = session.query(ContestProblem).filter(ContestProblem.contest_id == id, ContestProblem.problem_id == body.id).first()
-        
-        contest_problem.publication_delay = body.publication_delay
+        try:
+            scoreboard = get_scoreboard(id, session)
 
-        session.commit()
-        return True
+        except HTTPException as e:
+            scoreboard = ContestScoreboard(userteams=[], problems=[], scores=[])
+
+        return PastContest(
+            id=contest.id,
+            name=contest.name,
+            description=contest.description,
+            start_datetime=contest.start_datetime,
+            end_datetime=contest.end_datetime,
+            duration=int((contest.end_datetime - contest.start_datetime).total_seconds() / 3600),
+            n_submissions=number_of_submissions,
+            problems=problems_info,
+            scoreboard=scoreboard,
+            users=user_infos
+        )
 
     except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     except HTTPException as e:
         raise e
     except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
-#endregion
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
+def read_upcoming(id: int, session: Session) -> UpcomingContest:
+    """
+    Return an upcoming contest by id
+
+    Args:
+        id: int
+        session: Session
+
+    Returns:
+        contest: ContestRead
+    """
+    try:
+        contest = session.query(Contest).filter(Contest.id == id).first()
+        if not contest:
+            raise HTTPException(status_code=404, detail="Contest not found")
+        # check if it is an upcoming contest
+        if contest.start_datetime < datetime.now():
+            raise HTTPException(status_code=400, detail="Contest has already started")
+        
+        problems = session.query(Problem).join(ContestProblem, Problem.id == ContestProblem.problem_id).filter(ContestProblem.contest_id == id).all()
+        problem_languages = session.query(ProblemConstraint).join(Language, ProblemConstraint.language_id == Language.id).filter(ProblemConstraint.problem_id.in_([problem.id for problem in problems])).all()
+
+        languages = {}
+        
+        for problem_language in problem_languages:
+            if problem_language.problem_id not in languages:
+                languages[problem_language.problem_id] = []
+            languages[problem_language.problem_id].append(problem_language.language_name)
+        
+        problems_info = [ProblemInfo(title=problem.title, points=problem.points, languages=languages[problem.id]) for problem in problems]
+
+        return UpcomingContest(
+            id=contest.id,
+            name=contest.name,
+            description=contest.description,
+            start_datetime=contest.start_datetime,
+            end_datetime=contest.end_datetime,
+            duration=int((contest.end_datetime - contest.start_datetime).total_seconds() / 3600),
+            n_participants=len(contest.users),
+            n_problems=len(problems),
+            problems=problems_info,
+            is_registration_open=contest.is_registration_open
+        )
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+    
+def read_ongoing(id: int, user: User, session: Session):
+    """
+    Return an ongoing contest by id
+
+    Args:
+        id: int
+        user: User
+        session: Session
+
+    Returns:
+        contest: ContestRead
+    """
+    try:
+        contest = session.query(Contest).filter(Contest.id == id).first()
+        if not contest:
+            raise HTTPException(status_code=404, detail="Contest not found")
+        
+        # check if user is registered to the contest
+        if user not in contest.users:
+            raise HTTPException(status_code=400, detail="User is not registered to the contest")
+        
+        # check if it is an ongoing contest
+        if contest.start_datetime > datetime.now() or contest.end_datetime < datetime.now():
+            raise HTTPException(status_code=400, detail="Contest is not ongoing")
+        
+        problems = session.query(Problem).join(ContestProblem, Problem.id == ContestProblem.problem_id).filter(ContestProblem.contest_id == id).all()
+        problem_languages = session.query(ProblemConstraint).join(Language, ProblemConstraint.language_id == Language.id).filter(ProblemConstraint.problem_id.in_([problem.id for problem in problems])).all()
+
+        languages = {}
+        
+        for problem_language in problem_languages:
+            if problem_language.problem_id not in languages:
+                languages[problem_language.problem_id] = []
+            languages[problem_language.problem_id].append(problem_language.language_name)
+        
+        problems_info = [ProblemInfo(id=problem.id, title=problem.title, points=problem.points, languages=languages[problem.id]) for problem in problems]
+
+        user_infos = [ContestUserInfo.model_validate(obj=user) for user in contest.users]
+
+        number_of_submissions = session.query(ContestSubmission).filter(ContestSubmission.contest_id == id).count()
+
+        try:
+            scoreboard = get_scoreboard(id, session)
+
+        except HTTPException as e:
+            scoreboard = ContestScoreboard(userteams=[], problems=[], scores=[])
+
+        return PastContest(
+            id=contest.id,
+            name=contest.name,
+            description=contest.description,
+            start_datetime=contest.start_datetime,
+            end_datetime=contest.end_datetime,
+            duration=int((contest.end_datetime - contest.start_datetime).total_seconds() / 3600),
+            n_submissions=number_of_submissions,
+            problems=problems_info,
+            scoreboard=scoreboard,
+            users=user_infos
+        )
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+    
+
+def register_to_contest(contest_id: int, user: User, session: Session):
+    """
+    Register a user to a contest
+
+    Args:
+        contest_id: int
+        user: User
+        session: Session
+    """
+    try:
+        contest = session.query(Contest).filter(Contest.id == contest_id).first()
+
+        if not contest:
+            raise HTTPException(status_code=404, detail="Contest not found")
+        
+        if contest.is_registration_open == False:
+            raise HTTPException(status_code=400, detail="Registration is closed")
+
+        if contest.start_datetime < datetime.now():
+            raise HTTPException(status_code=400, detail="Contest has already started")
+        
+        if contest.end_datetime < datetime.now():
+            raise HTTPException(status_code=400, detail="Contest has already ended")
+        
+        if user in contest.users:
+            return JSONResponse(status_code=200, content={"message": "User already registered to contest"})
+        
+        contest_user = ContestUser(contest_id=contest_id, user_id=user.id)
+        session.add(contest_user)
+        session.commit()
+
+        return JSONResponse(status_code=200, content={"message": "User registered to contest successfully"})
+    
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
