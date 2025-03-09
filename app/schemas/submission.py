@@ -1,4 +1,6 @@
-from app.schemas.base import BaseRequest, BaseResponse
+from app.schemas.base import BaseRequest, BaseResponse, BaseListResponse
+from typing import List
+from datetime import datetime
 
 class SubmissionCreate(BaseRequest):
     """
@@ -34,7 +36,10 @@ class SubmissionResponse(BaseResponse):
     problem_id: int
     user_id: int
     language_id: int
+    submission_result_id: int
     submitted_code: str
+    created_at: datetime
+    score: int
 
 class SubmissionTestCaseResult(BaseRequest):
     result_id: int
@@ -52,3 +57,7 @@ class WSResult(BaseRequest):
     notes: str
     memory: float
     time: float
+
+
+class ProblemSubmissions(BaseListResponse):
+    submissions: List[SubmissionResponse]

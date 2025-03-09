@@ -84,7 +84,7 @@ async def save_total(id: int, result_id: SubmissionCompleteResult = Body(), sess
         JSONResponse: The response
     """
     try:
-        save_total_judge(id, result_id, session)
+        await save_total_judge(id, result_id, session)
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Internal server error")

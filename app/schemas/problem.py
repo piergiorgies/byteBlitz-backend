@@ -36,6 +36,7 @@ class ProblemAuthor(BaseResponse):
     id: int
     username: str
 class ProblemRead(BaseResponse):
+    id: int
     title: str
     description: str
     points: int
@@ -51,8 +52,8 @@ class ProblemInfo(BaseResponse):
     title: str
     points: int
     languages: List[str]
-    is_public: bool
-    difficulty: Difficulty
+    is_public: bool = False
+    difficulty: Difficulty = Difficulty.EASY
 
 class ProblemListResponse(BaseListResponse):
     problems: List[ProblemInfo]
