@@ -17,9 +17,11 @@ class SubmissionTestCase(Base):
         input_name (str): The test case input name
         result_id (int): The test case result id
         submission_id (int): The test case submission id
+        test_case_id (int): The test case test case id
 
         result (SubmissionResult): The submission result
         submission (Submission): The submission
+        test_case (ProblemTestCase): The problem test case
     """
 
     __tablename__ = 'submission_test_cases'
@@ -32,7 +34,9 @@ class SubmissionTestCase(Base):
     # input_name: Mapped[str] = mapped_column(String, nullable=False)
     result_id: Mapped[int] = mapped_column(Integer, FK('submission_results.id'), nullable=False)
     submission_id: Mapped[int] = mapped_column(Integer, FK('submissions.id', ondelete='cascade'), nullable=False)
+    test_case_id: Mapped[int] = mapped_column(Integer, FK('problem_test_cases.id'), nullable=False)
 
     # connected fields
     result: Mapped['SubmissionResult'] = relationship('SubmissionResult', back_populates='test_cases')
     submission: Mapped['Submission'] = relationship('Submission', back_populates='test_cases')
+    test_case: Mapped['ProblemTestCase'] = relationship('ProblemTestCase', back_populates='submission_test_cases')

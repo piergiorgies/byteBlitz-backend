@@ -8,7 +8,7 @@ from app.database import get_object_by_id, get_object_by_id_joined_with
 from app.models.mapping import Submission, User, Problem, Language, Contest
 from app.models.mapping import ContestSubmission, ContestProblem, SubmissionResult
 from app.connections.rabbitmq import rabbitmq_connection
-from app.schemas import SubmissionCreate
+from app.schemas import SubmissionCreate, ProblemSubmissions, PaginationParams, SubmissionResponse
 
 def create(submission_in: SubmissionCreate, session: Session, user: User):
     """
@@ -131,6 +131,24 @@ def get_submission_results(session: Session):
         submission_results : List[SubmissionResult] = query.all()
 
         return submission_results
+
+    except SQLAlchemyError as e:
+        raise e
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise e
+
+def submission_by_problem(pagination: PaginationParams, problem_id: int, user: User, session: Session):
+    try:
+        query = session.query(Submission).filter(Submission.problem_id == problem_id, Submission.user_id == user.id, Submission.submission_result_id != None)
+        count = query.count()
+        query = query.offset(pagination.offset).limit(pagination.limit).all()
+
+        submissions = [SubmissionResponse.model_validate(obj=submission) for submission in query]
+
+        result = ProblemSubmissions(count=count, submissions=submissions)
+        return result
 
     except SQLAlchemyError as e:
         raise e

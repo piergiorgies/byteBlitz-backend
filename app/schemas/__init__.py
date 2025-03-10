@@ -3,7 +3,7 @@ from .base import BaseRequest, BaseResponse, BaseListResponse
 from .pagination import PaginationParams, get_pagination_params
 from .judge import JudgeCreate, JudgeResponse, JudgeListResponse, JudgeProblem, Constraint, TestCase
 from .user import UserCreate, UserUpdate, UserResponse, UserListResponse
-from .submission import SubmissionCreate, SubmissionResponse, SubmissionTestCaseResult, SubmissionCompleteResult
+from .submission import SubmissionCreate, SubmissionResponse, SubmissionTestCaseResult, SubmissionCompleteResult, ProblemSubmissions
 from .contest import (
     ContestCreate, ContestUpdate, ContestRead, ContestListResponse,
     ContestScoreboard, ContestInfo, ContestInfos, ContestUserInfo,

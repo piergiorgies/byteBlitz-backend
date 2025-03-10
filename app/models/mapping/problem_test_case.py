@@ -18,4 +18,6 @@ class ProblemTestCase(Base):
     
     # connected fields
     problem = relationship('Problem', back_populates='test_cases')
+    submission_test_cases = relationship('SubmissionTestCase', back_populates='test_case')
+    
     
