@@ -32,7 +32,8 @@ def create(submission_in: SubmissionCreate, session: Session, user: User):
             notes=submission_in.notes,
             problem_id=submission_in.problem_id,
             user_id=user.id,
-            language_id=language.id
+            language_id=language.id,
+            is_pretest_run=submission_in.is_pretest_run
         )
         session.add(submission)
         session.commit()
@@ -52,7 +53,8 @@ def create(submission_in: SubmissionCreate, session: Session, user: User):
             'code' : submission.submitted_code,
             'problem_id' : submission.problem_id,
             'language' : submission.language.name.strip(),
-            'submission_id' : submission.id
+            'submission_id' : submission.id,
+            'is_pretest_run' : submission.is_pretest_run,
         }
         # send the submission to the queue
         # submission_in.id = submission.id
@@ -106,7 +108,8 @@ def _validate_submission(submission_dto: SubmissionCreate, session: Session, use
             raise HTTPException(status_code=400, detail="Problem not in contest")
         
         # check if problem has been published
-        contest_problem : ContestProblem = session.query(ContestProblem).filter(ContestProblem.contest_id == contest.id, ContestProblem.problem_id == problem.id).first()
+        contest_problem : ContestProblem = session.query(ContestProblem).filter(ContestProblem.contest_id == contest.id,
+                                                                                ContestProblem.problem_id == problem.id).first()
         if not contest_problem or contest_problem.publication_delay > (datetime.now() - Contest.start_datetime).total_seconds() / 60:
             raise HTTPException(status_code=400, detail="Problem not published yet")
         
@@ -120,10 +123,21 @@ def _validate_submission(submission_dto: SubmissionCreate, session: Session, use
         
     # check if the user has submitted too many times in the last hour
     last_hour = datetime.now() - timedelta(hours=1)
-    submissions_count = session.query(Submission).filter(Submission.user_id == user.id, Submission.created_at >= last_hour).count()
 
-    if submissions_count >= 1000:
-        raise HTTPException(status_code=400, detail="Too many submissions")
+    try:
+        submissions_count = session.query(Submission).filter(Submission.user_id == user.id,
+                                                         Submission.created_at >= last_hour,
+                                                         Submission.is_pretest_run == False).count()
+
+        if submissions_count >= 1000:
+            raise HTTPException(status_code=400, detail="Too many submissions")
+        
+    except SQLAlchemyError as e:
+        raise e
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise e
 
 def get_submission_results(session: Session):
     try:
@@ -141,7 +155,10 @@ def get_submission_results(session: Session):
 
 def submission_by_problem(pagination: PaginationParams, problem_id: int, user: User, session: Session):
     try:
-        query = session.query(Submission).filter(Submission.problem_id == problem_id, Submission.user_id == user.id, Submission.submission_result_id != None)
+        query = session.query(Submission).filter(Submission.problem_id == problem_id,
+                                                 Submission.user_id == user.id,
+                                                 Submission.submission_result_id != None,
+                                                 Submission.is_pretest_run == False)
         count = query.count()
         query = query.offset(pagination.offset).limit(pagination.limit).all()
 

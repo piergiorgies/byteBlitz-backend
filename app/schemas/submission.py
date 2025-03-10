@@ -17,6 +17,7 @@ class SubmissionCreate(BaseRequest):
     submitted_code: str
     contest_id: int | None = None
     notes: str
+    is_pretest_run: bool
 
 
 class SubmissionResponse(BaseResponse):

@@ -50,7 +50,13 @@ def get_scoreboard(id: int, session: Session) -> ContestScoreboard:
         # for each user, get the best submissions for each problem
         for contest_user, username in users:
             for i, (contest_problem, _) in enumerate(problems):
-                best_submission = session.query(ContestSubmission, Submission.score).join(Submission, ContestSubmission.submission_id == Submission.id).filter(ContestSubmission.contest_id == id, Submission.user_id == contest_user.user_id, Submission.problem_id == contest_problem.problem_id).order_by(Submission.score.desc()).first()
+                best_submission = session.query(ContestSubmission, Submission.score)\
+                    .join(Submission, ContestSubmission.submission_id == Submission.id)\
+                    .filter(ContestSubmission.contest_id == id,
+                            Submission.user_id == contest_user.user_id,
+                            Submission.problem_id == contest_problem.problem_id,
+                            Submission.is_pretest_run == False)\
+                    .order_by(Submission.score.desc()).first()
                 if best_submission:
                     scores[username][i] = best_submission.score
                 
