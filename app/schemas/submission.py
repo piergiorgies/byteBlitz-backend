@@ -51,8 +51,10 @@ class SubmissionTestCaseResult(BaseRequest):
 
 class SubmissionCompleteResult(BaseResponse):
     result_id: int
+    stderr: str
 
 class WSResult(BaseRequest):
+    type: str
     result_id: int
     number: int
     notes: str

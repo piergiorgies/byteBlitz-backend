@@ -73,7 +73,7 @@ async def accept_submission(id: int, body: SubmissionTestCaseResult = Body(), se
         raise HTTPException(status_code=500, detail="Internal server error")
     
 @router.post("/submissions/{id}/total", summary="Get the total score of a submission", dependencies=[Depends(JudgeChecker())])
-async def save_total(id: int, result_id: SubmissionCompleteResult = Body(), session = Depends(get_session)):
+async def save_total(id: int, complete_result: SubmissionCompleteResult = Body(), session = Depends(get_session)):
     """
     Get the total test case of a submission
 
@@ -84,7 +84,7 @@ async def save_total(id: int, result_id: SubmissionCompleteResult = Body(), sess
         JSONResponse: The response
     """
     try:
-        await save_total_judge(id, result_id, session)
+        await save_total_judge(id, complete_result, session)
     
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Internal server error")
