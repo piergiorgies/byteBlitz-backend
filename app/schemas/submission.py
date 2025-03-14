@@ -48,6 +48,8 @@ class SubmissionTestCaseResult(BaseRequest):
     notes: str
     memory: int
     time: float
+    is_pretest_run: bool = False
+    output: str | None = None
 
 class SubmissionCompleteResult(BaseResponse):
     result_id: int
@@ -60,7 +62,8 @@ class WSResult(BaseRequest):
     notes: str
     memory: float
     time: float
-
+    is_pretest_run: bool = False
+    output: str | None = None
 
 class ProblemSubmissions(BaseListResponse):
     submissions: List[SubmissionResponse]

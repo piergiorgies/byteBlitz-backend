@@ -104,7 +104,6 @@ async def accept(submission_id: int, submission_test_case: SubmissionTestCaseRes
             notes=submission_test_case.notes,
             memory=submission_test_case.memory,
             time=submission_test_case.time,
-            test_case=test_case
         )
 
         session.add(submission_test_case_db)
@@ -141,11 +140,16 @@ async def save_total(submission_id: int, result: SubmissionCompleteResult, sessi
 
         sub_test_cases = session.query(SubmissionTestCase).filter(SubmissionTestCase.submission_id == submission_id).all()
 
-        # get the accepted result
-        accepted_result: SubmissionResult = get_object_by_id(SubmissionResult, session, 1)
+        problem_test_cases = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == submission.problem_id).all()
 
         # calculate the total score of the submission
-        total_score = sum([sub_test_case.test_case.points for sub_test_case in sub_test_cases if sub_test_case.result_id == accepted_result.id])     
+        total_score = 0
+        for sub_test_case in sub_test_cases:
+            for problem_test_case in problem_test_cases:
+                if sub_test_case.number == problem_test_case.number:
+                    if sub_test_case.result_id == 1:
+                        total_score += problem_test_case.points
+        
 
         submission.score = total_score
         submission.submission_result_id = submission_result.id
