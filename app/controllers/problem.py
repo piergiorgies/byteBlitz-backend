@@ -3,12 +3,11 @@ from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
-from datetime import datetime
 
 from app.database import get_object_by_id
 from app.schemas import ProblemListResponse
-from app.schemas import PaginationParams, get_pagination_params
-from app.models.mapping import User, Problem, ProblemConstraint, Language, Contest
+from app.schemas import PaginationParams
+from app.models.mapping import User, Problem, ProblemConstraint, ProblemTestCase
 from app.schemas.problem import ProblemRead
 
 def list_visible_problems(pagination: PaginationParams, session: Session) -> ProblemListResponse:
@@ -75,6 +74,11 @@ def read(id: int, user: User, session: Session) -> ProblemRead:
         query = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem.id)
         constraints : List[ProblemConstraint] = query.all()
         problem.constraints = constraints
+
+        visible_test_cases = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem.id, ProblemTestCase.is_pretest == True).all()
+        problem.test_cases = visible_test_cases
+
+        query = session.query(ProblemTestCase)
 
         return ProblemRead.model_validate(obj=problem)
     

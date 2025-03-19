@@ -17,6 +17,7 @@ class SubmissionCreate(BaseRequest):
     submitted_code: str
     contest_id: int | None = None
     notes: str
+    is_pretest_run: bool
 
 
 class SubmissionResponse(BaseResponse):
@@ -47,17 +48,22 @@ class SubmissionTestCaseResult(BaseRequest):
     notes: str
     memory: int
     time: float
+    is_pretest_run: bool = False
+    output: str | None = None
 
 class SubmissionCompleteResult(BaseResponse):
     result_id: int
+    stderr: str
 
 class WSResult(BaseRequest):
+    type: str
     result_id: int
     number: int
     notes: str
     memory: float
     time: float
-
+    is_pretest_run: bool = False
+    output: str | None = None
 
 class ProblemSubmissions(BaseListResponse):
     submissions: List[SubmissionResponse]
