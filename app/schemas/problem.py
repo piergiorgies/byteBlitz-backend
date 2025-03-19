@@ -7,6 +7,7 @@ class ProblemTestCase(BaseRequest):
     output: str
     points: int
     is_pretest: bool
+    number: int
 
 class ProblemConstraint(BaseRequest):
     language_id: int
