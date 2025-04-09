@@ -95,19 +95,19 @@ async def accept(submission_id: int, submission_test_case: SubmissionTestCaseRes
         if not test_case:
             raise HTTPException(status_code=400, detail="Test case not found")
         
+        if not submission_test_case.is_pretest_run:
+            submission_test_case_db = SubmissionTestCase(
+                submission=submission,
+                result=result,
+                result_id=submission_test_case.result_id,
+                number=submission_test_case.number,
+                notes=submission_test_case.notes,
+                memory=submission_test_case.memory,
+                time=submission_test_case.time,
+            )
 
-        submission_test_case_db = SubmissionTestCase(
-            submission=submission,
-            result=result,
-            result_id=submission_test_case.result_id,
-            number=submission_test_case.number,
-            notes=submission_test_case.notes,
-            memory=submission_test_case.memory,
-            time=submission_test_case.time,
-        )
-
-        session.add(submission_test_case_db)
-        session.commit()
+            session.add(submission_test_case_db)
+            session.commit()
 
         tmp = submission_test_case.model_dump()
         tmp["type"] = "partial"
@@ -130,7 +130,6 @@ async def save_total(submission_id: int, result: SubmissionCompleteResult, sessi
         submission: Submission = get_object_by_id(Submission, session, submission_id)
         if not submission:
             raise HTTPException(status_code=400, detail="Submission not found")
-        
         if result.stderr != "":
             submission.notes = result.stderr
         
@@ -156,7 +155,7 @@ async def save_total(submission_id: int, result: SubmissionCompleteResult, sessi
 
         session.commit()
         
-        await websocket_manager.send_message(submission.user_id, {"type": "total", "submission_id": submission.id, "score": total_score, "result": submission.notes})
+        await websocket_manager.send_message(submission.user_id, {"type": "total", "submission_id": submission.id, "score": total_score, "result": submission.notes, 'is_pretest_run': submission.is_pretest_run})
 
     except SQLAlchemyError as e:
         session.rollback()

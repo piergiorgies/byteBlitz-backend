@@ -57,7 +57,6 @@ def create(submission_in: SubmissionCreate, session: Session, user: User):
             'is_pretest_run' : submission.is_pretest_run,
         }
         # send the submission to the queue
-        # submission_in.id = submission.id
         rabbitmq_connection.try_send_to_queue('submissions', body)
 
         return True
@@ -122,14 +121,14 @@ def _validate_submission(submission_dto: SubmissionCreate, session: Session, use
             raise HTTPException(status_code=400, detail="Contest is over")
         
     # check if the user has submitted too many times in the last hour
-    last_hour = datetime.now() - timedelta(hours=1)
+    last_minute = datetime.now() - timedelta(minutes=1)
 
     try:
         submissions_count = session.query(Submission).filter(Submission.user_id == user.id,
-                                                         Submission.created_at >= last_hour,
+                                                         Submission.created_at >= last_minute,
                                                          Submission.is_pretest_run == False).count()
 
-        if submissions_count >= 1000:
+        if submissions_count >= 5:
             raise HTTPException(status_code=400, detail="Too many submissions")
         
     except SQLAlchemyError as e:

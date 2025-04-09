@@ -318,7 +318,7 @@ def read_ongoing(id: int, user: User, session: Session):
                 languages[problem_language.problem_id] = []
             languages[problem_language.problem_id].append(problem_language.language_name)
         
-        problems_info = [ProblemInfo(id=problem.id, title=problem.title, points=problem.points, languages=languages[problem.id]) for problem in problems]
+        problems_info = [ProblemInfo(id=problem.id, title=problem.title, points=problem.points, languages=languages[problem.id], difficulty=problem.difficulty) for problem in problems]
 
         user_infos = [ContestUserInfo.model_validate(obj=user) for user in contest.users]
 
