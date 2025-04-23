@@ -109,7 +109,7 @@ def _validate_submission(submission_dto: SubmissionCreate, session: Session, use
         # check if problem has been published
         contest_problem : ContestProblem = session.query(ContestProblem).filter(ContestProblem.contest_id == contest.id,
                                                                                 ContestProblem.problem_id == problem.id).first()
-        if not contest_problem or contest_problem.publication_delay > (datetime.now() - Contest.start_datetime).total_seconds() / 60:
+        if not contest_problem or contest_problem.publication_delay > (datetime.now() - contest_problem.contest.start_datetime).total_seconds() / 60:
             raise HTTPException(status_code=400, detail="Problem not published yet")
         
         # check if the user is in the contest
