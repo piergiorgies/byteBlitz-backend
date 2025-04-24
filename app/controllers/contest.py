@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi.responses import JSONResponse
-from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy import and_, func, or_
+from sqlalchemy.orm import Session, aliased
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
@@ -11,72 +11,61 @@ from app.util.role_checker import RoleChecker
 from app.database import get_object_by_id
 from app.models.mapping import User, ContestUser, Contest
 from app.models.mapping import Problem, ContestProblem, ProblemConstraint, Language
-from app.models.mapping import Submission, ContestSubmission
+from app.models.mapping import Submission, ContestSubmission, SubmissionTestCase
 from app.schemas import (
     ContestListResponse, 
-    ContestScoreboard, ContestInfo, ContestInfos, ContestUserInfo, 
+    Scoreboard, ContestInfo, ContestInfos, ContestUserInfo, 
     ProblemInfo, PastContest, UpcomingContest
 )
 
-def get_scoreboard(id: int, session: Session) -> ContestScoreboard:
-    """
-    Get the current scoreboard for a specific contest
-    
-    Args:
-        id (int): the id of the related contest
-        session (Session):
-    
-    Returns:
-        [ContestScoreboardDTO]: current scoreboard for the given contest
-    """
-
+def get_scoreboard(id: int, session: Session) -> Scoreboard:
     try:
-        contest : Contest = get_object_by_id(Contest, session, id)
-        if not contest:
-            raise HTTPException(status_code=404, detail="Contest not found")
- 
-        # get all problems (sorted) in the contest
-        problems = session.query(ContestProblem, Problem.title).join(Problem, ContestProblem.problem_id == Problem.id).filter(ContestProblem.contest_id == id, Problem.is_public == True).order_by(ContestProblem.publication_delay, Problem.title).all()
-        titles = [title for _, title in problems]
-        if not problems:
-            raise HTTPException(status_code=404, detail="There are no problems for this contest")
+        cs = aliased(ContestSubmission)
+        s = aliased(Submission)
+        stc = aliased(SubmissionTestCase)
+        c = aliased(Contest)
+        u = aliased(User)
 
-        # get all users in the contest
-        users = session.query(ContestUser, User.username).join(User, ContestUser.user_id == User.id).filter(ContestUser.contest_id == id).all()
-        scores : dict[str, List[int]] = {username: [0] * len(problems) for _, username in users}
-        if not users:
-            raise HTTPException(status_code=404, detail="There are no users for this contest")
-
-        # for each user, get the best submissions for each problem
-        for contest_user, username in users:
-            for i, (contest_problem, _) in enumerate(problems):
-                best_submission = session.query(ContestSubmission, Submission.score)\
-                    .join(Submission, ContestSubmission.submission_id == Submission.id)\
-                    .filter(ContestSubmission.contest_id == id,
-                            Submission.user_id == contest_user.user_id,
-                            Submission.problem_id == contest_problem.problem_id,
-                            Submission.is_pretest_run == False)\
-                    .order_by(Submission.score.desc()).first()
-                if best_submission:
-                    scores[username][i] = best_submission.score
-                
-        # 5. sort users by score
-        scores = {k: v for k, v in sorted(scores.items(), key=lambda item: sum(item[1]), reverse=True)}
+        result = session.query(
+            s.user_id,
+            u.username,
+            s.problem_id,
+            func.max(s.score).label("max_score"))\
+            .join(cs, cs.submission_id == s.id)\
+            .join(c, c.id == cs.contest_id)\
+            .join(stc, stc.submission_id == s.id)\
+            .join(u, u.id == s.user_id)\
+            .filter(c.id == id)\
+            .filter(s.is_pretest_run == False)\
+            .group_by(s.user_id, u.username, s.problem_id)\
+            .order_by(s.user_id, s.problem_id)\
+            .all()
         
-        scoreboard : ContestScoreboard = ContestScoreboard(
-            userteams = scores.keys(),
-            problems = titles,
-            scores = scores.values()
-        )
+        # create a list of problems resolved by each user and the total score
+        user_scores = {}
+        for user_id, username, problem_id, max_score in result:
+            if username not in user_scores:
+                user_scores[username] = {
+                    "user_id": user_id,
+                    "problems": {},
+                    "total_score": 0
+                }
+            user_scores[username]["problems"][problem_id] = max_score
+            user_scores[username]["total_score"] += max_score
+        # sort the users by total score
+        sorted_user_scores = sorted(user_scores.values(), key=lambda x: x["total_score"], reverse=True)
 
-        return ContestScoreboard.model_validate(obj=scoreboard)
-    
+        # create the scoreboard
+        return Scoreboard(rankings=sorted_user_scores)
+
+
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
 
 def list_problems(id: int, user: User, session: Session) -> ContestListResponse:
     """
@@ -205,12 +194,7 @@ def read_past(id: int, session: Session):
 
         number_of_submissions = session.query(ContestSubmission).filter(ContestSubmission.contest_id == id).count()
 
-
-        try:
-            scoreboard = get_scoreboard(id, session)
-
-        except HTTPException as e:
-            scoreboard = ContestScoreboard(userteams=[], problems=[], scores=[])
+        scoreboard = get_scoreboard(id, session)
 
         return PastContest(
             id=contest.id,
@@ -308,7 +292,15 @@ def read_ongoing(id: int, user: User, session: Session):
         if contest.start_datetime > datetime.now() or contest.end_datetime < datetime.now():
             raise HTTPException(status_code=400, detail="Contest is not ongoing")
         
-        problems = session.query(Problem).join(ContestProblem, Problem.id == ContestProblem.problem_id).filter(ContestProblem.contest_id == id).all()
+        now = datetime.now()
+
+        # get all problems that has publication delay minor than the time passed since the start of the contest
+        problems = session.query(Problem).join(ContestProblem, Problem.id == ContestProblem.problem_id).filter(
+            ContestProblem.contest_id == id,
+            ContestProblem.publication_delay <= (now - contest.start_datetime).total_seconds() / 60
+        ).order_by(ContestProblem.publication_delay, Problem.title).all()
+
+        # problems = session.query(Problem).join(ContestProblem, Problem.id == ContestProblem.problem_id).filter(ContestProblem.contest_id == id).all()
         problem_languages = session.query(ProblemConstraint).join(Language, ProblemConstraint.language_id == Language.id).filter(ProblemConstraint.problem_id.in_([problem.id for problem in problems])).all()
 
         languages = {}
@@ -324,11 +316,7 @@ def read_ongoing(id: int, user: User, session: Session):
 
         number_of_submissions = session.query(ContestSubmission).filter(ContestSubmission.contest_id == id).count()
 
-        try:
-            scoreboard = get_scoreboard(id, session)
-
-        except HTTPException as e:
-            scoreboard = ContestScoreboard(userteams=[], problems=[], scores=[])
+        scoreboard = get_scoreboard(id, session)
 
         return PastContest(
             id=contest.id,

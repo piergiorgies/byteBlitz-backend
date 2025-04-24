@@ -1,7 +1,7 @@
 from datetime import datetime
 from app.schemas.base import BaseRequest, BaseResponse, BaseListResponse
 from app.schemas.problem import ProblemInfo
-from typing import Optional, List
+from typing import Dict, Optional, List
 
 class ContestCreate(BaseRequest):
     """
@@ -118,10 +118,13 @@ class ContestListResponse(BaseListResponse):
     contests: List[ContestBase]
 
 
-class ContestScoreboard(BaseResponse):
-    userteams: List[str]
-    problems: List[str]
-    scores: List[List[int]]
+class UserScore(BaseResponse):
+    user_id: int
+    total_score: float
+    problems: Dict[int, float]  # problem_id -> max_score
+
+class Scoreboard(BaseResponse):
+    rankings: list[UserScore]
 
 class ContestInfo(BaseResponse):
     id: int
@@ -141,6 +144,7 @@ class ContestInfos(BaseResponse):
 
 class ContestUserInfo(BaseResponse):
     username: str
+    id: int
 
 class PastContest(BaseResponse):
     id: int
@@ -151,7 +155,7 @@ class PastContest(BaseResponse):
     duration: int
     problems: List[ProblemInfo]
     n_submissions: int
-    scoreboard: ContestScoreboard
+    scoreboard: Scoreboard
     users: List[ContestUserInfo]
 
 class UpcomingContest(BaseResponse):

@@ -52,7 +52,7 @@ async def read_problem(id: int, user=Depends(get_current_user), session=Depends(
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-@router.get("/languages/available", summary="Get the available languages", dependencies=[Depends(RoleChecker([Role.PROBLEM_MAINTAINER]))])
+@router.get("/languages/available", summary="Get the available languages", dependencies=[Depends(RoleChecker([Role.GUEST]))])
 async def list_languages(session=Depends(get_session)):
     """
     Get all available languages

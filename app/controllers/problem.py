@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
@@ -5,9 +6,10 @@ from fastapi import HTTPException
 from typing import List
 
 from app.database import get_object_by_id
+from app.models.mapping.contest import Contest
 from app.schemas import ProblemListResponse
 from app.schemas import PaginationParams
-from app.models.mapping import User, Problem, ProblemConstraint, ProblemTestCase
+from app.models.mapping import User, Problem, ProblemConstraint, ProblemTestCase, ContestProblem
 from app.schemas.problem import ProblemRead
 
 def list_visible_problems(pagination: PaginationParams, session: Session) -> ProblemListResponse:
@@ -70,6 +72,21 @@ def read(id: int, user: User, session: Session) -> ProblemRead:
         problem: Problem = get_object_by_id(Problem, session, id)
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
+        
+        # check if the problem is in an active contest and the publication delay is not met
+        now = datetime.now()
+        contest_problem = session.query(ContestProblem).join(Contest).filter(
+            ContestProblem.problem_id == problem.id,
+            Contest.is_public == True,
+            Contest.start_datetime <= now,
+            Contest.end_datetime >= now,
+        ).first()
+
+        # ContestProblem.publication_delay <= (now - Contest.start_datetime).total_seconds() / 60
+        if contest_problem and contest_problem.publication_delay > 0:
+            if contest_problem.contest.start_datetime + timedelta(minutes=contest_problem.publication_delay) > now:
+                raise HTTPException(status_code=403, detail="Problem is in an active contest and not yet visible")
+
 
         query = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem.id)
         constraints : List[ProblemConstraint] = query.all()

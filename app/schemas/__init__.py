@@ -9,7 +9,7 @@ from .submission import (
 )
 from .contest import (
     ContestCreate, ContestUpdate, ContestRead, ContestListResponse,
-    ContestScoreboard, ContestInfo, ContestInfos, ContestUserInfo,
+    Scoreboard, ContestInfo, ContestInfos, ContestUserInfo,
     PastContest, UpcomingContest, ContestBase
     )
 from .problem import (
