@@ -1,14 +1,15 @@
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from typing import List
-from datetime import datetime
 
 from app.database import get_object_by_id
+from app.models.mapping.contest import Contest
 from app.schemas import ProblemListResponse
-from app.schemas import PaginationParams, get_pagination_params
-from app.models.mapping import User, Problem, ProblemConstraint, Language, Contest
+from app.schemas import PaginationParams
+from app.models.mapping import User, Problem, ProblemConstraint, ProblemTestCase, ContestProblem
 from app.schemas.problem import ProblemRead
 
 def list_visible_problems(pagination: PaginationParams, session: Session) -> ProblemListResponse:
@@ -18,8 +19,6 @@ def list_visible_problems(pagination: PaginationParams, session: Session) -> Pro
     Returns:
         ProblemListResponse: problems
     """
-    # get all public problems that are not in a contest that is not finished
-
     try:
         query = session.query(Problem).filter(Problem.is_public == True)
         # apply search filter
@@ -71,10 +70,30 @@ def read(id: int, user: User, session: Session) -> ProblemRead:
         problem: Problem = get_object_by_id(Problem, session, id)
         if not problem:
             raise HTTPException(status_code=404, detail="Problem not found")
+        
+        # check if the problem is in an active contest and the publication delay is not met
+        now = datetime.now()
+        contest_problem = session.query(ContestProblem).join(Contest).filter(
+            ContestProblem.problem_id == problem.id,
+            Contest.is_public == True,
+            Contest.start_datetime <= now,
+            Contest.end_datetime >= now,
+        ).first()
+
+        # ContestProblem.publication_delay <= (now - Contest.start_datetime).total_seconds() / 60
+        if contest_problem and contest_problem.publication_delay > 0:
+            if contest_problem.contest.start_datetime + timedelta(minutes=contest_problem.publication_delay) > now:
+                raise HTTPException(status_code=403, detail="Problem is in an active contest and not yet visible")
+
 
         query = session.query(ProblemConstraint).filter(ProblemConstraint.problem_id == problem.id)
         constraints : List[ProblemConstraint] = query.all()
         problem.constraints = constraints
+
+        visible_test_cases = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == problem.id, ProblemTestCase.is_pretest == True).all()
+        problem.test_cases = visible_test_cases
+
+        query = session.query(ProblemTestCase)
 
         return ProblemRead.model_validate(obj=problem)
     

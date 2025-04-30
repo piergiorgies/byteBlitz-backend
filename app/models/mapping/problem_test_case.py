@@ -17,5 +17,5 @@ class ProblemTestCase(Base):
     problem_id: Mapped[int] = mapped_column(Integer, FK('problems.id', ondelete='cascade'), nullable=False)
     
     # connected fields
-    problem = relationship('Problem', back_populates='test_cases')
+    problem = relationship('Problem', back_populates='test_cases')    
     

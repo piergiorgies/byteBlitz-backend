@@ -1,4 +1,6 @@
-from app.schemas.base import BaseRequest, BaseResponse
+from app.schemas.base import BaseRequest, BaseResponse, BaseListResponse
+from typing import List
+from datetime import datetime
 
 class SubmissionCreate(BaseRequest):
     """
@@ -15,6 +17,7 @@ class SubmissionCreate(BaseRequest):
     submitted_code: str
     contest_id: int | None = None
     notes: str
+    is_pretest_run: bool
 
 
 class SubmissionResponse(BaseResponse):
@@ -34,7 +37,10 @@ class SubmissionResponse(BaseResponse):
     problem_id: int
     user_id: int
     language_id: int
+    submission_result_id: int
     submitted_code: str
+    created_at: datetime
+    score: int
 
 class SubmissionTestCaseResult(BaseRequest):
     result_id: int
@@ -42,13 +48,22 @@ class SubmissionTestCaseResult(BaseRequest):
     notes: str
     memory: int
     time: float
+    is_pretest_run: bool = False
+    output: str | None = None
 
 class SubmissionCompleteResult(BaseResponse):
     result_id: int
+    stderr: str
 
 class WSResult(BaseRequest):
+    type: str
     result_id: int
     number: int
     notes: str
     memory: float
     time: float
+    is_pretest_run: bool = False
+    output: str | None = None
+
+class ProblemSubmissions(BaseListResponse):
+    submissions: List[SubmissionResponse]

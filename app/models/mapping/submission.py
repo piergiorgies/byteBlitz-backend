@@ -1,5 +1,5 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey as FK, Integer, String, DateTime
+from sqlalchemy import ForeignKey as FK, Integer, String, DateTime, Boolean
 from typing import Optional, List
 from datetime import datetime
 from app.database import Base
@@ -17,6 +17,7 @@ class Submission(Base):
     user_id: Mapped[int] = mapped_column(Integer, FK('users.id'), nullable=False)
     language_id: Mapped[int] = mapped_column(Integer, FK('languages.id'), nullable=False)
     submission_result_id: Mapped[int] = mapped_column(Integer, FK('submission_results.id'), nullable=True)
+    is_pretest_run: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # connected fields
     problem: Mapped['Problem'] = relationship('Problem', back_populates='submissions')

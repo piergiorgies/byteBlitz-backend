@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.models.role import Role
 from app.controllers.contest import get_scoreboard, list_with_info, read_past, read_upcoming, read_ongoing, register_to_contest
-from app.schemas import ContestScoreboard
+from app.schemas import Scoreboard
 from app.schemas import ContestRead, ContestInfos, UpcomingContest
 from app.models.mapping import User
 from app.database import get_session
@@ -41,7 +41,7 @@ async def add_user_to_contest(id: int, session=Depends(get_session)):
     """
 
     try:
-        scoreboard : ContestScoreboard = get_scoreboard(id, session)
+        scoreboard : Scoreboard = get_scoreboard(id, session)
         return scoreboard
     
     except HTTPException as e:

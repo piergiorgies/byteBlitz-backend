@@ -6,10 +6,9 @@ from datetime import datetime, timedelta
 from app.models.mapping import Problem, User, UserType
 from app.database import get_object_by_id_joined_with
 from app.models.role import Role
-from app.models.mapping import Submission, SubmissionResult, SubmissionTestCase, SubmissionTestCase
-from app.schemas import JudgeResponse, JudgeCreate, JudgeListResponse, JudgeProblem, Constraint, TestCase, SubmissionTestCaseResult
+from app.models.mapping import Submission, SubmissionResult, SubmissionTestCase, SubmissionTestCase, ProblemTestCase
+from app.schemas import SubmissionCompleteResult, JudgeProblem, Constraint, TestCase, SubmissionTestCaseResult, WSResult
 from app.database import get_object_by_id
-from app.schemas.submission import WSResult
 from app.util.websocket import websocket_manager
 
 #regiorn Judge
@@ -91,20 +90,29 @@ async def accept(submission_id: int, submission_test_case: SubmissionTestCaseRes
         if not result:
             raise HTTPException(status_code=400, detail="Result not found")
 
-        submission_test_case = SubmissionTestCase(
-            submission=submission,
-            result=result,
-            result_id=submission_test_case.result_id,
-            number=submission_test_case.number,
-            notes=submission_test_case.notes,
-            memory=submission_test_case.memory,
-            time=submission_test_case.time
-        )
 
-        session.add(submission_test_case)
-        session.commit()
+        test_case = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == submission.problem_id, ProblemTestCase.number == submission_test_case.number).first()
+        if not test_case:
+            raise HTTPException(status_code=400, detail="Test case not found")
+        
+        if not submission_test_case.is_pretest_run:
+            submission_test_case_db = SubmissionTestCase(
+                submission=submission,
+                result=result,
+                result_id=submission_test_case.result_id,
+                number=submission_test_case.number,
+                notes=submission_test_case.notes,
+                memory=submission_test_case.memory,
+                time=submission_test_case.time,
+            )
 
-        ws_message = WSResult.model_validate(obj=submission_test_case)
+            session.add(submission_test_case_db)
+            session.commit()
+
+        tmp = submission_test_case.model_dump()
+        tmp["type"] = "partial"
+        ws_message = WSResult.model_validate(obj=tmp)
+
         await websocket_manager.send_message(submission.user_id, ws_message.model_dump())
 
     except SQLAlchemyError as e:
@@ -116,23 +124,38 @@ async def accept(submission_id: int, submission_test_case: SubmissionTestCaseRes
         session.rollback()
         raise e
 
-def save_total(submission_id: int, result: SubmissionResult, session: Session):
+async def save_total(submission_id: int, result: SubmissionCompleteResult, session: Session):
     try:
         # check if the submission exists
         submission: Submission = get_object_by_id(Submission, session, submission_id)
         if not submission:
             raise HTTPException(status_code=400, detail="Submission not found")
+        if result.stderr != "":
+            submission.notes = result.stderr
         
         submission_result: SubmissionResult = get_object_by_id(SubmissionResult, session, result.result_id)
         if not submission_result:
             raise HTTPException(status_code=400, detail="Result not found")
+
+        sub_test_cases = session.query(SubmissionTestCase).filter(SubmissionTestCase.submission_id == submission_id).all()
+
+        problem_test_cases = session.query(ProblemTestCase).filter(ProblemTestCase.problem_id == submission.problem_id).all()
+
+        # calculate the total score of the submission
+        total_score = 0
+        for sub_test_case in sub_test_cases:
+            for problem_test_case in problem_test_cases:
+                if sub_test_case.number == problem_test_case.number:
+                    if sub_test_case.result_id == 1:
+                        total_score += problem_test_case.points
         
-        test_submissions = submission.test_cases
-        
-        submission.result = submission_result
+
+        submission.score = total_score
+        submission.submission_result_id = submission_result.id
 
         session.commit()
         
+        await websocket_manager.send_message(submission.user_id, {"type": "total", "submission_id": submission.id, "score": total_score, "result": submission.notes, 'is_pretest_run': submission.is_pretest_run})
 
     except SQLAlchemyError as e:
         session.rollback()
