@@ -17,9 +17,11 @@ class SubmissionTestCase(Base):
         input_name (str): The test case input name
         result_id (int): The test case result id
         submission_id (int): The test case submission id
+        test_case_id (int): The test case test case id
 
         result (SubmissionResult): The submission result
         submission (Submission): The submission
+        test_case (ProblemTestCase): The problem test case
     """
 
     __tablename__ = 'submission_test_cases'

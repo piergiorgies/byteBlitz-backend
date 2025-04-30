@@ -5,6 +5,9 @@ class Settings(BaseSettings):
     APP_NAME: str
     APP_DOMAIN: str
 
+    APP_HOST: str
+    APP_PORT: int
+
     DATABASE_NAME: str
     DATABASE_USER: str
     DATABASE_PASSWORD: str
@@ -33,7 +36,17 @@ class Settings(BaseSettings):
     PUBLIC_KEY: str
     PRIVATE_KEY: str
 
-    model_config = SettingsConfigDict(env_file=".env")
+    SMTP_SERVER: str
+    SMTP_PORT: int
+    SMTP_USER: str
+    SMTP_PASSWORD: str
+
+    GITHUB_CLIENT_ID: str
+    GITHUB_CLIENT_SECRET: str
+    GITHUB_REDIRECT_URI: str
+
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     
     @property
     def get_connection_string(self):

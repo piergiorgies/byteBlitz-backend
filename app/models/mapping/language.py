@@ -10,6 +10,7 @@ class Language(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     file_extension: Mapped[str] = mapped_column(String, nullable=False)
+    code: Mapped[str] = mapped_column(String, default='', nullable=True)
 
     # connected fields
     submissions: Mapped[List['Submission']] = relationship('Submission', back_populates='language')

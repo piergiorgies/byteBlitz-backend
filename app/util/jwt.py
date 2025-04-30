@@ -4,13 +4,21 @@ from app.database import get_session
 from app.models.role import Role
 
 from datetime import datetime, timedelta, timezone
-from jose import JWTError, jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import HTTPException, Query, WebSocket, status, Depends
+from fastapi import Cookie, HTTPException, Query, Request, WebSocket, status, Depends
 from typing import Annotated
 from sqlalchemy.orm import Session
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+class BearerScheme:
+    async def __call__(self, request: Request):
+        token = request.headers.get('Authorization')
+        if token == None or not token.startswith('Bearer '):
+            return None
+        
+        return token.split(' ')[1]
 
 credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -42,10 +50,10 @@ def get_tokens(user_id, username, user_permissions):
     }
 
     access_token = _create_access_token(data=data, expires_delta=access_token_expire)
-    refresh_token = _create_access_token(data=data, expires_delta=refresh_token_expire)
+    # refresh_token = _create_access_token(data=data, expires_delta=refresh_token_expire)
     return {
         "access_token": access_token,
-        "refresh_token": refresh_token
+        # "refresh_token": refresh_token
     }
 
 def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
@@ -62,10 +70,14 @@ def decode_token(token: Annotated[str, Depends(oauth2_scheme)]):
 
         return user_id, username
     
+    except ExpiredSignatureError as e:
+        return '', ''
     except JWTError as e:
         raise credentials_exception
 
-def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
+def get_current_user(token: Annotated[str | None, Cookie()], api_token: Annotated[str | None, Depends(BearerScheme())], session: Session = Depends(get_session)):
+    token = token or api_token
+
     try:
         if token == '':
             user_type = session.query(UserType).filter(UserType.permissions == Role.GUEST).one_or_none()
@@ -80,6 +92,18 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Ses
 
         else:
             id, username = decode_token(token)
+
+            if (id == '' or username == ''):
+                user_type = session.query(UserType).filter(UserType.permissions == Role.GUEST).one_or_none()
+                if not user_type:
+                    raise HTTPException(status_code=500, detail="Guest user type not found")
+            
+                user: User = session.query(User).filter(User.user_type_id == user_type.id).first()
+
+                if user is None:
+                    raise credentials_exception
+                return user
+
             user: User = session.query(User).filter(User.id == id, User.username == username).first()
 
             if user is None:
@@ -102,7 +126,7 @@ def get_judge(data: Annotated[str, Depends(oauth2_scheme)], session: Session = D
     except HTTPException as e:
         raise e
 
-def get_websocket_user(_: WebSocket, token: Annotated[str | None, Query()], session: Session = Depends(get_session)):
+def get_websocket_user(_: WebSocket, token: Annotated[str | None, Cookie()], session: Session = Depends(get_session)):
     id, username = decode_token(token)
     user: User = session.query(User).filter(User.id == id, User.username == username).first()
 

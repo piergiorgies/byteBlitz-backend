@@ -24,7 +24,7 @@ class RabbitMQConnection:
         
         try:
             credentials = pika.PlainCredentials(self.user, self.password) 
-            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host, credentials=credentials))
+            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host, port=self.port, credentials=credentials))
         except Exception as ex:
             print(f'Error while connecting to RabbitMQ: {ex}')
 

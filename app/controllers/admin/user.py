@@ -1,0 +1,208 @@
+from datetime import datetime
+from typing import List
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+from app.models.mapping import User, UserType
+from app.schemas import UserCreate, UserResponse, UserUpdate
+from app.util.pwd import _hash_password
+from app.database import get_object_by_id
+from app.models.role import Role
+from app.util.role_checker import RoleChecker
+from app.schemas import PaginationParams, UserListResponse
+from app.models.mapping import User, UserType
+
+
+def create_user(user: UserCreate, session: Session) -> UserResponse:
+    """
+    create a new user
+
+    Args:
+        user (UserCreate): the user DTO
+        session (Session): the session
+
+    Returns:
+        UserResponse: the created user
+    """
+    try:
+        user_type = session.query(UserType).filter(UserType.id == user.user_type_id).first()
+        if not user_type:
+            raise HTTPException(status_code=404, detail="User type not found")
+        
+        hash, salt = _hash_password(user.password)
+        user = User(
+            username=user.username,
+            password_hash=hash,
+            salt=salt,
+            email=user.email,
+            user_type_id=user.user_type_id
+        )
+        session.add(user)
+        session.commit()
+        return user
+    
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+
+def read_user(id: int, session: Session) -> UserResponse:
+    """
+    Read a user by id
+    
+    Args: 
+        id (int):
+        session (Session):
+    
+    Returns:
+        UserResponse: user
+    """
+    
+    try:
+        user: User = get_object_by_id(User, session, id)
+        
+        return UserResponse.model_validate(obj=user)
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+
+def delete_user(id: int, session: Session) -> bool:
+    """
+    Delete user by id
+    
+    Args:
+        id (int):
+        session (session):
+    
+    Returns:
+        bool: the result of delete operation
+    
+    """
+    try:
+        user: User = get_object_by_id(User, session, id)
+        user.deletion_date = datetime.now()
+        session.commit()
+        return True
+
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+def available_user_types_list(session: Session) -> List[UserType]:
+    """
+    Get all user types
+    
+    Args:
+        session (Session):
+    
+    Returns:
+        List[UserType]: list of user types
+    """
+    try:
+        to_exclude = [Role.JUDGE, Role.GUEST]
+        user_types: List[UserType] = session.query(UserType).filter(UserType.permissions.notin_(to_exclude)).all()
+        return user_types
+    
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+
+def list_user(pagination: PaginationParams, session: Session) -> UserListResponse:
+    """
+    List all users
+    
+    Args:
+        limit (int):
+        offset (int):
+        user (User):
+        session (Session):
+    
+    Returns:
+        [UserListResponse]: list of users
+    """
+    
+    try:
+
+        judge_type = session.query(UserType).filter(UserType.permissions == Role.JUDGE).one_or_none()
+        if not judge_type:
+            raise HTTPException(status_code=500, detail="Judge user type not found")
+        guest_type = session.query(UserType).filter(UserType.permissions == Role.GUEST).one_or_none()
+        if not guest_type:
+            raise HTTPException(status_code=500, detail="Guest user type not found")
+        
+        builder = session.query(User).filter(User.deletion_date == None, User.user_type_id != judge_type.id, User.user_type_id != guest_type.id)
+        if pagination.search_filter:
+            builder = builder.filter(User.username.ilike(f"%{pagination.search_filter}%"))
+        users: List[User] = builder.limit(pagination.limit).offset(pagination.offset).all()
+        count = builder.count()
+
+        return UserListResponse(users=[UserResponse.model_validate(obj=obj) for obj in users], count=count)
+    
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+
+def update_user(id: int, updated_user: UserUpdate, session: Session) -> UserResponse:
+    """update user by id
+
+    Args:
+        id (int): the id of the user
+        updated_user (UserDTO): the updated user DTO
+        current_user (User): the current user
+        session (Session): session
+
+    Returns:
+        UserDTO: the updated user
+    """
+    try:
+        user: User = get_object_by_id(User, session, id)
+
+        username_check : User = session.query(User).filter(User.username == updated_user.username).one_or_none()
+        if username_check and username_check.id != id:
+            raise HTTPException(status_code=409, detail="Username already exists")
+
+        user_type = session.query(UserType).filter(UserType.id == updated_user.user_type_id).one_or_none()
+        if not user_type:
+            raise HTTPException(status_code=404, detail="User type not found")
+
+        user.username = updated_user.username
+        user.email = updated_user.email
+        user.user_type_id = updated_user.user_type_id
+
+        session.commit()
+        return UserUpdate.model_validate(obj=user)
+    
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+
