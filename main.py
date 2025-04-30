@@ -27,6 +27,7 @@ app.include_router(submission.router)
 app.include_router(user.router)
 
 # general routers
+app.include_router(general.ws)
 app.include_router(general.router)
 
 # admin routers

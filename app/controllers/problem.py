@@ -19,8 +19,6 @@ def list_visible_problems(pagination: PaginationParams, session: Session) -> Pro
     Returns:
         ProblemListResponse: problems
     """
-    # get all public problems that are not in a contest that is not finished
-
     try:
         query = session.query(Problem).filter(Problem.is_public == True)
         # apply search filter
