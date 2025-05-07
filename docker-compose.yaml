@@ -13,10 +13,13 @@ services:
     ports:
       - "${DATABASE_PORT}:5432"
     networks:
-      - bridge
-      - backend
-
+      - byteblitz
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DATABASE_USER}"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
   
   pgadmin:
     container_name: pgadmin
@@ -31,8 +34,25 @@ services:
     ports:
       - "15432:80"
     networks:
-      - backend
+      - byteblitz
     restart: unless-stopped
+
+  app:
+    container_name: byteblitz-backend
+    build: .
+    ports:
+      - "9000:9000"
+    volumes:
+      - .:/app:cached
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - byteblitz
+    restart: unless-stopped
+    entrypoint: ["/app/entrypoint.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   loki:
     container_name: loki
@@ -41,7 +61,7 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     networks:
-      - backend
+      - byteblitz
 
   grafana:
     container_name: grafana
@@ -72,11 +92,10 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - backend
+      - byteblitz
 
 networks:
-  backend:
-  bridge:
+  byteblitz:
     driver: bridge
 
 volumes:
