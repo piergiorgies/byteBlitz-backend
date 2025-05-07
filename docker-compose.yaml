@@ -51,8 +51,7 @@ services:
     restart: unless-stopped
     entrypoint: ["/app/entrypoint.sh"]
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
 
   loki:
     container_name: loki
