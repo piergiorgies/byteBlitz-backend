@@ -12,7 +12,7 @@ router = APIRouter(
 )
 
 
-@router.get("/judges", summary="Get the judge list", dependencies=[Depends(RoleChecker(Role.ADMIN))])
+@router.get("/judges", summary="Get the judge list", dependencies=[Depends(RoleChecker([Role.ADMIN]))])
 async def list_judges(pagination : PaginationParams = Depends(get_pagination_params), session=Depends(get_session)):
     """
     Get the judge list
@@ -26,7 +26,7 @@ async def list_judges(pagination : PaginationParams = Depends(get_pagination_par
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-@router.post("/judges", summary="Create a new judge", dependencies=[Depends(RoleChecker(Role.ADMIN))])
+@router.post("/judges", summary="Create a new judge", dependencies=[Depends(RoleChecker([Role.ADMIN]))])
 async def create(judge: JudgeCreate, session=Depends(get_session)):
     """
     Create a new judge
@@ -40,7 +40,7 @@ async def create(judge: JudgeCreate, session=Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
     
-@router.delete("/judges/{id}", summary="Delete a judge", dependencies=[Depends(RoleChecker(Role.ADMIN))])
+@router.delete("/judges/{id}", summary="Delete a judge", dependencies=[Depends(RoleChecker([Role.ADMIN]))])
 async def delete(id: int, session=Depends(get_session)):
     """
     Delete a judge

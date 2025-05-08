@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=UserListResponse, summary="List users", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
+@router.get("", response_model=UserListResponse, summary="List users", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
 async def list(pagination : PaginationParams = Depends(get_pagination_params), session=Depends(get_session)
     ):
     """

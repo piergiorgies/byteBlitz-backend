@@ -113,7 +113,7 @@ async def list_languages(session=Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.get("/", response_model=ProblemListResponse, summary="List problems", dependencies=[Depends(RoleChecker([Role.PROBLEM_MAINTAINER]))])
+@router.get("", response_model=ProblemListResponse, summary="List problems", dependencies=[Depends(RoleChecker([Role.PROBLEM_MAINTAINER]))])
 async def list_problems(pagination : PaginationParams = Depends(get_pagination_params),  user=Depends(get_current_user), session=Depends(get_session)):
     """
     List problems
