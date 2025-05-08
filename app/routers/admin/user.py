@@ -114,7 +114,7 @@ async def delete(id: int, session=Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.post("/", summary="Create a user", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
+@router.post("", summary="Create a user", dependencies=[Depends(RoleChecker([Role.USER_MAINTAINER]))])
 async def create(user: UserCreate = Body(), session=Depends(get_session)):
     """
     Create a user

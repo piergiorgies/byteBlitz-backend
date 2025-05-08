@@ -14,7 +14,7 @@ router = APIRouter(
     tags=["Admin Contest"]
 )
 
-@router.post("/", summary="Create a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
+@router.post("", summary="Create a contest", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
 async def create_contest(contest: ContestCreate = Body(), session=Depends(get_session)):
     """
     Create a contest
