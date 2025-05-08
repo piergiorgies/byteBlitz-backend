@@ -38,10 +38,10 @@ services:
     restart: unless-stopped
 
   app:
-    container_name: byteblitz-backend
+    container_name: backend
     build: .
     ports:
-      - "9000:9000"
+      - "9010:9000"
     volumes:
       - .:/app:cached
     environment:

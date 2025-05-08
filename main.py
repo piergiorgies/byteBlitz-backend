@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.logger import LoggingMiddleware, get_logger
 from app.routers import auth, contest, problem, submission, user, general, judge
 from app.routers.admin import contest as contest_admin, problem as problem_admin, user as user_admin, judge as judge_admin
@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=True
 )
-
+app.add_middleware(ProxyHeadersMiddleware)
 app.add_middleware(LoggingMiddleware)
 
 # user routers

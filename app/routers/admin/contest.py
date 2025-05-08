@@ -78,7 +78,7 @@ async def update_contest(id: int, contest: ContestUpdate = Body(), session=Depen
     except Exception as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
-@router.get("/", response_model=ContestListResponse, summary="List contests", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
+@router.get("", response_model=ContestListResponse, summary="List contests", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
 async def list_contests(pagination : PaginationParams = Depends(get_pagination_params), user = Depends(get_current_user), session=Depends(get_session)):
     """
     List contests
