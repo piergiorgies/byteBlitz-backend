@@ -129,7 +129,7 @@ def _validate_submission(submission_dto: SubmissionCreate, session: Session, use
                                                          Submission.is_pretest_run == False).count()
 
         if submissions_count >= 5:
-            raise HTTPException(status_code=400, detail="Too many submissions")
+            raise HTTPException(status_code=403, detail="Too many submissions")
         
     except SQLAlchemyError as e:
         raise e
