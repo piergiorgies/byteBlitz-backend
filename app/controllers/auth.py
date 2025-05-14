@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import func
 from fastapi import HTTPException
 from app.models.mapping import UserType
 from app.models import Role
@@ -17,7 +18,10 @@ from app.config import settings
 
 def login(user_login: LoginRequest, session: Session):
     try:
-        user_db = session.query(User).filter(User.username == user_login.username).one_or_none()
+        user_db = session.query(User).filter(
+            (func.lower(User.username) == func.lower(user_login.username)) |
+            (func.lower(User.email) == func.lower(user_login.username))
+        ).join(UserType).one_or_none()
 
         if not user_db:
             raise HTTPException(status_code=404, detail="User not found")
@@ -61,8 +65,7 @@ def reset_password(data: ResetPasswordRequest, session: Session):
 
         body = f"""<h1>Reset your password</h1>
 <p>Click on the link to reset your password:
-<a href='{settings.APP_DOMAIN}/password-reset?token={user_db.reset_password_token}'>Reset password</a></p>
-                """
+<a href='{settings.APP_DOMAIN}/password-reset?token={user_db.reset_password_token}'>Reset password</a></p>"""
 
         sender = MailSender()    
         sender.send_mail(
