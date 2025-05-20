@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from app.schemas import ProblemCreate, ProblemUpdate, ProblemListResponse, PaginationParams, get_pagination_params, ProblemRead
-from app.controllers.admin.problem import create, delete, update, list_available_languages, list, read
+from app.controllers.admin.problem import create, delete, update, list_available_languages, list_problems, read
 from app.database import get_session
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
@@ -114,7 +114,7 @@ async def list_languages(session=Depends(get_session)):
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
 
 @router.get("", response_model=ProblemListResponse, summary="List problems", dependencies=[Depends(RoleChecker([Role.PROBLEM_MAINTAINER]))])
-async def list_problems(pagination : PaginationParams = Depends(get_pagination_params),  user=Depends(get_current_user), session=Depends(get_session)):
+async def problem_list(pagination : PaginationParams = Depends(get_pagination_params),  user=Depends(get_current_user), session=Depends(get_session)):
     """
     List problems
     
@@ -123,7 +123,7 @@ async def list_problems(pagination : PaginationParams = Depends(get_pagination_p
     """
 
     try:
-        problems = list(pagination.limit, pagination.offset, pagination.search_filter, user, session)
+        problems = list_problems(pagination.limit, pagination.offset, pagination.search_filter, user, session)
         return problems
     
     except HTTPException as e:

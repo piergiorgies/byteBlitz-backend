@@ -10,7 +10,7 @@ from app.database import get_object_by_id
 
 
 
-def list(limit: int, offset: int, searchFilter: str, user: User, session: Session) -> ProblemListResponse:
+def list_problems(limit: int, offset: int, searchFilter: str, user: User, session: Session) -> ProblemListResponse:
     """
     List problems according to visibility with correct counting in SQLAlchemy.
     

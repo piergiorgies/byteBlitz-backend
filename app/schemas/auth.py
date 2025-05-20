@@ -58,3 +58,18 @@ class ChangeResetPasswordRequest(BaseRequest):
 
     token: str
     password: str
+
+@dataclass
+class ChangePasswordRequest(BaseRequest):
+    """
+    
+    Change Password DTO
+
+    Attributes
+        old_password (str): The old password of the user
+        new_password (str): The new password of the user
+
+    """
+
+    old_password: str
+    new_password: str

@@ -1,16 +1,23 @@
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Body, Response
 from fastapi.responses import JSONResponse, RedirectResponse
-from app.schemas import LoginResponse, LoginRequest, ResetPasswordRequest, ChangeResetPasswordRequest
+from app.models import Role
+from app.schemas import (
+    LoginResponse, LoginRequest, ResetPasswordRequest, 
+    ChangeResetPasswordRequest, ChangePasswordRequest
+)
 from app.controllers.auth import (
     login as login_controller,
     reset_password as reset_pwd,
     change_reset_password as change_reset_pwd,
-    create_github_user
+    create_github_user,
+    change_pwd
 )
 
 from app.database import get_session
 from app.config import settings
+from app.util.jwt import get_current_user
+from app.util.role_checker import RoleChecker
 
 
 router = APIRouter(
@@ -91,7 +98,6 @@ async def reset_password(body: ResetPasswordRequest = Body(), session = Depends(
             status_code=500,
             content={"detail": "An unexpected error occurred", "error": str(e)}
         )
-    
 
 @router.post("/change-reset-password", summary="Change Password", response_description="Password changed")
 async def change_reset_password(body: ChangeResetPasswordRequest = Body(), session = Depends(get_session)):
@@ -111,7 +117,6 @@ async def change_reset_password(body: ChangeResetPasswordRequest = Body(), sessi
             status_code=500,
             content={"detail": "An unexpected error occurred", "error": str(e)}
         )
-    
 
 @router.get("/github", summary="Github Login", response_description="Redirect to Github login page")
 async def github_login():
@@ -120,7 +125,6 @@ async def github_login():
     GITHUB_REDIRECT_URI = settings.GITHUB_REDIRECT_URI
     github_auth_url = f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&redirect_uri={GITHUB_REDIRECT_URI}&scope=user:email"
     return {"auth_url": github_auth_url}
-
 
 @router.get("/github/callback", summary="Github Login Callback", response_description="Github login callback")
 async def github_callback(code: str, session = Depends(get_session)):
@@ -146,7 +150,6 @@ async def github_callback(code: str, session = Depends(get_session)):
             status_code=500,
             content={"detail": "An unexpected error occurred", "error": str(e)}
         )
-    
 
 def _get_github_user_infos(code: str):
     """
@@ -194,5 +197,22 @@ def _get_github_user_infos(code: str):
 
     return user_json
     
+@router.post("/change-password", summary="Change Password", dependencies=[Depends(RoleChecker([Role.USER]))])
+def change_password(body: ChangePasswordRequest = Body(), user = Depends(get_current_user), session = Depends(get_session)):
+    """
+    Change the password of a user
+    
+    Returns:
+        JSONResponse: response
+    """
+    try:
+        return change_pwd(body, user, session)
 
+    except HTTPException as e:
+        return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "An unexpected error occurred", "error": str(e)}
+        )
 
