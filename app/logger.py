@@ -1,3 +1,4 @@
+import time
 import uuid
 import json
 import logging
@@ -32,18 +33,19 @@ class LokiLogger:
         if self.CONSOLE_LOG:
             console_handler = logging.StreamHandler()
             handlers.append(console_handler)
-        
-        # Configura il logger
-        logging.basicConfig(
-            level=self.level,
-            handlers=handlers,
-            format="%(levelname)s - %(name)s - %(message)s"
-        )
+        logger = logging.getLogger(self.name)
+        logger.setLevel(self.level)
+        logger.handlers.clear()
+        for handler in handlers:
+            logger.addHandler(handler)
+
+        logger.propagate = False
 
         logging.getLogger("urllib3").setLevel(logging.WARNING)
         logging.getLogger("pika").setLevel(logging.WARNING)
 
-        self.logger = logging.getLogger(self.name)
+        self.logger = logger
+        self.logger.info(f"Logger initialized with level {self.level} and url {self.url}")
 
     def get_logger(self):
         return self.logger
@@ -65,9 +67,30 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         logger = get_logger()
 
-        logger.debug(f"Request {request.method} {request.url}")
+        client_ip = request.client.host if request.client else "unknown"
+        user_agent = request.headers.get("user-agent", "unknown")
+        user_token = request.cookies.get("token", "unknown")
+        method = request.method
+        path = str(request.url.path)
+        query = str(request.url.query)
+
+        logger.debug(
+            json.dumps({
+                "event": "request_start",
+                "request_id": request_id,
+                "method": method,
+                "path": path,
+                "query": query,
+                "client_ip": client_ip,
+                "user_agent": user_agent,
+            })
+        )
+
+        start_time = time.time()
 
         response = await call_next(request)
+
+        process_time = round((time.time() - start_time) * 1000, 2)
 
         if response.status_code >= 400:
             if isinstance(response, StreamingResponse):
@@ -79,10 +102,63 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                     response_text = response_body.decode("utf-8")
                     response_json = json.loads(response_text)
 
+                    logger.error(
+                        json.dumps({
+                            "event": "response_error",
+                            "request_id": request_id,
+                            "status_code": response.status_code,
+                            "response_body": response_json,
+                            "path": path,
+                            "client_ip": client_ip,
+                            "process_time_ms": process_time,
+                            "user_token": user_token,
+                            "tags": {
+                                "request_id": request_id,
+                                "status_code": response.status_code,
+                                "client_ip": client_ip,
+                                "path": path
+                            }
+                        })
+                    )
+
                     if response.status_code >= 500:
-                        logger.critical(f"Response error with status code {response.status_code}: {response_json}")
+                        logger.critical(
+                            json.dumps({
+                                "event": "critical_error",
+                                "request_id": request_id,
+                                "status_code": response.status_code,
+                                "response_body": response_json,
+                                "path": path
+                            })
+                        )
 
                 except json.JSONDecodeError:
-                    logger.critical(f"Response error with status code {response.status_code}: {response_text}")
-    
+                    logger.critical(
+                        json.dumps({
+                            "event": "response_error_non_json",
+                            "request_id": request_id,
+                            "status_code": response.status_code,
+                            "response_text": response_text
+                        })
+                    )
+
+        logger.info(
+            json.dumps({
+                "event": "request_end",
+                "request_id": request_id,
+                "method": method,
+                "path": path,
+                "status_code": response.status_code,
+                "process_time_ms": process_time,
+                "client_ip": client_ip,
+                "user_token": user_token,
+                "tags": {
+                    "request_id": request_id,
+                    "status_code": response.status_code,
+                    "path": path,
+                    "client_ip": client_ip
+                }
+            })
+        )
+
         return response
