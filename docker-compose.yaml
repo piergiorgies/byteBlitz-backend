@@ -37,21 +37,21 @@ services:
       - byteblitz
     restart: unless-stopped
 
-  app:
-    container_name: backend
-    build: .
-    ports:
-      - "9010:9000"
-    volumes:
-      - .:/app:cached
-    environment:
-      - PYTHONUNBUFFERED=1
-    networks:
-      - byteblitz
-    restart: unless-stopped
-    entrypoint: ["/app/entrypoint.sh"]
-    depends_on:
-      - postgres
+  # app:
+  #   container_name: backend
+  #   build: .
+  #   ports:
+  #     - "9010:9000"
+  #   volumes:
+  #     - .:/app:cached
+  #   environment:
+  #     - PYTHONUNBUFFERED=1
+  #   networks:
+  #     - byteblitz
+  #   restart: unless-stopped
+  #   entrypoint: ["/app/entrypoint.sh"]
+  #   depends_on:
+  #     - postgres
 
   loki:
     container_name: loki

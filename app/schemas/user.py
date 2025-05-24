@@ -66,6 +66,11 @@ class ProfileResponse(BaseResponse):
     acceptance: float
     total_year_sub: int
     submission_map: Dict[datetime, int]
+    email: str
+    username: str
+    registered_at: datetime
+    has_password: bool
+    
 
 class SubmissionRecord(BaseResponse):
     created_at: datetime

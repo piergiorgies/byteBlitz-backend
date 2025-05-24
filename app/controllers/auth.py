@@ -188,9 +188,15 @@ def change_pwd(body: ChangePasswordRequest, user: User, session: Session):
     try:
         if user.deletion_date is not None:
             raise HTTPException(status_code=404, detail="User not found")
-        password_hash, _ = _hash_password(password=body.old_password, salt=bytes.fromhex(user.salt))
-        if password_hash != user.password_hash:
-            raise HTTPException(status_code=401, detail="Invalid password")
+        # if the user want to set a password (because it has done the registration with OAuth)
+        if user.password_hash != '' and (body.old_password is None or body.old_password == ''):
+            raise HTTPException(status_code=422, detail="Unprocessable Entity (you need to specify the old password)")
+        # check the password only if the user has a password set
+        elif user.password_hash != '':
+            password_hash, _ = _hash_password(password=body.old_password, salt=bytes.fromhex(user.salt))
+            if password_hash != user.password_hash:
+                raise HTTPException(status_code=401, detail="Invalid password")
+
         password_hash, salt = _hash_password(password=body.new_password)
         user.password_hash = password_hash
         user.salt = salt

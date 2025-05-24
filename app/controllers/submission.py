@@ -125,6 +125,7 @@ def _validate_submission(submission_dto: SubmissionCreate, session: Session, use
 
     try:
         submissions_count = session.query(Submission).filter(Submission.user_id == user.id,
+                                                             Submission.is_pretest_run == False,
                                                          Submission.created_at >= last_minute,
                                                          Submission.is_pretest_run == False).count()
 

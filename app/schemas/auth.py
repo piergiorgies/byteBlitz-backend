@@ -1,3 +1,4 @@
+from typing import Optional
 from app.schemas.base import BaseRequest, BaseResponse
 from dataclasses import dataclass
 
@@ -71,5 +72,5 @@ class ChangePasswordRequest(BaseRequest):
 
     """
 
-    old_password: str
+    old_password: Optional[str]
     new_password: str

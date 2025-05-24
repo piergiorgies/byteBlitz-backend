@@ -90,6 +90,10 @@ def get_profile_info(current_user: User, session: Session) -> ProfileResponse:
             total_year_sub = total_year_sub,
             submission_map=submission_count_by_date,
             acceptance=acceptance_rate,
+            email=current_user.email,
+            username=current_user.username,
+            registered_at=current_user.registered_at,
+            has_password=current_user.password_hash != ''
         )
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
