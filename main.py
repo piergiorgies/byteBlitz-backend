@@ -43,3 +43,14 @@ app.include_router(judge.router)
 @app.get("/")
 async def root(logger = Depends(get_logger)):
     return {"message": "Hello ByteBlitz users!"}
+
+
+if __name__ == "__main__":
+
+    uvicorn.run(
+        "main:app",
+        host=settings.APP_HOST,
+        port=settings.APP_PORT,
+        reload=True
+    )
+

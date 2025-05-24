@@ -9,7 +9,10 @@ from sqlalchemy import func
 from fastapi import HTTPException
 from app.models.mapping import UserType
 from app.models import Role
-from app.schemas import LoginRequest, LoginResponse, ResetPasswordRequest, ChangeResetPasswordRequest
+from app.schemas import (
+    LoginRequest, LoginResponse, ResetPasswordRequest,
+    ChangeResetPasswordRequest, ChangePasswordRequest
+)
 from app.models.mapping import User
 from app.util.jwt import get_tokens
 from app.util.pwd import _hash_password
@@ -44,8 +47,7 @@ def login(user_login: LoginRequest, session: Session):
         raise e
     except Exception as e:
         session.rollback()
-        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))   
 
 def reset_password(data: ResetPasswordRequest, session: Session):
     try:
@@ -85,7 +87,6 @@ def reset_password(data: ResetPasswordRequest, session: Session):
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
-    
 
 def change_reset_password(data: ChangeResetPasswordRequest, session: Session):
     try:
@@ -117,8 +118,6 @@ def change_reset_password(data: ChangeResetPasswordRequest, session: Session):
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred" + str(e))
-    
-
 
 def create_github_user(user_json: dict, session: Session):
     """
@@ -173,4 +172,44 @@ def create_github_user(user_json: dict, session: Session):
         session.rollback()
         raise HTTPException(status_code=500, detail="An unexpected error occurred" + str(e))
 
+def change_pwd(body: ChangePasswordRequest, user: User, session: Session):
+    """
+    Change the password of a user
 
+    Args:
+        body (ChangePasswordRequest): request body
+        user (User): user
+        session (Session): sqlalchemy session
+
+    Returns:
+        JSONResponse: response
+    """
+
+    try:
+        if user.deletion_date is not None:
+            raise HTTPException(status_code=404, detail="User not found")
+        # if the user want to set a password (because it has done the registration with OAuth)
+        if user.password_hash != '' and (body.old_password is None or body.old_password == ''):
+            raise HTTPException(status_code=422, detail="Unprocessable Entity (you need to specify the old password)")
+        # check the password only if the user has a password set
+        elif user.password_hash != '':
+            password_hash, _ = _hash_password(password=body.old_password, salt=bytes.fromhex(user.salt))
+            if password_hash != user.password_hash:
+                raise HTTPException(status_code=401, detail="Invalid password")
+
+        password_hash, salt = _hash_password(password=body.new_password)
+        user.password_hash = password_hash
+        user.salt = salt
+        session.commit()
+        return JSONResponse(
+            status_code=200,
+            content={"detail": "Password changed"}
+        )
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail="An unexpected error occurred" + str(e))

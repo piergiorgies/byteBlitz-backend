@@ -1,5 +1,6 @@
 from app.schemas.base import BaseRequest, BaseResponse, BaseListResponse
 from datetime import datetime
+from typing import Dict
 
 class UserCreate(BaseRequest):
     """
@@ -60,3 +61,25 @@ class UserListResponse(BaseListResponse):
 
     """
     users: list[UserResponse]
+
+class ProfileResponse(BaseResponse):
+    acceptance: float
+    total_year_sub: int
+    submission_map: Dict[datetime, int]
+    email: str
+    username: str
+    registered_at: datetime
+    has_password: bool
+    
+
+class SubmissionRecord(BaseResponse):
+    created_at: datetime
+    problem_id: int
+    problem_title: str
+    result_code: str
+    execution_time: float
+    memory: int
+    language_name: str
+
+class SubmissionHistory(BaseListResponse):
+    submissions: list[SubmissionRecord]
