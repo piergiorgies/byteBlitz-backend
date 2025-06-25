@@ -169,3 +169,69 @@ class UpcomingContest(BaseResponse):
     n_problems: int
     problems: List["ProblemInfo"]
     is_registration_open: bool
+
+
+class ContestSubmissions(BaseListResponse):
+    """
+    
+    Contest Submission DTO
+
+    Attributes
+        submissions (List[ContestSubmissionInfo]): The submissions of the contest
+
+    """
+    submissions: List["ContestSubmissionRow"]
+
+class ContestSubmissionRow(BaseResponse):
+    """
+    
+    Contest Submission Row DTO
+
+    Attributes
+        id (int): The id of the submission
+        problem_id (int): The id of the problem
+        problem_name (str): The name of the problem
+        user_id (int): The id of the user
+        username (str): The username of the user
+        score (float): The score of the submission
+        status (str): The status of the submission
+        submission_time (datetime): The time of the submission
+
+    """
+    id: int
+    problem_id: int
+    problem_title: str
+    user_id: int
+    username: str
+    status: str
+    created_at: datetime
+    score: int
+
+class SubmissionInfo(BaseResponse):
+    """
+    
+    Submission Info DTO
+
+    Attributes
+        id (int): The id of the submission
+        problem_id (int): The id of the problem
+        problem_name (str): The name of the problem
+        user_id (int): The id of the user
+        username (str): The username of the user
+        score (float): The score of the submission
+        status (str): The status of the submission
+        submission_time (datetime): The time of the submission
+
+    """
+    id: int
+    test_case_results: List["TestCaseResult"]
+    problem_id: int
+    code: str    
+
+
+class TestCaseResult(BaseResponse):
+    number: int
+    notes: str
+    memory: float
+    time: float
+    result_code: str

@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List
 from sqlalchemy import or_
-from app.models.mapping import Contest, User, Problem, ContestProblem
+from app.models.mapping import Contest, User, Problem, ContestProblem, ContestSubmission, Submission, SubmissionResult, SubmissionTestCase
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
-from app.schemas import ContestCreate, ContestRead, ContestUpdate, ContestListResponse, ContestBase
+from app.schemas import (ContestCreate, ContestRead, ContestUpdate, ContestListResponse,
+    ContestBase, PaginationParams, ContestSubmissionRow, ContestSubmissions,
+    SubmissionInfo, TestCaseResult)
 from app.database import get_object_by_id
 
 def read(id: int, session: Session) -> ContestRead:
@@ -250,6 +252,111 @@ def list(limit : int, offset : int, searchFilter: str, user : User, session : Se
             count=count
         )
         
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+def get_submissions(id: int, pagination: PaginationParams, session: Session) -> ContestSubmissions:
+    """
+    Get contest submissions by id
+
+    Args:
+        id: int
+        session: Session
+
+    Returns:
+        List[ContestSubmissionRow]: List of contest submissions
+    """
+    try:
+        contest = get_object_by_id(Contest, session, id)
+        if not contest:
+            raise HTTPException(status_code=404, detail="Contest not found")
+        
+        # join Submission, User, Contest
+        query = session.query(ContestSubmission).filter(ContestSubmission.contest_id == id)
+        query = query.join(Submission).join(Contest).join(User).join(SubmissionResult).order_by(Submission.created_at.desc())
+        count = query.count()
+        
+        if pagination.search_filter:
+            query = query.filter(
+                or_(
+                    User.username.ilike(f"%{pagination.search_filter}%"),
+                    Submission.code.ilike(f"%{pagination.search_filter}%")
+                )
+            )
+        query = query.limit(pagination.limit).offset(pagination.offset)
+        submissions: List[ContestSubmission] = query.all()
+        if not submissions:
+            return ContestSubmissions(submissions=[], count=0)
+        contest_submissions = []
+        for cs in submissions:
+            contest_submissions.append(
+                ContestSubmissionRow(
+                    id=cs.submission.id,
+                    user_id=cs.submission.user.id,
+                    username=cs.submission.user.username,
+                    problem_id=cs.submission.problem_id,
+                    problem_title=cs.submission.problem.title,
+                    status=cs.submission.result.code,
+                    created_at=cs.submission.created_at,
+                    score=cs.submission.score,
+                )
+
+            )
+        return ContestSubmissions(submissions=contest_submissions, count=count)
+        
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail="Database error: " + str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+    
+
+def get_submission_info(id: int, session: Session) -> SubmissionInfo:
+    """
+    Get contest submission info by id
+
+    Args:
+        id: int
+        session: Session
+
+    Returns:
+        SubmissionInfo: submission info
+    """
+    try:
+        submission: Submission = get_object_by_id(Submission, session, id)
+        if not submission:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        
+        query = session.query(SubmissionTestCase).join(SubmissionResult).filter(SubmissionTestCase.submission_id == id)
+        test_case_results = query.all()
+        if not test_case_results:
+            raise HTTPException(status_code=404, detail="Test case results not found for this submission")
+        
+        test_case_results_list = [
+            TestCaseResult(
+                result_code=test_case_result.result.code,
+                number=test_case_result.number,
+                notes=test_case_result.notes,
+                memory=test_case_result.memory,
+                time=test_case_result.time,
+            ) for test_case_result in test_case_results
+        ]
+
+        submission = SubmissionInfo(
+            id=submission.id,
+            problem_id=submission.problem_id,
+            code=submission.submitted_code,
+            test_case_results=test_case_results_list,
+        )
+        
+        return SubmissionInfo.model_validate(obj=submission)
+    
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail="Database error: " + str(e))
     except HTTPException as e:

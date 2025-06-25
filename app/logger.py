@@ -61,7 +61,7 @@ def get_logger():
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: callable) -> Response:
         request_id = str(uuid.uuid4())
         request_id_context.set(request_id)
 
