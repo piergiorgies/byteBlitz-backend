@@ -9,3 +9,7 @@ class ContestSubmission(Base):
 
     contest_id : Mapped[int] = mapped_column(Integer, FK('contests.id', ondelete='cascade'), nullable=False, primary_key=True)
     submission_id : Mapped[int] = mapped_column(Integer, FK('submissions.id', ondelete='cascade'), nullable=False, primary_key=True)
+
+    # connected fields
+    contest : Mapped['Contest'] = relationship('Contest', back_populates='contest_submissions', overlaps='problems, contests', viewonly=True)
+    submission : Mapped['Submission'] = relationship('Submission', back_populates='contest_submissions', overlaps='problems, contests', viewonly=True)

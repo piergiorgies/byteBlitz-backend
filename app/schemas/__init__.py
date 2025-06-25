@@ -16,7 +16,8 @@ from .submission import (
 from .contest import (
     ContestCreate, ContestUpdate, ContestRead, ContestListResponse,
     Scoreboard, ContestInfo, ContestInfos, ContestUserInfo,
-    PastContest, UpcomingContest, ContestBase
+    PastContest, UpcomingContest, ContestBase, ContestSubmissions, ContestSubmissionRow,
+    SubmissionInfo, TestCaseResult
     )
 from .problem import (
     ProblemInfo, ProblemCreate, ProblemUpdate, ProblemRead,

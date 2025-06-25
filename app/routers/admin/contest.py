@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Path
 from fastapi.responses import JSONResponse
-from app.schemas import ContestCreate, ContestUpdate, ContestListResponse, ContestRead, PaginationParams, get_pagination_params
-from app.controllers.admin.contest import create, delete, update
+from app.schemas import (ContestCreate, ContestUpdate, ContestListResponse, ContestRead,
+    ContestSubmissions, SubmissionInfo, PaginationParams, get_pagination_params)
+from app.controllers.admin.contest import create, delete, update, get_submissions, get_submission_info
 from app.database import get_session
 from app.models.role import Role
 from app.util.role_checker import RoleChecker
@@ -109,6 +110,43 @@ async def read_contest(id: int = Path(..., title="the Id of the contest"), sessi
     try:
         contest: ContestRead = read(id, session)
         return contest
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+
+@router.get("/{id}/submissions", response_model=ContestSubmissions, summary="Get contest submissions", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
+async def get_contest_submissions(id: int = Path(..., title="the Id of the contest"), pagination: PaginationParams = Depends(get_pagination_params) , session=Depends(get_session)):
+    """
+    Get contest submissions by id
+
+    Args:
+        id: int
+    """
+
+    try:
+        result: ContestSubmissions = get_submissions(id, pagination, session)
+        return result        
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred: " + str(e))
+
+@router.get("/submission/info/{id}", response_model=SubmissionInfo ,summary="Get contest submission info", dependencies=[Depends(RoleChecker([Role.CONTEST_MAINTAINER]))])
+async def get_contest_submission_info(id: int = Path(..., title="the Id of the submission"), session=Depends(get_session)):
+    """
+    Get contest submission info by id
+
+    Args:
+        id: int
+    """
+
+    try:
+        result: SubmissionInfo = get_submission_info(id, session)
+        return result
     
     except HTTPException as e:
         raise e

@@ -26,3 +26,4 @@ class Submission(Base):
     contests: Mapped[List['Contest']] = relationship('Contest', secondary='contest_submissions', back_populates='submissions')
     test_cases: Mapped[List['SubmissionTestCase']] = relationship('SubmissionTestCase', back_populates='submission', cascade='all, delete', passive_deletes=True)
     result: Mapped['SubmissionResult'] = relationship('SubmissionResult', back_populates='submission')
+    contest_submissions: Mapped[List['ContestSubmission']] = relationship('ContestSubmission', back_populates='submission', cascade='all, delete-orphan', passive_deletes=True)
