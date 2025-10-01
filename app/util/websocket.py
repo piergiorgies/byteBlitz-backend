@@ -41,4 +41,10 @@ class WebsocketManager:
                 except Exception:
                     self.connections[client_id].pop(i)
 
+    async def disconnect(self, client_id: int):
+        if client_id in self.connections:
+            for connection in self.connections[client_id]:
+                await connection.close()
+            del self.connections[client_id]
+
 websocket_manager = WebsocketManager()

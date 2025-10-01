@@ -5,7 +5,6 @@ from app.database import get_session
 from app.models import Role
 from app.util.jwt import get_websocket_user
 from app.models.mapping.user import User
-from app.util.role_checker import RoleChecker
 from app.util.websocket import websocket_manager
 from app.controllers.general import get_dashboard_stats
 
@@ -19,7 +18,11 @@ async def websocket(socket: WebSocket, user: Annotated[User, Depends(get_websock
     await websocket_manager.connect(socket, user.id)
     # to keep the connection alive
     while True:
+        if socket.client_state.name != "CONNECTED":
+            websocket_manager.disconnect(user.id)
+            break
         data = await socket.receive()
+        print(f"Received data from user {user.id}: {data}")
 
 router = APIRouter(
     tags=["General"],
