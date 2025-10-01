@@ -61,7 +61,11 @@ Go to pgAdmin and do the following step:
 
 At this point you should be able to create the database table running the following command
 
-`alembic upgrade head`
+`python migrate.py migrate`
+
+And create some data
+
+`python migrate.py loaddata`
 
 If the migation was successful you should see the table in the database, specifically under:
 
